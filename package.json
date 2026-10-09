@@ -1,0 +1,42 @@
+{
+  "name": "tracechain",
+  "version": "1.0.0",
+  "description": "Enterprise decentralized chain of custody and provenance registry for biological specimens and clinical research",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview",
+    "compile": "hardhat compile",
+    "test:contracts": "hardhat test",
+    "deploy:local": "hardhat run scripts/deploy.js --network localhost",
+    "deploy:sepolia": "hardhat run scripts/deploy.js --network sepolia",
+    "node": "hardhat node"
+  },
+  "keywords": [
+    "solidity",
+    "ethereum",
+    "react",
+    "chain-of-custody",
+    "biotech",
+    "biobanking",
+    "web3"
+  ],
+  "author": "Tracechain Team",
+  "license": "MIT",
+  "devDependencies": {
+    "@nomicfoundation/hardhat-toolbox": "^5.0.0",
+    "@vitejs/plugin-react": "^4.3.4",
+    "hardhat": "^2.22.18",
+    "vite": "^5.4.14"
+  },
+  "dependencies": {
+    "@openzeppelin/contracts": "^5.2.0",
+    "canvas-confetti": "^1.9.4",
+    "clsx": "^2.1.1",
+    "ethers": "^6.13.5",
+    "lucide-react": "^0.475.0",
+    "qrcode": "^1.5.4",
+    "react": "^18.3.1",
+    "react-dom": "^18.3.1"
+  }
+}
