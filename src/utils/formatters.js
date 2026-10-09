@@ -13,7 +13,6 @@ export function shortHash(hash, chars = 6) {
 export function formatTimestamp(ts) {
   if (!ts) return "N/A";
   const num = Number(ts);
-  // Detect if seconds or milliseconds
   const ms = num < 10000000000 ? num * 1000 : num;
   return new Intl.DateTimeFormat("en-US", {
     month: "short",
@@ -21,7 +20,6 @@ export function formatTimestamp(ts) {
     year: "numeric",
     hour: "2-digit",
     minute: "2-digit",
-    second: "2-digit",
   }).format(new Date(ms));
 }
 
@@ -59,12 +57,12 @@ export const RECORD_TYPE_NAMES = [
 ];
 
 export const STATUS_CONFIG = {
-  0: { label: "None", color: "bg-slate-700 text-slate-300", dot: "bg-slate-400" },
-  1: { label: "Active", color: "bg-emerald-500/10 text-emerald-400 border border-emerald-500/30", dot: "bg-emerald-500" },
-  2: { label: "In Transit", color: "bg-amber-500/10 text-amber-400 border border-amber-500/30", dot: "bg-amber-500" },
-  3: { label: "Quarantined", color: "bg-rose-500/10 text-rose-400 border border-rose-500/30", dot: "bg-rose-500" },
-  4: { label: "Consumed", color: "bg-purple-500/10 text-purple-400 border border-purple-500/30", dot: "bg-purple-500" },
-  5: { label: "Destroyed", color: "bg-slate-600/30 text-slate-400 border border-slate-600/40", dot: "bg-slate-500" },
+  0: { label: "None", color: "bg-[#EAE1CB] text-[#596579] border border-[#D5C7A8]", dot: "bg-[#8B98AA]" },
+  1: { label: "Active", color: "bg-[#DCE6F5] text-[#2457A6] border border-[#BDD0EE]", dot: "bg-[#2457A6]" },
+  2: { label: "In Transit", color: "bg-[#FEF3C7] text-[#92400E] border border-[#FDE68A]", dot: "bg-[#D97706]" },
+  3: { label: "Quarantined", color: "bg-[#F6D9D4] text-[#C23B30] border border-[#EDB8B3]", dot: "bg-[#C23B30]" },
+  4: { label: "Consumed", color: "bg-[#EDE9FE] text-[#5B21B6] border border-[#DDD6FE]", dot: "bg-[#7C3AED]" },
+  5: { label: "Destroyed", color: "bg-[#EAE1CB] text-[#596579] border border-[#D5C7A8]", dot: "bg-[#596579]" },
 };
 
 export const ORG_TYPE_NAMES = [

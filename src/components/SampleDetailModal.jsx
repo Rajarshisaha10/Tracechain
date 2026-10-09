@@ -16,16 +16,13 @@ import {
   Fingerprint,
   Thermometer,
   QrCode,
-  ArrowRight,
   GitFork,
   Copy,
   Check,
-  AlertTriangle,
   FileText,
   Lock,
   Building,
   ArrowLeftRight,
-  ExternalLink,
   Flame
 } from "lucide-react";
 
@@ -65,12 +62,12 @@ export default function SampleDetailModal({
       setIsVerifying(false);
       if (res.valid) {
         confetti({
-          particleCount: 60,
+          particleCount: 50,
           spread: 60,
           origin: { y: 0.7 }
         });
       }
-    }, 400);
+    }, 350);
   };
 
   const handleTamperDemo = () => {
@@ -86,17 +83,17 @@ export default function SampleDetailModal({
 
   return (
     <div className="modal-overlay">
-      <div className="modal-content max-w-4xl max-h-[92vh] flex flex-col">
+      <div className="modal-content max-w-4xl max-h-[92vh] flex flex-col bg-[#FFFBF1] border-2 border-[#E3D7BC]">
         
         {/* Modal Header */}
-        <div className="p-6 border-b border-white/10 flex items-start justify-between gap-4 bg-slate-900/80 sticky top-0 z-20 backdrop-blur-md">
+        <div className="p-6 border-b-2 border-[#E3D7BC] flex items-start justify-between gap-4 bg-[#FFFBF1] sticky top-0 z-20">
           <div className="flex items-center gap-3">
-            <div className="w-11 h-11 rounded-xl bg-cyan-500/10 border border-cyan-500/30 flex items-center justify-center text-cyan-400">
+            <div className="w-11 h-11 rounded-xl bg-[#DCE6F5] border border-[#BDD0EE] flex items-center justify-center text-[#2457A6]">
               <Fingerprint className="w-6 h-6" />
             </div>
             <div>
               <div className="flex items-center gap-2">
-                <h2 className="text-xl font-extrabold text-white font-mono">
+                <h2 className="text-xl font-extrabold text-[#1B2B45] font-mono">
                   {sample.externalId}
                 </h2>
                 <span className={`badge-status ${statusCfg.color}`}>
@@ -104,13 +101,13 @@ export default function SampleDetailModal({
                   {statusCfg.label}
                 </span>
                 {isChild && (
-                  <span className="text-[10px] font-mono bg-purple-500/15 text-purple-300 border border-purple-500/30 px-2 py-0.5 rounded-full">
+                  <span className="text-[10px] font-mono bg-[#EBDDB8] text-[#1B2B45] border border-[#D2C4A3] px-2 py-0.5 rounded-full font-bold">
                     Derived Aliquot
                   </span>
                 )}
               </div>
-              <p className="text-xs text-slate-400 mt-0.5">
-                {sample.sampleType} • Anchored at Block ID: {shortHash(sample.sampleId, 6)}
+              <p className="text-xs text-[#596579] mt-0.5 font-medium">
+                {sample.sampleType} • Anchor Block: {shortHash(sample.sampleId, 6)}
               </p>
             </div>
           </div>
@@ -118,14 +115,14 @@ export default function SampleDetailModal({
           <div className="flex items-center gap-2">
             <button
               onClick={() => onOpenQr(sample)}
-              className="p-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-cyan-400 border border-white/5 transition-all"
+              className="p-2 rounded-xl bg-[#F5EEDC] hover:bg-[#EBDDB8] text-[#2457A6] border border-[#E3D7BC] transition-all"
               title="Barcode QR View"
             >
               <QrCode className="w-4 h-4" />
             </button>
             <button
               onClick={onClose}
-              className="p-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white border border-white/5 transition-all"
+              className="p-2 rounded-xl bg-[#F5EEDC] hover:bg-[#EBDDB8] text-[#1B2B45] border border-[#E3D7BC] transition-all"
             >
               <X className="w-4 h-4" />
             </button>
@@ -136,27 +133,27 @@ export default function SampleDetailModal({
         <div className="p-6 overflow-y-auto space-y-6 flex-1">
           
           {/* Quick Actions Bar */}
-          <div className="flex flex-wrap items-center justify-between gap-3 p-3 rounded-xl bg-slate-900/60 border border-white/5">
+          <div className="flex flex-wrap items-center justify-between gap-3 p-3.5 rounded-2xl bg-[#F5EEDC] border-2 border-[#E3D7BC]">
             <div className="flex items-center gap-2">
               <button
                 onClick={() => onOpenTransfer(sample)}
                 className="btn-secondary text-xs py-1.5"
               >
-                <ArrowLeftRight className="w-3.5 h-3.5 text-amber-400" />
+                <ArrowLeftRight className="w-3.5 h-3.5 text-[#2457A6]" />
                 Transfer
               </button>
               <button
                 onClick={() => onOpenStorage(sample)}
                 className="btn-secondary text-xs py-1.5"
               >
-                <Thermometer className="w-3.5 h-3.5 text-cyan-400" />
+                <Thermometer className="w-3.5 h-3.5 text-[#2457A6]" />
                 Log Storage
               </button>
               <button
                 onClick={() => onOpenAliquot(sample)}
                 className="btn-secondary text-xs py-1.5"
               >
-                <GitFork className="w-3.5 h-3.5 text-purple-400" />
+                <GitFork className="w-3.5 h-3.5 text-[#C23B30]" />
                 Split Aliquot
               </button>
             </div>
@@ -175,7 +172,7 @@ export default function SampleDetailModal({
               <button
                 onClick={handleTamperDemo}
                 title="Simulate data tampering to test verification failure"
-                className="text-xs text-rose-400 hover:text-rose-300 bg-rose-500/10 hover:bg-rose-500/20 border border-rose-500/30 px-2.5 py-1.5 rounded-lg flex items-center gap-1 transition-all"
+                className="text-xs text-[#C23B30] hover:text-[#A32E24] bg-[#F6D9D4] hover:bg-[#F3C4BD] border border-[#EDB8B3] px-2.5 py-1.5 rounded-xl font-bold flex items-center gap-1 transition-all"
               >
                 <Flame className="w-3.5 h-3.5" />
                 Simulate Tamper
@@ -186,30 +183,30 @@ export default function SampleDetailModal({
           {/* Verification Result Banner */}
           {verifyResult && (
             <div
-              className={`p-4 rounded-xl border flex items-start gap-3 transition-all animate-fadeIn ${
+              className={`p-4 rounded-2xl border-2 flex items-start gap-3 transition-all animate-fadeIn ${
                 verifyResult.valid
-                  ? "bg-emerald-500/10 border-emerald-500/40 text-emerald-200"
-                  : "bg-rose-500/15 border-rose-500/50 text-rose-200"
+                  ? "bg-[#DCE6F5] border-[#BDD0EE] text-[#1B4385]"
+                  : "bg-[#F6D9D4] border-[#EDB8B3] text-[#9E2A20]"
               }`}
             >
               {verifyResult.valid ? (
-                <ShieldCheck className="w-6 h-6 text-emerald-400 shrink-0 mt-0.5" />
+                <ShieldCheck className="w-6 h-6 text-[#2457A6] shrink-0 mt-0.5" />
               ) : (
-                <ShieldAlert className="w-6 h-6 text-rose-400 shrink-0 mt-0.5" />
+                <ShieldAlert className="w-6 h-6 text-[#C23B30] shrink-0 mt-0.5" />
               )}
               <div className="flex-1 text-xs">
-                <div className="font-bold text-sm">
+                <div className="font-extrabold text-sm">
                   {verifyResult.valid
                     ? "Cryptographic Provenance 100% Intact"
                     : "TAMPER ALERT — Integrity Check Failed!"}
                 </div>
-                <p className="mt-1 opacity-90 leading-relaxed">
+                <p className="mt-1 leading-relaxed font-medium">
                   {verifyResult.valid
-                    ? `Every hash link from the anchor root (block #${shortHash(sample.sampleId, 3)}) to current head (${shortHash(sample.headHash, 3)}) matches mathematical keccak-256 specifications. No unauthorized changes detected.`
+                    ? `Every hash link from the anchor root (block #${shortHash(sample.sampleId, 3)}) to current head (${shortHash(sample.headHash, 3)}) matches mathematical keccak-256 specifications. No unauthorized mutations detected.`
                     : verifyResult.reason}
                 </p>
                 {verifyResult.valid && (
-                  <div className="mt-2 text-[11px] font-mono opacity-80">
+                  <div className="mt-2 text-[11px] font-mono font-bold text-[#2457A6]">
                     Verified {verifyResult.totalSteps} cryptographic records across the ledger.
                   </div>
                 )}
@@ -221,70 +218,70 @@ export default function SampleDetailModal({
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             
             {/* Box 1: Custody & Origins */}
-            <div className="glass-panel p-4 border border-white/5 space-y-3">
-              <h4 className="text-xs font-bold text-slate-300 uppercase tracking-wider flex items-center gap-1.5">
-                <Building className="w-3.5 h-3.5 text-cyan-400" /> Custody & Provenance
+            <div className="glass-panel p-4.5 bg-[#F5EEDC] border-2 border-[#E3D7BC] space-y-3">
+              <h4 className="text-xs font-extrabold text-[#1B2B45] uppercase tracking-wider flex items-center gap-1.5">
+                <Building className="w-3.5 h-3.5 text-[#2457A6]" /> Custody & Provenance
               </h4>
               <div className="space-y-2 text-xs">
-                <div className="flex justify-between py-1 border-b border-white/5">
-                  <span className="text-slate-500">Current Custodian:</span>
-                  <span className="font-semibold text-slate-200">
+                <div className="flex justify-between py-1 border-b border-[#E3D7BC]">
+                  <span className="text-[#6B7287] font-medium">Current Custodian:</span>
+                  <span className="font-bold text-[#1B2B45]">
                     {getOrgName(sample.custodian)}
                   </span>
                 </div>
-                <div className="flex justify-between py-1 border-b border-white/5">
-                  <span className="text-slate-500">Originating Org:</span>
-                  <span className="font-semibold text-slate-200">
+                <div className="flex justify-between py-1 border-b border-[#E3D7BC]">
+                  <span className="text-[#6B7287] font-medium">Originating Facility:</span>
+                  <span className="font-bold text-[#1B2B45]">
                     {getOrgName(sample.origin)}
                   </span>
                 </div>
-                <div className="flex justify-between py-1 border-b border-white/5">
-                  <span className="text-slate-500">Collection Date:</span>
-                  <span className="text-slate-200">{formatTimestamp(sample.collectedAt)}</span>
+                <div className="flex justify-between py-1 border-b border-[#E3D7BC]">
+                  <span className="text-[#6B7287] font-medium">Collection Date:</span>
+                  <span className="text-[#1B2B45] font-semibold">{formatTimestamp(sample.collectedAt)}</span>
                 </div>
                 {sample.pendingRecipient && sample.pendingRecipient !== "0x0000000000000000000000000000000000000000" && (
-                  <div className="flex justify-between py-1 border-b border-white/5 bg-amber-500/10 px-2 rounded">
-                    <span className="text-amber-400 font-semibold">En Route To:</span>
-                    <span className="text-amber-300 font-semibold">{getOrgName(sample.pendingRecipient)}</span>
+                  <div className="flex justify-between py-1 border-b border-[#E3D7BC] bg-[#FEF3C7] px-2 rounded-lg">
+                    <span className="text-[#92400E] font-bold">En Route To:</span>
+                    <span className="text-[#92400E] font-bold">{getOrgName(sample.pendingRecipient)}</span>
                   </div>
                 )}
               </div>
             </div>
 
             {/* Box 2: Cryptographic Identity & Zero-Knowledge Hashes */}
-            <div className="glass-panel p-4 border border-white/5 space-y-3">
-              <h4 className="text-xs font-bold text-slate-300 uppercase tracking-wider flex items-center gap-1.5">
-                <Lock className="w-3.5 h-3.5 text-emerald-400" /> Cryptographic Anchors
+            <div className="glass-panel p-4.5 bg-[#F5EEDC] border-2 border-[#E3D7BC] space-y-3">
+              <h4 className="text-xs font-extrabold text-[#1B2B45] uppercase tracking-wider flex items-center gap-1.5">
+                <Lock className="w-3.5 h-3.5 text-[#2457A6]" /> Cryptographic Hashes
               </h4>
               <div className="space-y-2 text-xs">
                 <div>
-                  <div className="flex justify-between text-[11px] text-slate-500 mb-0.5">
-                    <span>Consent Document Seal:</span>
+                  <div className="flex justify-between text-[11px] text-[#6B7287] mb-0.5">
+                    <span className="font-medium">Consent Document Seal:</span>
                     <button
                       onClick={() => handleCopy(sample.consentHash, "consent")}
-                      className="text-cyan-400 hover:underline flex items-center gap-1"
+                      className="text-[#2457A6] hover:underline flex items-center gap-1 font-bold"
                     >
-                      {copiedHash === "consent" ? <Check className="w-3 h-3 text-emerald-400" /> : <Copy className="w-3 h-3" />}
+                      {copiedHash === "consent" ? <Check className="w-3 h-3 text-[#2457A6]" /> : <Copy className="w-3 h-3" />}
                       {copiedHash === "consent" ? "Copied" : "Copy"}
                     </button>
                   </div>
-                  <div className="font-mono text-[11px] bg-slate-900/80 p-1.5 rounded border border-white/5 text-slate-300 break-all">
+                  <div className="font-mono text-[11px] bg-[#FFFBF1] p-1.5 rounded-lg border border-[#E3D7BC] text-[#1B2B45] break-all font-semibold">
                     {sample.consentHash}
                   </div>
                 </div>
 
                 <div>
-                  <div className="flex justify-between text-[11px] text-slate-500 mb-0.5">
-                    <span>Pseudonymous Subject Hash:</span>
+                  <div className="flex justify-between text-[11px] text-[#6B7287] mb-0.5">
+                    <span className="font-medium">Pseudonymous Subject Hash:</span>
                     <button
                       onClick={() => handleCopy(sample.subjectHash, "subject")}
-                      className="text-cyan-400 hover:underline flex items-center gap-1"
+                      className="text-[#2457A6] hover:underline flex items-center gap-1 font-bold"
                     >
-                      {copiedHash === "subject" ? <Check className="w-3 h-3 text-emerald-400" /> : <Copy className="w-3 h-3" />}
+                      {copiedHash === "subject" ? <Check className="w-3 h-3 text-[#2457A6]" /> : <Copy className="w-3 h-3" />}
                       {copiedHash === "subject" ? "Copied" : "Copy"}
                     </button>
                   </div>
-                  <div className="font-mono text-[11px] bg-slate-900/80 p-1.5 rounded border border-white/5 text-slate-300 break-all">
+                  <div className="font-mono text-[11px] bg-[#FFFBF1] p-1.5 rounded-lg border border-[#E3D7BC] text-[#1B2B45] break-all font-semibold">
                     {sample.subjectHash}
                   </div>
                 </div>
@@ -295,8 +292,8 @@ export default function SampleDetailModal({
 
           {/* Aliquots Section if present */}
           {children.length > 0 && (
-            <div className="glass-panel p-4 border border-white/5">
-              <h4 className="text-xs font-bold text-purple-300 uppercase tracking-wider flex items-center gap-1.5 mb-3">
+            <div className="glass-panel p-4.5 bg-[#FFFBF1] border-2 border-[#E3D7BC]">
+              <h4 className="text-xs font-extrabold text-[#C23B30] uppercase tracking-wider flex items-center gap-1.5 mb-3">
                 <GitFork className="w-3.5 h-3.5" /> Child Aliquot Sub-Specimens ({children.length})
               </h4>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
@@ -306,13 +303,13 @@ export default function SampleDetailModal({
                   return (
                     <div
                       key={cid}
-                      className="p-3 bg-purple-500/5 border border-purple-500/20 rounded-xl text-xs flex justify-between items-center"
+                      className="p-3 bg-[#F5EEDC] border-2 border-[#E3D7BC] rounded-xl text-xs flex justify-between items-center"
                     >
                       <div>
-                        <div className="font-bold text-white font-mono">{child.externalId}</div>
-                        <div className="text-slate-400 text-[11px]">{child.sampleType}</div>
+                        <div className="font-bold text-[#1B2B45] font-mono">{child.externalId}</div>
+                        <div className="text-[#596579] text-[11px]">{child.sampleType}</div>
                       </div>
-                      <span className="text-[10px] font-mono text-purple-300 bg-purple-500/20 px-2 py-0.5 rounded">
+                      <span className="text-[10px] font-mono text-[#C23B30] bg-[#F6D9D4] px-2 py-0.5 rounded font-bold">
                         {STATUS_CONFIG[child.status]?.label}
                       </span>
                     </div>
@@ -324,17 +321,17 @@ export default function SampleDetailModal({
 
           {/* Cryptographic Hash-Chain Event Timeline */}
           <div>
-            <div className="flex items-center justify-between pb-3 border-b border-white/10 mb-4">
-              <h3 className="text-sm font-bold text-white flex items-center gap-2">
-                <FileText className="w-4 h-4 text-cyan-400" />
+            <div className="flex items-center justify-between pb-3 border-b-2 border-[#E3D7BC] mb-4">
+              <h3 className="text-sm font-extrabold text-[#1B2B45] flex items-center gap-2">
+                <FileText className="w-4 h-4 text-[#2457A6]" />
                 Immutable Event History Hash-Chain
               </h3>
-              <span className="text-xs text-slate-400 font-mono">
+              <span className="text-xs text-[#6B7287] font-mono font-bold">
                 {history.length} Chain Blocks
               </span>
             </div>
 
-            <div className="relative pl-6 space-y-6 before:content-[''] before:absolute before:left-2.5 before:top-3 before:bottom-3 before:w-0.5 before:bg-gradient-to-b before:from-cyan-500 before:via-emerald-500 before:to-purple-500">
+            <div className="relative pl-6 space-y-6 before:content-[''] before:absolute before:left-2.5 before:top-3 before:bottom-3 before:w-0.5 before:bg-[#E3D7BC]">
               {history.map((rec, i) => {
                 const recTypeName = RECORD_TYPE_NAMES[rec.recType] || "Handling Event";
                 const isStorage = rec.recType === 7;
@@ -344,52 +341,52 @@ export default function SampleDetailModal({
                 return (
                   <div key={i} className="relative group">
                     {/* Timeline Node Dot */}
-                    <div className="absolute -left-[27px] top-1.5 w-4 h-4 rounded-full bg-slate-900 border-2 border-cyan-400 flex items-center justify-center group-hover:scale-125 transition-transform">
-                      <div className="w-1.5 h-1.5 rounded-full bg-cyan-400"></div>
+                    <div className="absolute -left-[27px] top-1.5 w-4 h-4 rounded-full bg-[#FFFBF1] border-2 border-[#2457A6] flex items-center justify-center group-hover:scale-125 transition-transform">
+                      <div className="w-1.5 h-1.5 rounded-full bg-[#2457A6]"></div>
                     </div>
 
-                    <div className="glass-panel p-4 border border-white/10 group-hover:border-cyan-500/30 transition-all">
+                    <div className="glass-panel p-4 bg-[#FFFBF1] border-2 border-[#E3D7BC] group-hover:border-[#2457A6] transition-all">
                       <div className="flex flex-wrap items-center justify-between gap-2">
                         <div className="flex items-center gap-2">
                           <span
-                            className={`text-[11px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-md ${
+                            className={`text-[11px] font-extrabold uppercase tracking-wider px-2 py-0.5 rounded-md ${
                               isIncident || isQuarantine
-                                ? "bg-rose-500/20 text-rose-300 border border-rose-500/30"
+                                ? "bg-[#F6D9D4] text-[#C23B30] border border-[#EDB8B3]"
                                 : isStorage
-                                ? "bg-cyan-500/20 text-cyan-300 border border-cyan-500/30"
-                                : "bg-emerald-500/20 text-emerald-300 border border-emerald-500/30"
+                                ? "bg-[#DCE6F5] text-[#2457A6] border border-[#BDD0EE]"
+                                : "bg-[#EBDDB8] text-[#1B2B45] border border-[#D2C4A3]"
                             }`}
                           >
                             Block #{i + 1}: {recTypeName}
                           </span>
 
                           {rec.temp !== undefined && rec.temp !== -2147483648 && (
-                            <span className="text-xs font-bold font-mono px-2 py-0.5 bg-blue-500/20 text-blue-300 rounded-md border border-blue-500/30">
+                            <span className="text-xs font-bold font-mono px-2 py-0.5 bg-[#DCE6F5] text-[#2457A6] rounded-md border border-[#BDD0EE]">
                               {formatTemp(rec.temp)}
                             </span>
                           )}
                         </div>
 
-                        <span className="text-[11px] text-slate-400 font-mono">
+                        <span className="text-[11px] text-[#6B7287] font-mono">
                           {formatTimestamp(rec.timestamp)}
                         </span>
                       </div>
 
                       {/* Event description / note */}
-                      <p className="text-xs text-slate-200 mt-2 font-medium">
+                      <p className="text-xs text-[#1B2B45] mt-2 font-semibold">
                         {rec.note || "Chain transaction executed"}
                       </p>
 
                       {/* Actor and Cryptographic Proof Hashes */}
-                      <div className="mt-3 pt-3 border-t border-white/5 grid grid-cols-1 sm:grid-cols-2 gap-2 text-[11px] font-mono">
-                        <div className="text-slate-400 truncate">
-                          Actor: <span className="text-slate-200">{getOrgName(rec.actor)}</span>
+                      <div className="mt-3 pt-3 border-t border-[#E3D7BC] grid grid-cols-1 sm:grid-cols-2 gap-2 text-[11px] font-mono">
+                        <div className="text-[#6B7287] truncate">
+                          Actor: <span className="text-[#1B2B45] font-bold">{getOrgName(rec.actor)}</span>
                         </div>
-                        <div className="text-slate-400 truncate text-right">
-                          Prev Hash: <span className="text-slate-300">{shortHash(rec.prevHash, 4)}</span>
+                        <div className="text-[#6B7287] truncate text-right">
+                          Prev Hash: <span className="text-[#1B2B45] font-bold">{shortHash(rec.prevHash, 4)}</span>
                         </div>
-                        <div className="col-span-full bg-slate-950/70 p-2 rounded border border-white/5 text-[10px] text-cyan-300/90 break-all flex items-center justify-between">
-                          <span>Block Signature: {rec.recordHash}</span>
+                        <div className="col-span-full bg-[#F5EEDC] p-2 rounded-lg border border-[#E3D7BC] text-[10px] text-[#2457A6] font-bold break-all flex items-center justify-between">
+                          <span>Signature: {rec.recordHash}</span>
                         </div>
                       </div>
 

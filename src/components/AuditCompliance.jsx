@@ -1,7 +1,7 @@
 import React, { useState } from "react";
 import { useChain } from "../context/ChainContext";
-import { hashFile, hashString } from "../utils/crypto";
-import { formatTimestamp, shortHash, STATUS_CONFIG } from "../utils/formatters";
+import { hashFile } from "../utils/crypto";
+import { formatTimestamp, shortHash } from "../utils/formatters";
 import {
   ShieldAlert,
   FileCheck2,
@@ -9,27 +9,21 @@ import {
   Upload,
   CheckCircle2,
   Search,
-  Lock,
   Unlock,
-  Building,
   FileText
 } from "lucide-react";
 
 export default function AuditCompliance({ onSelectSample }) {
   const {
     sandboxData,
-    activeAccount,
     recordTest,
     logIncident,
-    quarantine,
     release,
-    currentActor
   } = useChain();
 
   const samples = Object.values(sandboxData.samples || {});
   const quarantinedSamples = samples.filter((s) => s.status === 3);
 
-  // Lab Test form state
   const [testSampleId, setTestSampleId] = useState("");
   const [testName, setTestName] = useState("Comprehensive 500-Gene Targeted Exome Sequencing");
   const [reportHash, setReportHash] = useState("0x" + "e5".repeat(32));
@@ -37,21 +31,16 @@ export default function AuditCompliance({ onSelectSample }) {
   const [reportUri, setReportUri] = useState("ipfs://bafybeireportngsdiagnostic2026");
   const [testLoading, setTestLoading] = useState(false);
 
-  // Incident form state
   const [incSampleId, setIncSampleId] = useState("");
   const [incDesc, setIncDesc] = useState("Cryogenic container temperature excursion: rose to -15°C for 35 mins");
   const [incEvidenceHash, setIncEvidenceHash] = useState("0x" + "c3".repeat(32));
   const [incLoading, setIncLoading] = useState(false);
 
-  // Test Verifier
   const [verifySampleId, setVerifySampleId] = useState("");
   const [verifyFileHash, setVerifyFileHash] = useState("");
   const [verifyResult, setVerifyResult] = useState(null);
 
-  // Feedback notifications
   const [msg, setMsg] = useState({ text: "", type: "" });
-
-  const isAuditorOrAdmin = currentActor.orgType === 0 || currentActor.orgType === 5;
 
   const handleTestFileUpload = async (e) => {
     const file = e.target.files[0];
@@ -133,13 +122,13 @@ export default function AuditCompliance({ onSelectSample }) {
     <div className="space-y-8 animate-fadeIn">
       
       {/* Banner */}
-      <div className="glass-panel p-6 border border-white/10 flex items-center justify-between">
+      <div className="glass-panel p-6 bg-[#FFFBF1] border-2 border-[#E3D7BC] flex items-center justify-between">
         <div>
-          <h2 className="text-xl font-bold text-white flex items-center gap-2">
-            <FileCheck2 className="w-5 h-5 text-emerald-400" />
+          <h2 className="text-xl font-extrabold text-[#1B2B45] flex items-center gap-2">
+            <FileCheck2 className="w-5 h-5 text-[#2457A6]" />
             Lab Diagnostics, Incident Reporting & Compliance Clearance
           </h2>
-          <p className="text-xs text-slate-400 mt-1">
+          <p className="text-xs text-[#596579] mt-1 font-medium">
             Permanent diagnostic report hashing, incident auditing, and regulatory quarantine administration.
           </p>
         </div>
@@ -147,33 +136,33 @@ export default function AuditCompliance({ onSelectSample }) {
 
       {msg.text && (
         <div
-          className={`p-4 rounded-xl border text-xs font-semibold flex items-center gap-2 ${
+          className={`p-4 rounded-2xl border-2 text-xs font-bold flex items-center gap-2 ${
             msg.type === "ok"
-              ? "bg-emerald-500/10 border-emerald-500/30 text-emerald-300"
-              : "bg-rose-500/10 border-rose-500/30 text-rose-300"
+              ? "bg-[#DCE6F5] border-[#BDD0EE] text-[#1B4385]"
+              : "bg-[#F6D9D4] border-[#EDB8B3] text-[#9E2A20]"
           }`}
         >
-          <CheckCircle2 className="w-4 h-4 text-emerald-400" />
+          <CheckCircle2 className="w-4 h-4 text-[#2457A6]" />
           {msg.text}
         </div>
       )}
 
       {/* Quarantined Specimens Audit Section */}
-      <div className="glass-panel p-6 border border-rose-500/20 bg-rose-500/[0.02]">
-        <div className="flex items-center justify-between pb-3 border-b border-white/10 mb-4">
+      <div className="glass-panel p-6 border-2 border-[#EDB8B3] bg-[#F6D9D4]/40">
+        <div className="flex items-center justify-between pb-3 border-b-2 border-[#EDB8B3] mb-4">
           <div className="flex items-center gap-2">
-            <ShieldAlert className="w-5 h-5 text-rose-400" />
-            <h3 className="text-sm font-bold text-white">
+            <ShieldAlert className="w-5 h-5 text-[#C23B30]" />
+            <h3 className="text-sm font-extrabold text-[#1B2B45]">
               Quarantine Hold Workbench ({quarantinedSamples.length})
             </h3>
           </div>
-          <span className="text-[11px] text-rose-300/80 font-mono">
-            Requires Auditor Clearance
+          <span className="text-[11px] text-[#C23B30] font-mono font-bold">
+            Requires Compliance Clearance
           </span>
         </div>
 
         {quarantinedSamples.length === 0 ? (
-          <div className="py-6 text-center text-slate-400 text-xs">
+          <div className="py-6 text-center text-[#596579] text-xs font-medium">
             Zero quarantined specimens. All biological inventory is in acceptable status.
           </div>
         ) : (
@@ -181,39 +170,39 @@ export default function AuditCompliance({ onSelectSample }) {
             {quarantinedSamples.map((s) => (
               <div
                 key={s.sampleId}
-                className="p-4 rounded-xl bg-slate-900/90 border border-rose-500/30 space-y-3"
+                className="p-4.5 rounded-2xl bg-[#FFFBF1] border-2 border-[#EDB8B3] space-y-3"
               >
                 <div className="flex justify-between items-start">
                   <div>
                     <h4
                       onClick={() => onSelectSample(s.sampleId)}
-                      className="font-bold text-sm text-white font-mono hover:text-cyan-300 cursor-pointer"
+                      className="font-extrabold text-sm text-[#1B2B45] font-mono hover:text-[#2457A6] cursor-pointer"
                     >
                       {s.externalId}
                     </h4>
-                    <p className="text-xs text-slate-400 mt-0.5">{s.sampleType}</p>
+                    <p className="text-xs text-[#596579] mt-0.5 font-medium">{s.sampleType}</p>
                   </div>
-                  <span className="text-[10px] font-mono bg-rose-500/20 text-rose-300 border border-rose-500/30 px-2 py-0.5 rounded">
+                  <span className="text-[10px] font-mono bg-[#F6D9D4] text-[#C23B30] border border-[#EDB8B3] px-2.5 py-0.5 rounded-full font-bold">
                     QUARANTINED
                   </span>
                 </div>
 
-                <div className="text-xs text-slate-400 space-y-1">
-                  <div>Custodian: {shortHash(s.custodian, 4)}</div>
-                  <div>Anchor: <span className="font-mono text-cyan-400">{shortHash(s.headHash, 4)}</span></div>
+                <div className="text-xs text-[#596579] space-y-1 font-medium">
+                  <div>Custodian: <span className="font-bold text-[#1B2B45]">{shortHash(s.custodian, 4)}</span></div>
+                  <div>Anchor: <span className="font-mono text-[#2457A6] font-bold">{shortHash(s.headHash, 4)}</span></div>
                 </div>
 
-                <div className="pt-2 border-t border-white/5 flex items-center justify-between gap-2">
+                <div className="pt-2 border-t border-[#E3D7BC] flex items-center justify-between gap-2">
                   <button
                     onClick={() => onSelectSample(s.sampleId)}
-                    className="text-xs text-cyan-400 hover:underline font-semibold"
+                    className="text-xs text-[#2457A6] hover:underline font-bold"
                   >
                     View Incidents & History
                   </button>
 
                   <button
                     onClick={() => handleRelease(s.sampleId)}
-                    className="btn-primary text-xs py-1.5 px-3 bg-gradient-to-r from-emerald-500 to-teal-500 text-slate-950 font-bold"
+                    className="btn-primary text-xs py-1.5 px-3.5"
                   >
                     <Unlock className="w-3.5 h-3.5" />
                     Grant Auditor Release
@@ -229,13 +218,13 @@ export default function AuditCompliance({ onSelectSample }) {
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         
         {/* Box 1: Record Lab Test Results */}
-        <div className="glass-panel p-6 border border-white/10">
-          <div className="flex items-center justify-between pb-3 border-b border-white/10 mb-4">
-            <h3 className="text-sm font-bold text-white flex items-center gap-2">
-              <FileText className="w-4 h-4 text-cyan-400" />
+        <div className="glass-panel p-6 bg-[#FFFBF1] border-2 border-[#E3D7BC]">
+          <div className="flex items-center justify-between pb-3 border-b-2 border-[#E3D7BC] mb-4">
+            <h3 className="text-sm font-extrabold text-[#1B2B45] flex items-center gap-2">
+              <FileText className="w-4 h-4 text-[#2457A6]" />
               Record Diagnostic / Genomic Test
             </h3>
-            <span className="text-[11px] text-slate-400 font-mono">Laboratories Only</span>
+            <span className="text-[11px] text-[#6B7287] font-semibold">Laboratories Only</span>
           </div>
 
           <form onSubmit={handleRecordTest} className="space-y-4">
@@ -244,7 +233,7 @@ export default function AuditCompliance({ onSelectSample }) {
               <select
                 value={testSampleId}
                 onChange={(e) => setTestSampleId(e.target.value)}
-                className="text-sm"
+                className="text-sm font-bold"
                 required
               >
                 <option value="">-- Choose specimen --</option>
@@ -268,20 +257,20 @@ export default function AuditCompliance({ onSelectSample }) {
 
             <div>
               <label>Report File Seal (Keccak-256)</label>
-              <label className="border-2 border-dashed border-white/15 hover:border-cyan-500/50 rounded-xl p-3 text-center cursor-pointer block bg-slate-900/40">
+              <label className="border-2 border-dashed border-[#E3D7BC] hover:border-[#2457A6] rounded-xl p-3.5 text-center cursor-pointer block bg-[#F5EEDC]">
                 <input type="file" className="hidden" onChange={handleTestFileUpload} />
-                <div className="flex flex-col items-center gap-1 text-xs text-slate-400">
-                  <Upload className="w-4 h-4 text-cyan-400" />
+                <div className="flex flex-col items-center gap-1 text-xs text-[#596579]">
+                  <Upload className="w-4 h-4 text-[#2457A6]" />
                   {reportFileName ? (
-                    <span className="text-emerald-400 font-semibold truncate max-w-[200px]">
+                    <span className="text-[#2457A6] font-bold truncate max-w-[200px]">
                       ✓ {reportFileName}
                     </span>
                   ) : (
-                    <span>Click to pick lab report PDF to compute cryptographic hash</span>
+                    <span className="font-medium">Pick lab report PDF to compute cryptographic hash</span>
                   )}
                 </div>
               </label>
-              <div className="font-mono text-[10px] bg-slate-950 p-2 rounded border border-white/5 text-cyan-400 truncate mt-1">
+              <div className="font-mono text-[10px] bg-[#EBDDB8] p-2 rounded-lg border border-[#D2C4A3] text-[#1B2B45] font-semibold truncate mt-1">
                 {reportHash}
               </div>
             </div>
@@ -307,13 +296,13 @@ export default function AuditCompliance({ onSelectSample }) {
         </div>
 
         {/* Box 2: Report Incident / Excursion */}
-        <div className="glass-panel p-6 border border-white/10">
-          <div className="flex items-center justify-between pb-3 border-b border-white/10 mb-4">
-            <h3 className="text-sm font-bold text-white flex items-center gap-2">
-              <AlertTriangle className="w-4 h-4 text-rose-400" />
+        <div className="glass-panel p-6 bg-[#FFFBF1] border-2 border-[#E3D7BC]">
+          <div className="flex items-center justify-between pb-3 border-b-2 border-[#E3D7BC] mb-4">
+            <h3 className="text-sm font-extrabold text-[#1B2B45] flex items-center gap-2">
+              <AlertTriangle className="w-4 h-4 text-[#C23B30]" />
               Log Cold-Chain Incident / Breach
             </h3>
-            <span className="text-[11px] text-slate-400 font-mono">Custodians & Couriers</span>
+            <span className="text-[11px] text-[#6B7287] font-semibold">Custodians & Couriers</span>
           </div>
 
           <form onSubmit={handleLogIncident} className="space-y-4">
@@ -322,7 +311,7 @@ export default function AuditCompliance({ onSelectSample }) {
               <select
                 value={incSampleId}
                 onChange={(e) => setIncSampleId(e.target.value)}
-                className="text-sm"
+                className="text-sm font-bold"
                 required
               >
                 <option value="">-- Choose specimen --</option>
@@ -369,12 +358,12 @@ export default function AuditCompliance({ onSelectSample }) {
       </div>
 
       {/* Independent Diagnostic Report Verifier */}
-      <div className="glass-panel p-6 border border-white/10">
-        <h3 className="text-sm font-bold text-white flex items-center gap-2 mb-3">
-          <Search className="w-4 h-4 text-cyan-400" />
+      <div className="glass-panel p-6 bg-[#FFFBF1] border-2 border-[#E3D7BC]">
+        <h3 className="text-sm font-extrabold text-[#1B2B45] flex items-center gap-2 mb-2">
+          <Search className="w-4 h-4 text-[#2457A6]" />
           Independent Diagnostic Report Integrity Verification
         </h3>
-        <p className="text-xs text-slate-400 mb-4">
+        <p className="text-xs text-[#596579] mb-4 font-medium">
           Verify whether an external lab report PDF or sequencing dataset was certified and anchored to this specimen's immutable hash chain.
         </p>
 
@@ -383,7 +372,7 @@ export default function AuditCompliance({ onSelectSample }) {
             <select
               value={verifySampleId}
               onChange={(e) => setVerifySampleId(e.target.value)}
-              className="text-sm"
+              className="text-sm font-bold"
               required
             >
               <option value="">-- Select Specimen --</option>
@@ -413,23 +402,23 @@ export default function AuditCompliance({ onSelectSample }) {
 
         {verifyResult && (
           <div
-            className={`mt-4 p-4 rounded-xl border text-xs animate-fadeIn ${
+            className={`mt-4 p-4.5 rounded-2xl border-2 text-xs animate-fadeIn ${
               verifyResult.matched
-                ? "bg-emerald-500/10 border-emerald-500/30 text-emerald-300"
-                : "bg-rose-500/10 border-rose-500/30 text-rose-300"
+                ? "bg-[#DCE6F5] border-[#BDD0EE] text-[#1B4385]"
+                : "bg-[#F6D9D4] border-[#EDB8B3] text-[#9E2A20]"
             }`}
           >
             {verifyResult.matched ? (
               <div className="space-y-1">
-                <div className="font-bold flex items-center gap-1.5">
-                  <CheckCircle2 className="w-4 h-4 text-emerald-400" /> Report Verified Authentic & On-Chain!
+                <div className="font-extrabold text-sm flex items-center gap-1.5">
+                  <CheckCircle2 className="w-4 h-4 text-[#2457A6]" /> Report Verified Authentic & On-Chain!
                 </div>
-                <div>Test Assay: {verifyResult.testName}</div>
-                <div>Recorded: {formatTimestamp(verifyResult.timestamp)}</div>
+                <div className="font-medium">Test Assay: {verifyResult.testName}</div>
+                <div className="font-mono">Recorded: {formatTimestamp(verifyResult.timestamp)}</div>
               </div>
             ) : (
-              <div className="font-bold flex items-center gap-1.5">
-                <AlertTriangle className="w-4 h-4 text-rose-400" /> No matching diagnostic report hash found on-chain for this specimen.
+              <div className="font-extrabold text-sm flex items-center gap-1.5">
+                <AlertTriangle className="w-4 h-4 text-[#C23B30]" /> No matching diagnostic report hash found on-chain for this specimen.
               </div>
             )}
           </div>

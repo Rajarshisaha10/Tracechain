@@ -16,7 +16,7 @@ import StorageLogModal from "./components/StorageLogModal";
 import BarcodeModal from "./components/BarcodeModal";
 
 import { shortHash } from "./utils/formatters";
-import { ShieldCheck, Cpu, Terminal, ExternalLink } from "lucide-react";
+import { ShieldCheck } from "lucide-react";
 
 function MainContent() {
   const [activeTab, setActiveTab] = useState("dashboard");
@@ -29,12 +29,8 @@ function MainContent() {
   const [storageSample, setStorageSample] = useState(null);
   const [qrSample, setQrSample] = useState(null);
 
-  const handleOpenAliquot = (sample) => {
-    setActiveTab("lineage");
-  };
-
   return (
-    <div className="min-h-screen flex flex-col bg-[#070a12] text-slate-100">
+    <div className="min-h-screen flex flex-col bg-[#F5EEDC] text-[#1B2B45]">
       
       {/* Top Navbar */}
       <Navbar activeTab={activeTab} setActiveTab={setActiveTab} />
@@ -130,23 +126,25 @@ function MainContent() {
       )}
 
       {/* Footer */}
-      <footer className="border-t border-white/10 bg-slate-950/80 px-4 lg:px-8 py-6 text-xs text-slate-500 mt-12">
+      <footer className="border-t-2 border-[#E3D7BC] bg-[#FFFBF1] px-4 lg:px-8 py-6 text-xs text-[#596579] mt-12">
         <div className="max-w-7xl mx-auto flex flex-col md:flex-row items-center justify-between gap-4">
           <div className="flex items-center gap-3">
-            <ShieldCheck className="w-4 h-4 text-emerald-400" />
-            <span>
+            <div className="w-5 h-5 rounded-md bg-[#C23B30] flex items-center justify-center">
+              <div className="w-2 h-2 rounded-full bg-[#F5EEDC]"></div>
+            </div>
+            <span className="font-semibold text-[#1B2B45]">
               Tracechain EVM Core • Solidity ^0.8.20 • Hash-Chain Anchored
             </span>
           </div>
 
           <div className="flex items-center gap-4 font-mono text-[11px]">
-            <span>Contract: <span className="text-cyan-400">{shortHash(contractAddress, 6)}</span></span>
+            <span>Contract: <span className="text-[#2457A6] font-bold">{shortHash(contractAddress, 6)}</span></span>
             <span>•</span>
-            <span>Mode: <span className="text-emerald-400 font-bold uppercase">{mode}</span></span>
+            <span>Mode: <span className="text-[#2457A6] font-bold uppercase bg-[#DCE6F5] px-2 py-0.5 rounded-full border border-[#BDD0EE]">{mode}</span></span>
           </div>
 
-          <div className="text-[11px] text-slate-500">
-            Compliant with ISO 20387 Biobanking & 21 CFR Part 11 Audit Integrity
+          <div className="text-[11px] text-[#6B7287] font-medium">
+            ISO 20387 Biobanking & 21 CFR Part 11 Audit Integrity
           </div>
         </div>
       </footer>

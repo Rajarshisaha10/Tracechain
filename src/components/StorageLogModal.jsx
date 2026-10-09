@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import { useChain } from "../context/ChainContext";
-import { X, Thermometer, CheckCircle2 } from "lucide-react";
+import { X, Thermometer } from "lucide-react";
 
 export default function StorageLogModal({ sample, onClose, onSuccess }) {
   const { logStorage } = useChain();
@@ -37,26 +37,26 @@ export default function StorageLogModal({ sample, onClose, onSuccess }) {
 
   return (
     <div className="modal-overlay">
-      <div className="modal-content max-w-md">
+      <div className="modal-content max-w-md bg-[#FFFBF1] border-2 border-[#E3D7BC]">
         
-        <div className="p-5 border-b border-white/10 flex items-center justify-between">
+        <div className="p-5 border-b-2 border-[#E3D7BC] flex items-center justify-between bg-[#FFFBF1]">
           <div className="flex items-center gap-2.5">
-            <div className="w-8 h-8 rounded-lg bg-cyan-500/10 text-cyan-400 flex items-center justify-center border border-cyan-500/20">
+            <div className="w-8 h-8 rounded-lg bg-[#DCE6F5] text-[#2457A6] flex items-center justify-center border border-[#BDD0EE]">
               <Thermometer className="w-4 h-4" />
             </div>
             <div>
-              <h3 className="text-sm font-bold text-white">Log Storage & Temperature</h3>
-              <p className="text-[11px] text-slate-400 font-mono">{sample.externalId}</p>
+              <h3 className="text-sm font-extrabold text-[#1B2B45]">Log Storage & Temperature</h3>
+              <p className="text-[11px] text-[#596579] font-mono">{sample.externalId}</p>
             </div>
           </div>
-          <button onClick={onClose} className="p-1.5 rounded-lg bg-slate-800 text-slate-400 hover:text-white">
+          <button onClick={onClose} className="p-1.5 rounded-lg bg-[#F5EEDC] text-[#1B2B45] hover:bg-[#EBDDB8]">
             <X className="w-4 h-4" />
           </button>
         </div>
 
         <form onSubmit={handleSubmit} className="p-6 space-y-4">
           {error && (
-            <div className="p-3 rounded-xl bg-rose-500/15 border border-rose-500/30 text-rose-300 text-xs font-semibold">
+            <div className="p-3 rounded-xl bg-[#F6D9D4] border border-[#EDB8B3] text-[#C23B30] text-xs font-bold">
               {error}
             </div>
           )}
@@ -81,26 +81,26 @@ export default function StorageLogModal({ sample, onClose, onSuccess }) {
                 value={tempCelsius}
                 onChange={(e) => setTempCelsius(e.target.value)}
                 placeholder="-80.0"
-                className="font-mono text-sm"
+                className="font-mono text-sm font-bold"
               />
               <button
                 type="button"
                 onClick={() => setTempCelsius("-80.0")}
-                className="px-2.5 py-1 text-xs bg-slate-800 border border-white/10 rounded-lg text-cyan-300 hover:border-cyan-500/40"
+                className="px-2.5 py-1 text-xs bg-[#F5EEDC] border-2 border-[#E3D7BC] rounded-lg text-[#2457A6] font-bold hover:border-[#2457A6]"
               >
                 -80°C
               </button>
               <button
                 type="button"
                 onClick={() => setTempCelsius("-20.0")}
-                className="px-2.5 py-1 text-xs bg-slate-800 border border-white/10 rounded-lg text-cyan-300 hover:border-cyan-500/40"
+                className="px-2.5 py-1 text-xs bg-[#F5EEDC] border-2 border-[#E3D7BC] rounded-lg text-[#2457A6] font-bold hover:border-[#2457A6]"
               >
                 -20°C
               </button>
               <button
                 type="button"
                 onClick={() => setTempCelsius("4.0")}
-                className="px-2.5 py-1 text-xs bg-slate-800 border border-white/10 rounded-lg text-cyan-300 hover:border-cyan-500/40"
+                className="px-2.5 py-1 text-xs bg-[#F5EEDC] border-2 border-[#E3D7BC] rounded-lg text-[#2457A6] font-bold hover:border-[#2457A6]"
               >
                 +4°C
               </button>

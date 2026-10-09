@@ -1,19 +1,17 @@
 import React, { useState } from "react";
 import { useChain } from "../context/ChainContext";
-import { shortHash, formatTimestamp, ORG_TYPE_NAMES } from "../utils/formatters";
+import { shortHash, ORG_TYPE_NAMES } from "../utils/formatters";
 import {
   Building2,
   ShieldCheck,
   PlusCircle,
-  PauseOctagon,
-  Play,
   Globe,
   Award,
   CheckCircle2
 } from "lucide-react";
 
 export default function OrgDirectory() {
-  const { sandboxData, registerOrg, currentActor } = useChain();
+  const { sandboxData, registerOrg } = useChain();
   const orgs = Object.values(sandboxData.orgs || {});
 
   const [newAddr, setNewAddr] = useState("");
@@ -49,25 +47,25 @@ export default function OrgDirectory() {
     <div className="space-y-8 animate-fadeIn">
       
       {/* Banner */}
-      <div className="glass-panel p-6 border border-white/10 flex items-center justify-between">
+      <div className="glass-panel p-6 bg-[#FFFBF1] border-2 border-[#E3D7BC] flex items-center justify-between">
         <div>
-          <h2 className="text-xl font-bold text-white flex items-center gap-2">
-            <Building2 className="w-5 h-5 text-cyan-400" />
+          <h2 className="text-xl font-extrabold text-[#1B2B45] flex items-center gap-2">
+            <Building2 className="w-5 h-5 text-[#2457A6]" />
             Permissioned Network Participant Registry
           </h2>
-          <p className="text-xs text-slate-400 mt-1">
+          <p className="text-xs text-[#596579] mt-1 font-medium">
             Vetted healthcare systems, clinical laboratories, certified cryogenic couriers, and regulatory oversight bodies.
           </p>
         </div>
         <div className="text-right">
-          <span className="text-[11px] text-slate-400">Total Vetted Orgs</span>
-          <div className="text-lg font-bold text-cyan-400 font-mono">{orgs.length} Active</div>
+          <span className="text-[11px] text-[#6B7287]">Total Vetted Orgs</span>
+          <div className="text-lg font-extrabold text-[#2457A6] font-mono">{orgs.length} Active</div>
         </div>
       </div>
 
       {msg && (
-        <div className="p-4 rounded-xl bg-emerald-500/10 border border-emerald-500/30 text-emerald-300 text-xs font-semibold flex items-center gap-2">
-          <CheckCircle2 className="w-4 h-4 text-emerald-400" />
+        <div className="p-4 rounded-2xl bg-[#DCE6F5] border-2 border-[#BDD0EE] text-[#1B4385] text-xs font-bold flex items-center gap-2">
+          <CheckCircle2 className="w-4 h-4 text-[#2457A6]" />
           {msg}
         </div>
       )}
@@ -77,8 +75,8 @@ export default function OrgDirectory() {
         
         {/* Left 2 Cols: Organizations List */}
         <div className="lg:col-span-2 space-y-4">
-          <h3 className="text-sm font-bold text-white flex items-center gap-2">
-            <ShieldCheck className="w-4 h-4 text-emerald-400" />
+          <h3 className="text-sm font-extrabold text-[#1B2B45] flex items-center gap-2">
+            <ShieldCheck className="w-4 h-4 text-[#2457A6]" />
             Active Network Nodes & Facilities
           </h3>
 
@@ -88,32 +86,32 @@ export default function OrgDirectory() {
               return (
                 <div
                   key={o.address}
-                  className="glass-panel p-5 border border-white/10 hover:border-cyan-500/30 space-y-3 transition-all"
+                  className="glass-panel p-5 bg-[#FFFBF1] border-2 border-[#E3D7BC] hover:border-[#2457A6] space-y-3 transition-all"
                 >
                   <div className="flex items-start justify-between">
                     <div>
-                      <h4 className="text-sm font-bold text-white line-clamp-1">{o.name}</h4>
-                      <span className="text-[11px] font-semibold text-cyan-400">
+                      <h4 className="text-sm font-extrabold text-[#1B2B45] line-clamp-1">{o.name}</h4>
+                      <span className="text-[11px] font-bold text-[#2457A6]">
                         {typeName}
                       </span>
                     </div>
-                    <span className="text-[10px] bg-emerald-500/15 text-emerald-300 border border-emerald-500/30 px-2 py-0.5 rounded font-bold uppercase">
+                    <span className="text-[10px] bg-[#DCE6F5] text-[#2457A6] border border-[#BDD0EE] px-2 py-0.5 rounded-full font-bold uppercase">
                       ACTIVE
                     </span>
                   </div>
 
-                  <div className="space-y-1.5 text-xs text-slate-400 pt-2 border-t border-white/5">
+                  <div className="space-y-1.5 text-xs text-[#596579] pt-2 border-t border-[#E3D7BC] font-medium">
                     <div className="flex justify-between">
-                      <span className="flex items-center gap-1"><Globe className="w-3 h-3" /> Jurisdiction:</span>
-                      <span className="font-semibold text-slate-200">{o.country || "GLOBAL"}</span>
+                      <span className="flex items-center gap-1"><Globe className="w-3 h-3 text-[#2457A6]" /> Country:</span>
+                      <span className="font-bold text-[#1B2B45]">{o.country || "GLOBAL"}</span>
                     </div>
                     <div className="flex justify-between">
-                      <span>Wallet Address:</span>
-                      <span className="font-mono text-slate-300">{shortHash(o.address, 4)}</span>
+                      <span>Address:</span>
+                      <span className="font-mono text-[#1B2B45] font-semibold">{shortHash(o.address, 4)}</span>
                     </div>
                     <div className="flex justify-between">
-                      <span className="flex items-center gap-1"><Award className="w-3 h-3" /> Accreditation:</span>
-                      <span className="font-mono text-cyan-400 text-[10px]">{shortHash(o.accreditationHash, 4)}</span>
+                      <span className="flex items-center gap-1"><Award className="w-3 h-3 text-[#2457A6]" /> Accreditation:</span>
+                      <span className="font-mono text-[#2457A6] text-[10px] font-bold">{shortHash(o.accreditationHash, 4)}</span>
                     </div>
                   </div>
                 </div>
@@ -123,13 +121,13 @@ export default function OrgDirectory() {
         </div>
 
         {/* Right Col: Admin Onboarding Form */}
-        <div className="glass-panel p-6 border border-white/10">
-          <div className="flex items-center justify-between pb-3 border-b border-white/10 mb-4">
-            <h3 className="text-sm font-bold text-white flex items-center gap-2">
-              <PlusCircle className="w-4 h-4 text-cyan-400" />
+        <div className="glass-panel p-6 bg-[#FFFBF1] border-2 border-[#E3D7BC]">
+          <div className="flex items-center justify-between pb-3 border-b-2 border-[#E3D7BC] mb-4">
+            <h3 className="text-sm font-extrabold text-[#1B2B45] flex items-center gap-2">
+              <PlusCircle className="w-4 h-4 text-[#2457A6]" />
               Onboard Organization
             </h3>
-            <span className="text-[11px] text-slate-400 font-mono">Admin Only</span>
+            <span className="text-[11px] text-[#6B7287] font-semibold">Admin Only</span>
           </div>
 
           <form onSubmit={handleRegister} className="space-y-4">
@@ -149,7 +147,7 @@ export default function OrgDirectory() {
               <select
                 value={newType}
                 onChange={(e) => setNewType(e.target.value)}
-                className="text-sm"
+                className="text-sm font-bold"
               >
                 <option value="1">Hospital / Clinical Ward</option>
                 <option value="2">Diagnostic Laboratory</option>
@@ -161,7 +159,7 @@ export default function OrgDirectory() {
 
             <div className="grid grid-cols-2 gap-3">
               <div>
-                <label>Country (2-Letter ISO)</label>
+                <label>Country (ISO)</label>
                 <input
                   type="text"
                   maxLength={2}

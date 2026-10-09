@@ -2,7 +2,6 @@ import React, { useState } from "react";
 import { useChain } from "../context/ChainContext";
 import { shortHash } from "../utils/formatters";
 import {
-  ShieldCheck,
   Activity,
   Layers,
   ArrowLeftRight,
@@ -26,7 +25,6 @@ export default function Navbar({ activeTab, setActiveTab }) {
     resetSandbox,
     connectWallet,
     walletAddress,
-    isConnecting
   } = useChain();
 
   const [showRoleDropdown, setShowRoleDropdown] = useState(false);
@@ -46,7 +44,7 @@ export default function Navbar({ activeTab, setActiveTab }) {
   };
 
   return (
-    <header className="sticky top-0 z-50 bg-[#070a12]/80 backdrop-blur-md border-b border-white/10 px-4 lg:px-8 py-3">
+    <header className="sticky top-0 z-50 bg-[#F5EEDC]/95 backdrop-blur-md border-b-2 border-[#E3D7BC] px-4 lg:px-8 py-3">
       <div className="max-w-7xl mx-auto flex items-center justify-between gap-4">
         
         {/* Left: Brand Identity */}
@@ -55,24 +53,25 @@ export default function Navbar({ activeTab, setActiveTab }) {
             onClick={() => setActiveTab("dashboard")} 
             className="flex items-center gap-3 cursor-pointer group"
           >
-            <div className="w-10 h-10 rounded-xl bg-gradient-to-tr from-cyan-500 to-emerald-400 flex items-center justify-center shadow-lg shadow-cyan-500/20 group-hover:shadow-emerald-400/30 transition-all">
-              <ShieldCheck className="w-6 h-6 text-slate-950 font-bold" />
+            {/* The signature Red Square with Cream Circle cutout */}
+            <div className="w-9 h-9 rounded-xl bg-[#C23B30] flex items-center justify-center relative shadow-sm group-hover:scale-105 transition-transform">
+              <div className="w-3.5 h-3.5 rounded-full bg-[#F5EEDC]"></div>
             </div>
             <div>
               <div className="flex items-center gap-2">
-                <span className="text-xl font-extrabold tracking-tight bg-gradient-to-r from-white via-slate-100 to-slate-400 bg-clip-text text-transparent">
-                  TRACECHAIN
+                <span className="text-xl font-extrabold tracking-tight text-[#2457A6]">
+                  Tracechain
                 </span>
-                <span className="text-[10px] font-bold uppercase tracking-wider bg-cyan-500/20 text-cyan-300 px-2 py-0.5 rounded-full border border-cyan-500/30">
-                  EVM Core
+                <span className="text-[10px] font-bold uppercase tracking-wider bg-[#DCE6F5] text-[#2457A6] px-2 py-0.5 rounded-full border border-[#BDD0EE]">
+                  Permissioned
                 </span>
               </div>
-              <p className="text-[11px] text-slate-400 font-medium">Biological Provenance & Custody</p>
+              <p className="text-[11px] text-[#6B7287] font-medium">Biological Provenance & Chain of Custody</p>
             </div>
           </div>
 
           {/* Desktop Nav Tabs */}
-          <nav className="hidden md:flex items-center gap-1 ml-4 bg-slate-900/60 p-1 rounded-xl border border-white/5">
+          <nav className="hidden md:flex items-center gap-1.5 ml-4 bg-[#FFFBF1] p-1.5 rounded-2xl border-2 border-[#E3D7BC]">
             {navItems.map((item) => {
               const Icon = item.icon;
               const isActive = activeTab === item.id;
@@ -80,10 +79,10 @@ export default function Navbar({ activeTab, setActiveTab }) {
                 <button
                   key={item.id}
                   onClick={() => setActiveTab(item.id)}
-                  className={`flex items-center gap-2 px-3.5 py-1.5 rounded-lg text-xs font-semibold transition-all ${
+                  className={`flex items-center gap-2 px-3.5 py-1.5 rounded-xl text-xs font-bold transition-all ${
                     isActive
-                      ? "bg-cyan-500/15 text-cyan-300 shadow-sm border border-cyan-500/30"
-                      : "text-slate-400 hover:text-slate-200 hover:bg-slate-800/40"
+                      ? "bg-[#2457A6] text-white shadow-sm"
+                      : "text-[#596579] hover:text-[#1B2B45] hover:bg-[#EBDDB8]/50"
                   }`}
                 >
                   <Icon className="w-3.5 h-3.5" />
@@ -98,16 +97,16 @@ export default function Navbar({ activeTab, setActiveTab }) {
         <div className="flex items-center gap-3">
           
           {/* Mode Badge & Switcher */}
-          <div className="flex items-center bg-slate-900/80 border border-white/10 rounded-xl p-1 text-xs">
+          <div className="flex items-center bg-[#FFFBF1] border-2 border-[#E3D7BC] rounded-xl p-1 text-xs">
             <button
               onClick={() => setMode("sandbox")}
-              className={`px-3 py-1 rounded-lg font-semibold transition-all flex items-center gap-1.5 ${
+              className={`px-3 py-1 rounded-lg font-bold transition-all flex items-center gap-1.5 ${
                 mode === "sandbox"
-                  ? "bg-emerald-500/20 text-emerald-300 border border-emerald-500/40 shadow-sm"
-                  : "text-slate-400 hover:text-slate-200"
+                  ? "bg-[#2457A6] text-white shadow-sm"
+                  : "text-[#6B7287] hover:text-[#1B2B45]"
               }`}
             >
-              <Sparkles className="w-3 h-3 text-emerald-400" />
+              <Sparkles className="w-3 h-3 text-[#EBDDB8]" />
               Sandbox
             </button>
             <button
@@ -118,13 +117,13 @@ export default function Navbar({ activeTab, setActiveTab }) {
                   setMode("web3");
                 }
               }}
-              className={`px-3 py-1 rounded-lg font-semibold transition-all flex items-center gap-1.5 ${
+              className={`px-3 py-1 rounded-lg font-bold transition-all flex items-center gap-1.5 ${
                 mode === "web3"
-                  ? "bg-cyan-500/20 text-cyan-300 border border-cyan-500/40 shadow-sm"
-                  : "text-slate-400 hover:text-slate-200"
+                  ? "bg-[#2457A6] text-white shadow-sm"
+                  : "text-[#6B7287] hover:text-[#1B2B45]"
               }`}
             >
-              <Wallet className="w-3 h-3 text-cyan-400" />
+              <Wallet className="w-3 h-3" />
               {walletAddress ? shortHash(walletAddress, 4) : "Web3 Wallet"}
             </button>
           </div>
@@ -134,30 +133,30 @@ export default function Navbar({ activeTab, setActiveTab }) {
             <div className="relative">
               <button
                 onClick={() => setShowRoleDropdown(!showRoleDropdown)}
-                className="flex items-center gap-2.5 px-3 py-1.5 rounded-xl bg-slate-900 border border-white/10 hover:border-cyan-500/40 text-xs transition-all text-left"
+                className="flex items-center gap-2.5 px-3.5 py-1.5 rounded-xl bg-[#FFFBF1] border-2 border-[#E3D7BC] hover:border-[#2457A6] text-xs transition-all text-left shadow-sm"
               >
-                <div className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></div>
+                <div className="w-2.5 h-2.5 rounded-full bg-[#C23B30]"></div>
                 <div>
-                  <div className="font-semibold text-slate-200 line-clamp-1 max-w-[130px]">
+                  <div className="font-bold text-[#1B2B45] line-clamp-1 max-w-[130px]">
                     {currentActor.name}
                   </div>
-                  <div className="text-[10px] text-cyan-400 font-mono">
+                  <div className="text-[10px] text-[#2457A6] font-mono font-semibold">
                     {currentActor.orgTypeName}
                   </div>
                 </div>
-                <ChevronDown className="w-3.5 h-3.5 text-slate-400 ml-1" />
+                <ChevronDown className="w-3.5 h-3.5 text-[#6B7287] ml-1" />
               </button>
 
               {showRoleDropdown && (
-                <div className="absolute right-0 mt-2 w-72 bg-slate-900 border border-white/15 rounded-2xl shadow-2xl p-2 z-50 animate-fadeIn">
-                  <div className="px-3 py-2 border-b border-white/10 flex items-between justify-between">
-                    <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wider">
-                      Switch Role Identity
+                <div className="absolute right-0 mt-2 w-72 bg-[#FFFBF1] border-2 border-[#E3D7BC] rounded-2xl shadow-xl p-2 z-50 animate-fadeIn">
+                  <div className="px-3 py-2 border-b border-[#E3D7BC] flex items-center justify-between">
+                    <span className="text-[11px] font-extrabold text-[#6B7287] uppercase tracking-wider">
+                      Acting Facility Identity
                     </span>
                     <button
                       onClick={resetSandbox}
                       title="Reset Sandbox Data to Defaults"
-                      className="text-[10px] text-slate-400 hover:text-rose-400 flex items-center gap-1"
+                      className="text-[10px] text-[#C23B30] hover:underline flex items-center gap-1 font-bold"
                     >
                       <RotateCcw className="w-3 h-3" />
                       Reset
@@ -172,18 +171,18 @@ export default function Navbar({ activeTab, setActiveTab }) {
                           onClick={() => handleRoleSelect(org.address)}
                           className={`w-full text-left px-3 py-2 rounded-xl text-xs transition-all flex items-center justify-between ${
                             isSelected
-                              ? "bg-cyan-500/15 border border-cyan-500/30 text-cyan-200"
-                              : "hover:bg-slate-800/60 text-slate-300"
+                              ? "bg-[#DCE6F5] border-2 border-[#BDD0EE] text-[#2457A6] font-bold"
+                              : "hover:bg-[#EBDDB8]/40 text-[#1B2B45]"
                           }`}
                         >
                           <div>
-                            <div className="font-semibold">{org.name}</div>
-                            <div className="text-[10px] text-slate-400 font-mono">
+                            <div className="font-bold">{org.name}</div>
+                            <div className="text-[10px] text-[#6B7287] font-mono">
                               {org.orgTypeName} • {shortHash(org.address, 4)}
                             </div>
                           </div>
                           {isSelected && (
-                            <div className="w-2 h-2 rounded-full bg-cyan-400"></div>
+                            <div className="w-2.5 h-2.5 rounded-full bg-[#2457A6]"></div>
                           )}
                         </button>
                       );
@@ -196,9 +195,9 @@ export default function Navbar({ activeTab, setActiveTab }) {
 
           {/* Web3 Connected Badge */}
           {mode === "web3" && (
-            <div className="flex items-center gap-2 px-3 py-1.5 rounded-xl bg-slate-900 border border-cyan-500/30 text-xs">
-              <div className="w-2 h-2 rounded-full bg-cyan-400"></div>
-              <span className="font-mono text-cyan-300">{shortHash(walletAddress, 4)}</span>
+            <div className="flex items-center gap-2 px-3 py-1.5 rounded-xl bg-[#FFFBF1] border-2 border-[#BDD0EE] text-xs">
+              <div className="w-2.5 h-2.5 rounded-full bg-[#2457A6]"></div>
+              <span className="font-mono text-[#2457A6] font-bold">{shortHash(walletAddress, 4)}</span>
             </div>
           )}
 
@@ -207,7 +206,7 @@ export default function Navbar({ activeTab, setActiveTab }) {
       </div>
 
       {/* Mobile Nav Tabs Bar */}
-      <div className="flex md:hidden items-center justify-around gap-1 mt-3 pt-2 border-t border-white/5 overflow-x-auto">
+      <div className="flex md:hidden items-center justify-around gap-1 mt-3 pt-2 border-t border-[#E3D7BC] overflow-x-auto">
         {navItems.map((item) => {
           const Icon = item.icon;
           const isActive = activeTab === item.id;
@@ -215,8 +214,8 @@ export default function Navbar({ activeTab, setActiveTab }) {
             <button
               key={item.id}
               onClick={() => setActiveTab(item.id)}
-              className={`flex flex-col items-center gap-1 px-2.5 py-1 text-[10px] font-medium transition-all ${
-                isActive ? "text-cyan-400 font-bold" : "text-slate-400"
+              className={`flex flex-col items-center gap-1 px-2.5 py-1 text-[10px] font-bold transition-all ${
+                isActive ? "text-[#2457A6]" : "text-[#6B7287]"
               }`}
             >
               <Icon className="w-4 h-4" />

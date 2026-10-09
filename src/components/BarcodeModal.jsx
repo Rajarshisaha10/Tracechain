@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from "react";
 import QRCode from "qrcode";
-import { X, QrCode, Printer, Download, Check, Copy } from "lucide-react";
+import { X, QrCode, Printer, Check, Copy } from "lucide-react";
 import { shortHash } from "../utils/formatters";
 
 export default function BarcodeModal({ sample, onClose }) {
@@ -21,8 +21,8 @@ export default function BarcodeModal({ sample, onClose }) {
       width: 280,
       margin: 1.5,
       color: {
-        dark: "#0f172a",
-        light: "#ffffff"
+        dark: "#1B2B45",
+        light: "#FFFFFF"
       }
     }).then(setQrUrl).catch(console.error);
   }, [sample]);
@@ -41,23 +41,23 @@ export default function BarcodeModal({ sample, onClose }) {
 
   return (
     <div className="modal-overlay">
-      <div className="modal-content max-w-sm text-center">
+      <div className="modal-content max-w-sm text-center bg-[#FFFBF1] border-2 border-[#E3D7BC]">
         
-        <div className="p-5 border-b border-white/10 flex items-center justify-between">
+        <div className="p-5 border-b-2 border-[#E3D7BC] flex items-center justify-between bg-[#FFFBF1]">
           <div className="flex items-center gap-2">
-            <QrCode className="w-4 h-4 text-cyan-400" />
-            <h3 className="text-sm font-bold text-white">Specimen Cryo-Vial Barcode</h3>
+            <QrCode className="w-4 h-4 text-[#2457A6]" />
+            <h3 className="text-sm font-extrabold text-[#1B2B45]">Specimen Tube Barcode</h3>
           </div>
-          <button onClick={onClose} className="p-1.5 rounded-lg bg-slate-800 text-slate-400 hover:text-white">
+          <button onClick={onClose} className="p-1.5 rounded-lg bg-[#F5EEDC] text-[#1B2B45] hover:bg-[#EBDDB8]">
             <X className="w-4 h-4" />
           </button>
         </div>
 
         <div className="p-6 space-y-4">
           {/* Printable Label Preview Box */}
-          <div className="p-5 bg-white rounded-2xl shadow-xl text-slate-900 border border-slate-200 inline-block w-full">
-            <div className="text-[10px] font-bold tracking-widest text-slate-500 uppercase">
-              TRACECHAIN BIO-REGISTRY
+          <div className="p-5 bg-white rounded-2xl shadow-md text-[#1B2B45] border-2 border-[#E3D7BC] inline-block w-full">
+            <div className="text-[10px] font-extrabold tracking-widest text-[#2457A6] uppercase">
+              TRACECHAIN REGISTRY
             </div>
             
             {qrUrl && (
@@ -68,13 +68,13 @@ export default function BarcodeModal({ sample, onClose }) {
               />
             )}
 
-            <div className="font-mono text-base font-extrabold tracking-wider text-slate-950">
+            <div className="font-mono text-base font-extrabold tracking-wider text-[#1B2B45]">
               {sample.externalId}
             </div>
-            <div className="text-xs font-semibold text-slate-600 mt-0.5">
+            <div className="text-xs font-bold text-[#596579] mt-0.5">
               {sample.sampleType}
             </div>
-            <div className="text-[10px] font-mono text-slate-400 mt-1 truncate">
+            <div className="text-[10px] font-mono text-[#6B7287] mt-1 truncate">
               ID: {shortHash(sample.sampleId, 6)}
             </div>
           </div>
@@ -82,17 +82,17 @@ export default function BarcodeModal({ sample, onClose }) {
           <div className="space-y-2">
             <button
               onClick={handleCopyId}
-              className="btn-secondary w-full text-xs py-2 flex items-center justify-center gap-1.5"
+              className="btn-secondary w-full text-xs py-2 flex items-center justify-center gap-1.5 font-bold"
             >
-              {copied ? <Check className="w-3.5 h-3.5 text-emerald-400" /> : <Copy className="w-3.5 h-3.5" />}
+              {copied ? <Check className="w-3.5 h-3.5 text-[#2457A6]" /> : <Copy className="w-3.5 h-3.5" />}
               {copied ? "Sample ID Copied" : "Copy Cryptographic ID"}
             </button>
             <button
               onClick={handlePrint}
-              className="btn-primary w-full text-xs py-2 flex items-center justify-center gap-1.5"
+              className="btn-primary w-full text-xs py-2 flex items-center justify-center gap-1.5 font-bold"
             >
               <Printer className="w-3.5 h-3.5" />
-              Print Cryo-Vial Tube Label
+              Print Cryo-Vial Label
             </button>
           </div>
         </div>

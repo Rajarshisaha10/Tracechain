@@ -34,26 +34,26 @@ export default function TransferModal({ sample, onClose, onSuccess }) {
 
   return (
     <div className="modal-overlay">
-      <div className="modal-content max-w-md">
+      <div className="modal-content max-w-md bg-[#FFFBF1] border-2 border-[#E3D7BC]">
         
-        <div className="p-5 border-b border-white/10 flex items-center justify-between">
+        <div className="p-5 border-b-2 border-[#E3D7BC] flex items-center justify-between bg-[#FFFBF1]">
           <div className="flex items-center gap-2.5">
-            <div className="w-8 h-8 rounded-lg bg-amber-500/10 text-amber-400 flex items-center justify-center border border-amber-500/20">
+            <div className="w-8 h-8 rounded-lg bg-[#DCE6F5] text-[#2457A6] flex items-center justify-center border border-[#BDD0EE]">
               <ArrowLeftRight className="w-4 h-4" />
             </div>
             <div>
-              <h3 className="text-sm font-bold text-white">Transfer Custody</h3>
-              <p className="text-[11px] text-slate-400 font-mono">{sample.externalId}</p>
+              <h3 className="text-sm font-extrabold text-[#1B2B45]">Transfer Custody</h3>
+              <p className="text-[11px] text-[#596579] font-mono">{sample.externalId}</p>
             </div>
           </div>
-          <button onClick={onClose} className="p-1.5 rounded-lg bg-slate-800 text-slate-400 hover:text-white">
+          <button onClick={onClose} className="p-1.5 rounded-lg bg-[#F5EEDC] text-[#1B2B45] hover:bg-[#EBDDB8]">
             <X className="w-4 h-4" />
           </button>
         </div>
 
         <form onSubmit={handleSubmit} className="p-6 space-y-4">
           {error && (
-            <div className="p-3 rounded-xl bg-rose-500/15 border border-rose-500/30 text-rose-300 text-xs font-semibold">
+            <div className="p-3 rounded-xl bg-[#F6D9D4] border border-[#EDB8B3] text-[#C23B30] text-xs font-bold">
               {error}
             </div>
           )}
@@ -63,7 +63,7 @@ export default function TransferModal({ sample, onClose, onSuccess }) {
             <select
               value={toAddress}
               onChange={(e) => setToAddress(e.target.value)}
-              className="text-sm"
+              className="text-sm font-bold"
               required
             >
               <option value="">-- Choose recipient partner --</option>

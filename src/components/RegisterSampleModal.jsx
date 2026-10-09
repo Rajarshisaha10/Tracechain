@@ -1,10 +1,10 @@
 import React, { useState } from "react";
 import { useChain } from "../context/ChainContext";
 import { hashFile, hashString } from "../utils/crypto";
-import { X, PlusCircle, Upload, CheckCircle, FileText, Lock } from "lucide-react";
+import { X, PlusCircle, Upload } from "lucide-react";
 
 export default function RegisterSampleModal({ onClose, onSuccess }) {
-  const { registerSample, currentActor } = useChain();
+  const { registerSample } = useChain();
 
   const [externalId, setExternalId] = useState(`TC-2026-${Math.floor(1000 + Math.random() * 9000)}`);
   const [sampleType, setSampleType] = useState("Whole Blood (EDTA)");
@@ -61,22 +61,22 @@ export default function RegisterSampleModal({ onClose, onSuccess }) {
 
   return (
     <div className="modal-overlay">
-      <div className="modal-content max-w-lg">
+      <div className="modal-content max-w-lg bg-[#FFFBF1] border-2 border-[#E3D7BC]">
         
         {/* Header */}
-        <div className="p-5 border-b border-white/10 flex items-center justify-between">
+        <div className="p-5 border-b-2 border-[#E3D7BC] flex items-center justify-between bg-[#FFFBF1]">
           <div className="flex items-center gap-2.5">
-            <div className="w-8 h-8 rounded-lg bg-cyan-500/10 text-cyan-400 flex items-center justify-center border border-cyan-500/20">
+            <div className="w-8 h-8 rounded-lg bg-[#DCE6F5] text-[#2457A6] flex items-center justify-center border border-[#BDD0EE]">
               <PlusCircle className="w-4 h-4" />
             </div>
             <div>
-              <h3 className="text-base font-bold text-white">Register Biological Specimen</h3>
-              <p className="text-[11px] text-slate-400">Mint root provenance hash on-chain</p>
+              <h3 className="text-base font-extrabold text-[#1B2B45]">Register Biological Specimen</h3>
+              <p className="text-[11px] text-[#596579] font-medium">Mint root provenance hash on-chain</p>
             </div>
           </div>
           <button
             onClick={onClose}
-            className="p-1.5 rounded-lg bg-slate-800 text-slate-400 hover:text-white"
+            className="p-1.5 rounded-lg bg-[#F5EEDC] text-[#1B2B45] hover:bg-[#EBDDB8]"
           >
             <X className="w-4 h-4" />
           </button>
@@ -86,20 +86,20 @@ export default function RegisterSampleModal({ onClose, onSuccess }) {
         <form onSubmit={handleSubmit} className="p-6 space-y-4">
           
           {error && (
-            <div className="p-3 rounded-xl bg-rose-500/15 border border-rose-500/30 text-rose-300 text-xs font-semibold">
+            <div className="p-3 rounded-xl bg-[#F6D9D4] border border-[#EDB8B3] text-[#C23B30] text-xs font-bold">
               {error}
             </div>
           )}
 
           <div>
-            <label>Specimen Barcode / External ID</label>
+            <label>Specimen Barcode / Label ID</label>
             <input
               type="text"
               value={externalId}
               onChange={(e) => setExternalId(e.target.value)}
               placeholder="e.g. TC-2026-9081"
               required
-              className="font-mono text-sm"
+              className="font-mono text-sm font-bold"
             />
           </div>
 
@@ -108,7 +108,7 @@ export default function RegisterSampleModal({ onClose, onSuccess }) {
             <select
               value={sampleType}
               onChange={(e) => setSampleType(e.target.value)}
-              className="text-sm"
+              className="text-sm font-bold"
             >
               <option value="Whole Blood (EDTA)">Whole Blood (EDTA)</option>
               <option value="Blood Plasma Aliquot">Blood Plasma Aliquot</option>
@@ -146,19 +146,19 @@ export default function RegisterSampleModal({ onClose, onSuccess }) {
           <div>
             <div className="flex justify-between items-center mb-1">
               <label className="mb-0">Informed Consent Document Seal</label>
-              <span className="text-[10px] text-slate-500 font-mono">Keccak-256</span>
+              <span className="text-[10px] text-[#2457A6] font-mono font-bold">Keccak-256</span>
             </div>
             
-            <label className="border-2 border-dashed border-white/15 hover:border-cyan-500/50 rounded-xl p-3 text-center cursor-pointer block transition-all bg-slate-900/40">
+            <label className="border-2 border-dashed border-[#E3D7BC] hover:border-[#2457A6] rounded-xl p-3 text-center cursor-pointer block transition-all bg-[#F5EEDC]">
               <input
                 type="file"
                 className="hidden"
                 onChange={handleFileUpload}
               />
-              <div className="flex flex-col items-center gap-1 text-xs text-slate-400">
-                <Upload className="w-4 h-4 text-cyan-400" />
+              <div className="flex flex-col items-center gap-1 text-xs text-[#596579]">
+                <Upload className="w-4 h-4 text-[#2457A6]" />
                 {fileName ? (
-                  <span className="text-emerald-400 font-semibold truncate max-w-[200px]">
+                  <span className="text-[#2457A6] font-bold truncate max-w-[200px]">
                     ✓ {fileName}
                   </span>
                 ) : (
@@ -167,7 +167,7 @@ export default function RegisterSampleModal({ onClose, onSuccess }) {
               </div>
             </label>
 
-            <div className="font-mono text-[10px] bg-slate-950 p-2 rounded border border-white/5 text-cyan-400/80 truncate mt-1">
+            <div className="font-mono text-[10px] bg-[#EBDDB8] p-2 rounded-lg border border-[#D2C4A3] text-[#1B2B45] font-semibold truncate mt-1">
               {consentHash}
             </div>
           </div>
