@@ -47,19 +47,19 @@ export default function OrgDirectory() {
     <div className="space-y-8 animate-fadeIn">
       
       {/* Banner */}
-      <div className="glass-panel p-6 bg-[#FFFBF1] border-2 border-[#E3D7BC] flex items-center justify-between">
+      <div className="glass-panel p-4 sm:p-6 bg-[#FFFBF1] border-2 border-[#E3D7BC] flex flex-col sm:flex-row sm:items-center justify-between gap-3">
         <div>
-          <h2 className="text-xl font-extrabold text-[#1B2B45] flex items-center gap-2">
-            <Building2 className="w-5 h-5 text-[#2457A6]" />
-            Permissioned Network Participant Registry
+          <h2 className="text-lg sm:text-xl font-extrabold text-[#1B2B45] flex items-center gap-2">
+            <Building2 className="w-5 h-5 text-[#2457A6] shrink-0" />
+            <span>Permissioned Network Participant Registry</span>
           </h2>
           <p className="text-xs text-[#596579] mt-1 font-medium">
             Vetted healthcare systems, clinical laboratories, certified cryogenic couriers, and regulatory oversight bodies.
           </p>
         </div>
-        <div className="text-right">
-          <span className="text-[11px] text-[#6B7287]">Total Vetted Orgs</span>
-          <div className="text-lg font-extrabold text-[#2457A6] font-mono">{orgs.length} Active</div>
+        <div className="sm:text-right pt-2 sm:pt-0 border-t sm:border-t-0 border-[#E3D7BC] flex sm:flex-col justify-between sm:justify-start items-center sm:items-end">
+          <span className="text-[11px] text-[#6B7287]">Total Vetted Orgs:</span>
+          <div className="text-base sm:text-lg font-extrabold text-[#2457A6] font-mono">{orgs.length} Active</div>
         </div>
       </div>
 
@@ -157,7 +157,7 @@ export default function OrgDirectory() {
               </select>
             </div>
 
-            <div className="grid grid-cols-2 gap-3">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               <div>
                 <label>Country (ISO)</label>
                 <input

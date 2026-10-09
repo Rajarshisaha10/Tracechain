@@ -65,11 +65,11 @@ export default function AliquotManager({ onSelectSample }) {
     <div className="space-y-8 animate-fadeIn">
       
       {/* Banner */}
-      <div className="glass-panel p-6 bg-[#FFFBF1] border-2 border-[#E3D7BC] flex items-center justify-between">
+      <div className="glass-panel p-4 sm:p-6 bg-[#FFFBF1] border-2 border-[#E3D7BC] flex flex-col sm:flex-row sm:items-center justify-between gap-3">
         <div>
-          <h2 className="text-xl font-extrabold text-[#1B2B45] flex items-center gap-2">
-            <GitFork className="w-5 h-5 text-[#C23B30]" />
-            Specimen Fractionation & Aliquot Lineage
+          <h2 className="text-lg sm:text-xl font-extrabold text-[#1B2B45] flex items-center gap-2">
+            <GitFork className="w-5 h-5 text-[#C23B30] shrink-0" />
+            <span>Specimen Fractionation & Aliquot Lineage</span>
           </h2>
           <p className="text-xs text-[#596579] mt-1 font-medium">
             Derive child sub-samples (plasma, serum, buffy coat) with bidirectional cryptographic anchors to the primary specimen.
@@ -144,27 +144,27 @@ export default function AliquotManager({ onSelectSample }) {
                   </div>
 
                   {/* Children Aliquots Branch Visualizer */}
-                  <div className="pl-6 border-l-2 border-[#C23B30] space-y-3 relative ml-3">
+                  <div className="pl-4 sm:pl-6 border-l-2 border-[#C23B30] space-y-3 relative ml-1 sm:ml-3">
                     {children.map((child) => (
                       <div
                         key={child.sampleId}
                         onClick={() => onSelectSample(child.sampleId)}
-                        className="p-3.5 rounded-xl bg-[#FFFBF1] hover:bg-[#FFFFFF] border-2 border-[#E3D7BC] hover:border-[#2457A6] cursor-pointer transition-all flex items-center justify-between"
+                        className="p-3 sm:p-3.5 rounded-xl bg-[#FFFBF1] hover:bg-[#FFFFFF] border-2 border-[#E3D7BC] hover:border-[#2457A6] cursor-pointer transition-all flex flex-col sm:flex-row sm:items-center justify-between gap-2"
                       >
-                        <div>
-                          <div className="flex items-center gap-2">
-                            <span className="w-2.5 h-2.5 rounded-full bg-[#C23B30]"></span>
-                            <span className="font-extrabold text-xs text-[#1B2B45] font-mono">
+                        <div className="min-w-0">
+                          <div className="flex items-center gap-1.5 flex-wrap">
+                            <span className="w-2.5 h-2.5 rounded-full bg-[#C23B30] shrink-0"></span>
+                            <span className="font-extrabold text-xs text-[#1B2B45] font-mono truncate">
                               {child.externalId}
                             </span>
-                            <span className="text-[10px] text-[#6B7287] font-semibold">({child.sampleType})</span>
+                            <span className="text-[10px] text-[#6B7287] font-semibold truncate">({child.sampleType})</span>
                           </div>
-                          <div className="text-[11px] text-[#596579] mt-1">
+                          <div className="text-[11px] text-[#596579] mt-1 truncate">
                             Custodian: {getOrgName(child.custodian)} • Anchor: {shortHash(child.headHash, 4)}
                           </div>
                         </div>
 
-                        <span className="text-[10px] font-mono font-bold text-[#C23B30] bg-[#F6D9D4] border border-[#EDB8B3] px-2.5 py-0.5 rounded-full">
+                        <span className="text-[10px] font-mono font-bold text-[#C23B30] bg-[#F6D9D4] border border-[#EDB8B3] px-2.5 py-0.5 rounded-full self-start sm:self-auto shrink-0">
                           {STATUS_CONFIG[child.status]?.label}
                         </span>
                       </div>

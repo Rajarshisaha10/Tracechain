@@ -122,11 +122,11 @@ export default function AuditCompliance({ onSelectSample }) {
     <div className="space-y-8 animate-fadeIn">
       
       {/* Banner */}
-      <div className="glass-panel p-6 bg-[#FFFBF1] border-2 border-[#E3D7BC] flex items-center justify-between">
+      <div className="glass-panel p-4 sm:p-6 bg-[#FFFBF1] border-2 border-[#E3D7BC] flex flex-col sm:flex-row sm:items-center justify-between gap-3">
         <div>
-          <h2 className="text-xl font-extrabold text-[#1B2B45] flex items-center gap-2">
-            <FileCheck2 className="w-5 h-5 text-[#2457A6]" />
-            Lab Diagnostics, Incident Reporting & Compliance Clearance
+          <h2 className="text-lg sm:text-xl font-extrabold text-[#1B2B45] flex items-center gap-2">
+            <FileCheck2 className="w-5 h-5 text-[#2457A6] shrink-0" />
+            <span>Lab Diagnostics, Incident Reporting & Compliance Clearance</span>
           </h2>
           <p className="text-xs text-[#596579] mt-1 font-medium">
             Permanent diagnostic report hashing, incident auditing, and regulatory quarantine administration.
@@ -192,20 +192,20 @@ export default function AuditCompliance({ onSelectSample }) {
                   <div>Anchor: <span className="font-mono text-[#2457A6] font-bold">{shortHash(s.headHash, 4)}</span></div>
                 </div>
 
-                <div className="pt-2 border-t border-[#E3D7BC] flex items-center justify-between gap-2">
+                <div className="pt-2 border-t border-[#E3D7BC] flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-2">
                   <button
                     onClick={() => onSelectSample(s.sampleId)}
-                    className="text-xs text-[#2457A6] hover:underline font-bold"
+                    className="text-xs text-[#2457A6] hover:underline font-bold py-1"
                   >
                     View Incidents & History
                   </button>
 
                   <button
                     onClick={() => handleRelease(s.sampleId)}
-                    className="btn-primary text-xs py-1.5 px-3.5"
+                    className="btn-primary text-xs py-1.5 px-3.5 justify-center"
                   >
                     <Unlock className="w-3.5 h-3.5" />
-                    Grant Auditor Release
+                    <span>Grant Auditor Release</span>
                   </button>
                 </div>
               </div>

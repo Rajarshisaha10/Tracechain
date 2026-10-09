@@ -74,36 +74,38 @@ export default function StorageLogModal({ sample, onClose, onSuccess }) {
 
           <div>
             <label>Storage Temperature (°C)</label>
-            <div className="flex gap-2">
+            <div className="space-y-2">
               <input
                 type="number"
                 step="0.1"
                 value={tempCelsius}
                 onChange={(e) => setTempCelsius(e.target.value)}
                 placeholder="-80.0"
-                className="font-mono text-sm font-bold"
+                className="w-full font-mono text-sm font-bold"
               />
-              <button
-                type="button"
-                onClick={() => setTempCelsius("-80.0")}
-                className="px-2.5 py-1 text-xs bg-[#F5EEDC] border-2 border-[#E3D7BC] rounded-lg text-[#2457A6] font-bold hover:border-[#2457A6]"
-              >
-                -80°C
-              </button>
-              <button
-                type="button"
-                onClick={() => setTempCelsius("-20.0")}
-                className="px-2.5 py-1 text-xs bg-[#F5EEDC] border-2 border-[#E3D7BC] rounded-lg text-[#2457A6] font-bold hover:border-[#2457A6]"
-              >
-                -20°C
-              </button>
-              <button
-                type="button"
-                onClick={() => setTempCelsius("4.0")}
-                className="px-2.5 py-1 text-xs bg-[#F5EEDC] border-2 border-[#E3D7BC] rounded-lg text-[#2457A6] font-bold hover:border-[#2457A6]"
-              >
-                +4°C
-              </button>
+              <div className="flex gap-2">
+                <button
+                  type="button"
+                  onClick={() => setTempCelsius("-80.0")}
+                  className="flex-1 py-1.5 text-xs bg-[#F5EEDC] border-2 border-[#E3D7BC] rounded-lg text-[#2457A6] font-bold hover:border-[#2457A6]"
+                >
+                  -80°C
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setTempCelsius("-20.0")}
+                  className="flex-1 py-1.5 text-xs bg-[#F5EEDC] border-2 border-[#E3D7BC] rounded-lg text-[#2457A6] font-bold hover:border-[#2457A6]"
+                >
+                  -20°C
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setTempCelsius("4.0")}
+                  className="flex-1 py-1.5 text-xs bg-[#F5EEDC] border-2 border-[#E3D7BC] rounded-lg text-[#2457A6] font-bold hover:border-[#2457A6]"
+                >
+                  +4°C
+                </button>
+              </div>
             </div>
           </div>
 
@@ -117,11 +119,11 @@ export default function StorageLogModal({ sample, onClose, onSuccess }) {
             />
           </div>
 
-          <div className="pt-2 flex justify-end gap-2">
-            <button type="button" onClick={onClose} className="btn-secondary text-xs">
+          <div className="pt-2 flex flex-col-reverse sm:flex-row justify-end gap-2">
+            <button type="button" onClick={onClose} className="btn-secondary text-xs w-full sm:w-auto">
               Cancel
             </button>
-            <button type="submit" disabled={loading} className="btn-primary text-xs">
+            <button type="submit" disabled={loading} className="btn-primary text-xs w-full sm:w-auto justify-center">
               {loading ? "Recording..." : "Record on Chain"}
             </button>
           </div>

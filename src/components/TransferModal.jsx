@@ -87,11 +87,11 @@ export default function TransferModal({ sample, onClose, onSuccess }) {
             />
           </div>
 
-          <div className="pt-2 flex justify-end gap-2">
-            <button type="button" onClick={onClose} className="btn-secondary text-xs">
+          <div className="pt-2 flex flex-col-reverse sm:flex-row justify-end gap-2">
+            <button type="button" onClick={onClose} className="btn-secondary text-xs w-full sm:w-auto">
               Cancel
             </button>
-            <button type="submit" disabled={loading} className="btn-primary text-xs">
+            <button type="submit" disabled={loading} className="btn-primary text-xs w-full sm:w-auto justify-center">
               {loading ? "Dispatching..." : "Sign & Dispatch Transfer"}
             </button>
           </div>

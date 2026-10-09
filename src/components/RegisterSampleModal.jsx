@@ -120,7 +120,7 @@ export default function RegisterSampleModal({ onClose, onSuccess }) {
             </select>
           </div>
 
-          <div className="grid grid-cols-2 gap-3">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <div>
               <label>Collection Date</label>
               <input
@@ -182,18 +182,18 @@ export default function RegisterSampleModal({ onClose, onSuccess }) {
             />
           </div>
 
-          <div className="pt-2 flex items-center justify-end gap-2">
+          <div className="pt-2 flex flex-col-reverse sm:flex-row justify-end gap-2">
             <button
               type="button"
               onClick={onClose}
-              className="btn-secondary text-xs"
+              className="btn-secondary text-xs w-full sm:w-auto"
             >
               Cancel
             </button>
             <button
               type="submit"
               disabled={loading}
-              className="btn-primary text-xs"
+              className="btn-primary text-xs w-full sm:w-auto justify-center"
             >
               {loading ? "Registering on Chain..." : "Confirm & Anchor on Chain"}
             </button>

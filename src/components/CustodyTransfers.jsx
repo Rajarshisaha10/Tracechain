@@ -103,19 +103,19 @@ export default function CustodyTransfers({ onSelectSample }) {
     <div className="space-y-8 animate-fadeIn">
       
       {/* Header Banner */}
-      <div className="glass-panel p-6 bg-[#FFFBF1] border-2 border-[#E3D7BC] flex items-center justify-between">
+      <div className="glass-panel p-4 sm:p-6 bg-[#FFFBF1] border-2 border-[#E3D7BC] flex flex-col sm:flex-row sm:items-center justify-between gap-3">
         <div>
-          <h2 className="text-xl font-extrabold text-[#1B2B45] flex items-center gap-2">
-            <ArrowLeftRight className="w-5 h-5 text-[#2457A6]" />
-            Two-Step Custody Handoffs & Chain Transfers
+          <h2 className="text-lg sm:text-xl font-extrabold text-[#1B2B45] flex items-center gap-2">
+            <ArrowLeftRight className="w-5 h-5 text-[#2457A6] shrink-0" />
+            <span>Two-Step Custody Handoffs & Chain Transfers</span>
           </h2>
           <p className="text-xs text-[#596579] mt-1 font-medium">
             Physical handoffs require cryptographic confirmation. Deliveries marked damaged or out-of-spec are automatically quarantined.
           </p>
         </div>
 
-        <div className="text-right">
-          <span className="text-[11px] text-[#6B7287]">Acting Custodian</span>
+        <div className="sm:text-right pt-2 sm:pt-0 border-t sm:border-t-0 border-[#E3D7BC] flex sm:flex-col justify-between sm:justify-start items-center sm:items-end">
+          <span className="text-[11px] text-[#6B7287]">Acting Custodian:</span>
           <div className="text-xs font-extrabold text-[#2457A6] font-mono">
             {currentActor.name}
           </div>
@@ -189,31 +189,33 @@ export default function CustodyTransfers({ onSelectSample }) {
                     </div>
 
                     {/* Actions: Accept Intact vs Damaged vs Reject */}
-                    <div className="pt-2 border-t border-[#E3D7BC] flex flex-wrap items-center gap-2">
+                    <div className="pt-2.5 border-t border-[#E3D7BC] flex flex-col sm:flex-row items-stretch sm:items-center gap-2">
                       <button
                         onClick={() => handleAccept(s.sampleId, true)}
-                        className="btn-primary text-[11px] py-2 px-3 flex-1"
+                        className="btn-primary text-xs py-2 px-3 flex-1 justify-center"
                       >
                         <CheckCircle2 className="w-3.5 h-3.5" />
-                        Accept (Intact)
+                        <span>Accept (Intact)</span>
                       </button>
 
-                      <button
-                        onClick={() => handleAccept(s.sampleId, false)}
-                        className="btn-danger text-[11px] py-2 px-3"
-                        title="Auto-quarantines the specimen due to compromise"
-                      >
-                        <AlertOctagon className="w-3.5 h-3.5" />
-                        Damaged / Excursion
-                      </button>
+                      <div className="flex gap-2">
+                        <button
+                          onClick={() => handleAccept(s.sampleId, false)}
+                          className="btn-danger text-xs py-2 px-3 flex-1 justify-center"
+                          title="Auto-quarantines the specimen due to compromise"
+                        >
+                          <AlertOctagon className="w-3.5 h-3.5" />
+                          <span>Damaged / Excursion</span>
+                        </button>
 
-                      <button
-                        onClick={() => handleReject(s.sampleId)}
-                        className="p-2 rounded-xl bg-[#EBDDB8] text-[#1B2B45] hover:bg-[#D2C4A3] transition-colors"
-                        title="Reject Transfer"
-                      >
-                        <XCircle className="w-4 h-4 text-[#C23B30]" />
-                      </button>
+                        <button
+                          onClick={() => handleReject(s.sampleId)}
+                          className="p-2.5 rounded-xl bg-[#EBDDB8] text-[#1B2B45] hover:bg-[#D2C4A3] transition-colors flex items-center justify-center min-w-[42px]"
+                          title="Reject Transfer"
+                        >
+                          <XCircle className="w-4 h-4 text-[#C23B30]" />
+                        </button>
+                      </div>
                     </div>
 
                   </div>
