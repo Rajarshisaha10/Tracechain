@@ -1,0 +1,340 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#4338ca">
+<title>SampleChain</title>
+<style>
+:root{
+  --bg:#f4f5fa; --card:#ffffff; --text:#151a2d; --muted:#5f6783; --line:#dfe2ee;
+  --brand:#4338ca; --brand-text:#ffffff; --good:#15803d; --good-bg:#dcfce7;
+  --bad:#b91c1c; --bad-bg:#fee2e2; --warn:#a16207; --warn-bg:#fef3c7; --info-bg:#e8eafd; --neutral-bg:#e5e7ef;
+}
+@media (prefers-color-scheme: dark){
+  :root{
+    --bg:#0e1020; --card:#171a2e; --text:#e9ecfa; --muted:#98a0c0; --line:#2b3050;
+    --brand:#818cf8; --brand-text:#0d0f26; --good:#4ade80; --good-bg:#12331f;
+    --bad:#f87171; --bad-bg:#3a1517; --warn:#fbbf24; --warn-bg:#3a2d0b; --info-bg:#1c2145; --neutral-bg:#252a47;
+  }
+}
+*{box-sizing:border-box}
+html{-webkit-text-size-adjust:100%}
+body{margin:0;background:var(--bg);color:var(--text);font:15px/1.45 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;
+  padding-bottom:calc(72px + env(safe-area-inset-bottom))}
+header{position:sticky;top:0;z-index:10;background:var(--brand);color:var(--brand-text);
+  padding:calc(10px + env(safe-area-inset-top)) 16px 10px;display:flex;align-items:center;justify-content:space-between;gap:8px}
+header h1{font-size:18px;margin:0;font-weight:700}
+#chip{background:rgba(255,255,255,.2);color:inherit;border:0;border-radius:999px;padding:6px 12px;font-size:13px;max-width:62%;
+  white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+main{max-width:640px;margin:0 auto;padding:16px}
+.tab{display:none}.tab.active{display:block}
+.card{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:16px;margin-bottom:16px}
+.card h2{margin:0 0 4px;font-size:16px}
+.card p.sub{margin:0 0 12px;color:var(--muted);font-size:13px}
+label{display:block;font-size:13px;font-weight:600;margin:12px 0 4px}
+input,select{width:100%;font:inherit;font-size:16px;padding:11px 12px;border:1px solid var(--line);border-radius:10px;background:var(--bg);color:var(--text)}
+input:disabled{opacity:.5}
+.btn{display:block;width:100%;margin-top:14px;padding:13px;border:0;border-radius:10px;background:var(--brand);color:var(--brand-text);
+  font-size:16px;font-weight:700;cursor:pointer}
+.btn.alt{background:transparent;color:var(--brand);border:1px solid var(--brand)}
+.btn.small{display:inline-block;width:auto;margin:6px 6px 0 0;padding:7px 12px;font-size:13px}
+.btn:disabled{opacity:.6}
+.filebtn{display:block;margin-top:8px;padding:10px;border:1px dashed var(--brand);border-radius:10px;text-align:center;color:var(--brand);font-weight:600;font-size:14px;cursor:pointer}
+.filebtn input{display:none}
+.out{margin-top:14px;font-size:14px;word-break:break-word}
+.out:empty{display:none}
+.out.err{background:var(--bad-bg);color:var(--bad);padding:10px 12px;border-radius:10px}
+.out.ok{background:var(--info-bg);padding:10px 12px;border-radius:10px}
+.out.plain{padding:0}
+.badge{display:block;text-align:center;font-weight:800;font-size:17px;padding:13px;border-radius:12px;margin-bottom:10px}
+.badge small{font-weight:600;font-size:13px}
+.badge.good{background:var(--good-bg);color:var(--good)}
+.badge.bad{background:var(--bad-bg);color:var(--bad)}
+.badge.warn{background:var(--warn-bg);color:var(--warn)}
+.badge.neutral{background:var(--neutral-bg);color:var(--muted)}
+.row{display:flex;justify-content:space-between;gap:12px;padding:7px 0;border-bottom:1px solid var(--line)}
+.row:last-child{border-bottom:0}
+.row span{color:var(--muted);flex:0 0 36%}
+.row b{font-weight:600;text-align:right;flex:1;min-width:0;word-break:break-word}
+code{font:12px ui-monospace,Menlo,Consolas,monospace;word-break:break-all;background:var(--bg);padding:2px 5px;border-radius:5px}
+code[data-copy]{cursor:pointer}
+.sec{font-size:12px;text-transform:uppercase;letter-spacing:.05em;color:var(--muted);margin:16px 0 4px;font-weight:700}
+.item{border:1px solid var(--line);border-radius:10px;padding:10px 12px;margin:8px 0}
+.item .t{font-weight:700;margin-bottom:2px}
+.item .m{font-size:13px;color:var(--muted);margin:2px 0}
+.tl{border-left:3px solid var(--line);margin:8px 0 0 8px;padding-left:12px}
+.tl .item{position:relative}
+.tl .item::before{content:"";position:absolute;left:-19px;top:14px;width:9px;height:9px;border-radius:50%;background:var(--brand)}
+.tl .item.flag::before{background:var(--bad)}
+.pill{display:inline-block;font-size:11px;font-weight:700;padding:2px 8px;border-radius:999px;background:var(--neutral-bg);color:var(--muted)}
+.pill.good{background:var(--good-bg);color:var(--good)}.pill.bad{background:var(--bad-bg);color:var(--bad)}.pill.warn{background:var(--warn-bg);color:var(--warn)}
+.check{padding:4px 0}
+a{color:var(--brand)}
+nav{position:fixed;bottom:0;left:0;right:0;background:var(--card);border-top:1px solid var(--line);display:flex;
+  padding-bottom:env(safe-area-inset-bottom);z-index:20}
+nav button{flex:1;background:none;border:0;color:var(--muted);padding:8px 2px;font-size:11px;font-weight:600;cursor:pointer}
+nav button span{display:block;font-size:20px;line-height:1.2}
+nav button.active{color:var(--brand)}
+#toast{position:fixed;left:50%;bottom:90px;transform:translateX(-50%);background:#111;color:#fff;padding:8px 14px;border-radius:999px;
+  font-size:13px;opacity:0;pointer-events:none;transition:opacity .2s;z-index:30}
+#toast.show{opacity:.92}
+.spin{display:inline-block;width:14px;height:14px;border:2px solid var(--line);border-top-color:var(--brand);border-radius:50%;
+  animation:sp .8s linear infinite;vertical-align:-2px;margin-right:6px}
+@keyframes sp{to{transform:rotate(360deg)}}
+.note{font-size:13px;color:var(--muted);margin:10px 0 0}
+.warnbox{background:var(--warn-bg);color:var(--warn);border-radius:10px;padding:10px 12px;font-size:13px;margin-top:10px}
+</style>
+</head>
+<body>
+<header>
+  <h1>🧬 SampleChain</h1>
+  <button id="chip" type="button">Not connected</button>
+</header>
+
+<main>
+  <!-- TRACE -->
+  <section id="tab-trace" class="tab active">
+    <div class="card">
+      <h2>Trace a sample</h2>
+      <p class="sub">Full custody and handling history, with the hash chain re-checked on your device. No wallet needed if an RPC URL is set.</p>
+      <label for="t_id">Sample ID</label>
+      <input id="t_id" class="sid" placeholder="0x… (or use organization + label below)" autocapitalize="off" autocomplete="off" spellcheck="false">
+      <label for="t_org">Creating organization address</label>
+      <input id="t_org" placeholder="0x…" autocapitalize="off" spellcheck="false">
+      <label for="t_label">Sample label / barcode</label>
+      <input id="t_label" placeholder="e.g. H-001">
+      <button class="btn" id="bTrace">Trace</button>
+      <div class="out" id="oTrace"></div>
+    </div>
+    <div class="card">
+      <h2>Check a lab report</h2>
+      <p class="sub">Pick the report file. If the lab recorded this exact file for the sample, it is confirmed. A single changed byte fails.</p>
+      <label for="rp_id">Sample ID</label>
+      <input id="rp_id" class="sid" placeholder="0x…" autocapitalize="off" spellcheck="false">
+      <label for="rp_hash">Report hash</label>
+      <input id="rp_hash" placeholder="0x…" autocapitalize="off" spellcheck="false">
+      <label class="filebtn">📎 Pick report file to hash<input type="file" data-hash="rp_hash"></label>
+      <button class="btn" id="bReport">Check report</button>
+      <div class="out" id="oReport"></div>
+    </div>
+  </section>
+
+  <!-- SAMPLE -->
+  <section id="tab-sample" class="tab">
+    <div class="card">
+      <h2>My samples</h2>
+      <p class="sub">Samples currently in your custody. Tap “Use” to fill the sample ID everywhere.</p>
+      <button class="btn" id="bMine">Load my samples</button>
+      <div class="out" id="oMine"></div>
+    </div>
+
+    <div class="card">
+      <h2>Register a new sample</h2>
+      <p class="sub">Hospitals, laboratories and research institutions.</p>
+      <label for="n_label">Sample label / barcode</label><input id="n_label" placeholder="H-001">
+      <label for="n_type">Sample type</label><input id="n_type" placeholder="Whole blood">
+      <label for="n_date">Collection date</label><input id="n_date" type="date">
+      <label for="n_subject">Pseudonymous subject reference</label>
+      <input id="n_subject" placeholder="e.g. study code P-0042" autocapitalize="off" spellcheck="false">
+      <label for="n_consent">Consent form hash</label>
+      <input id="n_consent" placeholder="0x…" autocapitalize="off" spellcheck="false">
+      <label class="filebtn">📎 Pick consent form to hash<input type="file" data-hash="n_consent"></label>
+      <label for="n_note">Note (optional)</label><input id="n_note" placeholder="Collected at ward 3">
+      <div class="warnbox">Never enter names or national IDs. The subject reference is hashed on your device; only the hash is stored.</div>
+      <button class="btn" id="bRegister">Register sample</button>
+      <div class="out" id="oRegister"></div>
+    </div>
+
+    <div class="card">
+      <h2>Log storage</h2>
+      <label for="st_id">Sample ID</label><input id="st_id" class="sid" placeholder="0x…" autocapitalize="off" spellcheck="false">
+      <label for="st_loc">Location</label><input id="st_loc" placeholder="Freezer A2, shelf 3">
+      <label for="st_temp">Temperature °C (optional)</label><input id="st_temp" type="number" step="0.1" inputmode="decimal" placeholder="-80">
+      <label for="st_note">Note (optional)</label><input id="st_note" placeholder="">
+      <button class="btn" id="bStorage">Log storage</button>
+      <div class="out" id="oStorage"></div>
+    </div>
+
+    <div class="card">
+      <h2>Log handling</h2>
+      <label for="hd_id">Sample ID</label><input id="hd_id" class="sid" placeholder="0x…" autocapitalize="off" spellcheck="false">
+      <label for="hd_act">Action</label><input id="hd_act" placeholder="Centrifuged / Thawed / Aliquoted…">
+      <label for="hd_note">Details (optional)</label><input id="hd_note" placeholder="10 min @ 2000g">
+      <button class="btn" id="bHandling">Log handling</button>
+      <div class="out" id="oHandling"></div>
+    </div>
+
+    <div class="card">
+      <h2>Record a test</h2>
+      <p class="sub">Laboratories and research institutions holding the sample.</p>
+      <label for="ts_id">Sample ID</label><input id="ts_id" class="sid" placeholder="0x…" autocapitalize="off" spellcheck="false">
+      <label for="ts_name">Test name</label><input id="ts_name" placeholder="Complete blood count">
+      <label for="ts_hash">Report / result hash</label>
+      <input id="ts_hash" placeholder="0x…" autocapitalize="off" spellcheck="false">
+      <label class="filebtn">📎 Pick report file to hash<input type="file" data-hash="ts_hash"></label>
+      <label for="ts_uri">Report location (optional)</label><input id="ts_uri" placeholder="ipfs://…">
+      <button class="btn" id="bTest">Record test</button>
+      <div class="out" id="oTest"></div>
+    </div>
+
+    <div class="card">
+      <h2>Create aliquot</h2>
+      <p class="sub">Split a child sample from one you hold. It inherits consent and links back to its parent.</p>
+      <label for="al_id">Parent sample ID</label><input id="al_id" class="sid" placeholder="0x…" autocapitalize="off" spellcheck="false">
+      <label for="al_label">New label / barcode</label><input id="al_label" placeholder="L-001-A">
+      <label for="al_type">Sample type</label><input id="al_type" placeholder="Plasma">
+      <label for="al_note">Note (optional)</label><input id="al_note" placeholder="500 µL">
+      <button class="btn" id="bAliquot">Create aliquot</button>
+      <div class="out" id="oAliquot"></div>
+    </div>
+
+    <div class="card">
+      <h2>Report an incident</h2>
+      <p class="sub">Custodian, the receiving party during transit, or an auditor.</p>
+      <label for="in_id">Sample ID</label><input id="in_id" class="sid" placeholder="0x…" autocapitalize="off" spellcheck="false">
+      <label for="in_desc">What happened</label><input id="in_desc" placeholder="Temperature excursion to 8 °C for 40 min">
+      <label for="in_hash">Evidence hash (optional)</label>
+      <input id="in_hash" placeholder="0x…" autocapitalize="off" spellcheck="false">
+      <label class="filebtn">📎 Pick evidence file to hash<input type="file" data-hash="in_hash"></label>
+      <label for="in_uri">Evidence location (optional)</label><input id="in_uri" placeholder="ipfs://…">
+      <button class="btn alt" id="bIncident">Report incident</button>
+      <div class="out" id="oIncident"></div>
+    </div>
+
+    <div class="card">
+      <h2>End of life</h2>
+      <p class="sub">Mark a sample as used up or destroyed. This is final.</p>
+      <label for="eo_id">Sample ID</label><input id="eo_id" class="sid" placeholder="0x…" autocapitalize="off" spellcheck="false">
+      <label for="eo_reason">Reason / method</label><input id="eo_reason" placeholder="Used in assay / Incinerated per SOP-7">
+      <button class="btn alt" id="bConsume">Mark consumed</button>
+      <button class="btn alt" id="bDestroy">Mark destroyed</button>
+      <div class="out" id="oEnd"></div>
+    </div>
+  </section>
+
+  <!-- CUSTODY -->
+  <section id="tab-custody" class="tab">
+    <div class="card">
+      <h2>Inbox</h2>
+      <p class="sub">Transfers waiting for you to accept or reject.</p>
+      <button class="btn" id="bInbox">Check inbox</button>
+      <div class="out" id="oInbox"></div>
+    </div>
+
+    <div class="card">
+      <h2>Send sample</h2>
+      <p class="sub">Hand a sample to another organization. They must accept it.</p>
+      <label for="tr_id">Sample ID</label><input id="tr_id" class="sid" placeholder="0x…" autocapitalize="off" spellcheck="false">
+      <label for="tr_to">Recipient organization address</label><input id="tr_to" placeholder="0x…" autocapitalize="off" spellcheck="false">
+      <label for="tr_note">Note</label><input id="tr_note" placeholder="Dry ice, AWB 1234">
+      <button class="btn" id="bSend">Send</button>
+      <button class="btn alt" id="bCancel">Cancel pending transfer</button>
+      <div class="out" id="oSend"></div>
+    </div>
+
+    <div class="card">
+      <h2>Receive sample</h2>
+      <label for="rc_id">Sample ID</label><input id="rc_id" class="sid" placeholder="0x…" autocapitalize="off" spellcheck="false">
+      <label for="rc_ok">Condition on arrival</label>
+      <select id="rc_ok"><option value="1">Intact, within spec</option><option value="0">Damaged / out of spec (auto-quarantine)</option></select>
+      <label for="rc_note">Note</label><input id="rc_note" placeholder="Sealed, 4.1 °C">
+      <button class="btn" id="bAccept">Accept</button>
+      <button class="btn alt" id="bReject">Reject</button>
+      <div class="out" id="oRecv"></div>
+    </div>
+
+    <div class="card">
+      <h2>Quarantine</h2>
+      <p class="sub">Custodian, auditor or admin can put a sample on hold. Only an auditor or admin can release it.</p>
+      <label for="q_id">Sample ID</label><input id="q_id" class="sid" placeholder="0x…" autocapitalize="off" spellcheck="false">
+      <label for="q_note">Reason / note</label><input id="q_note" placeholder="">
+      <button class="btn alt" id="bQuarantine">Put on hold</button>
+      <button class="btn alt" id="bRelease">Release (auditor / admin)</button>
+      <div class="out" id="oQuar"></div>
+    </div>
+  </section>
+
+  <!-- ADMIN -->
+  <section id="tab-admin" class="tab">
+    <div class="card">
+      <h2>Register organization</h2>
+      <p class="sub">Admin only.</p>
+      <label for="o_addr">Wallet address</label><input id="o_addr" placeholder="0x…" autocapitalize="off" spellcheck="false">
+      <label for="o_name">Name</label><input id="o_name" placeholder="City Hospital">
+      <label for="o_country">Country (2 letters)</label><input id="o_country" maxlength="2" placeholder="IN" autocapitalize="characters">
+      <label for="o_type">Type</label><select id="o_type"></select>
+      <label for="o_acc">Accreditation hash (optional)</label>
+      <input id="o_acc" placeholder="0x… (empty if none)" autocapitalize="off" spellcheck="false">
+      <label class="filebtn">📎 Pick accreditation file to hash<input type="file" data-hash="o_acc"></label>
+      <button class="btn" id="bOrg">Register</button>
+      <div class="out" id="oOrg"></div>
+    </div>
+    <div class="card">
+      <h2>Suspend / reinstate</h2>
+      <label for="o2_addr">Wallet address</label><input id="o2_addr" placeholder="0x…" autocapitalize="off" spellcheck="false">
+      <label for="o2_active">Status</label>
+      <select id="o2_active"><option value="0">Suspend</option><option value="1">Reinstate</option></select>
+      <button class="btn alt" id="bActive">Apply</button>
+      <div class="out" id="oActive"></div>
+    </div>
+    <div class="card">
+      <h2>Recover custody</h2>
+      <p class="sub">Admin only. For samples stuck with a suspended or defunct organization. Recorded permanently with the reason.</p>
+      <label for="rv_id">Sample ID</label><input id="rv_id" class="sid" placeholder="0x…" autocapitalize="off" spellcheck="false">
+      <label for="rv_to">New custodian address</label><input id="rv_to" placeholder="0x…" autocapitalize="off" spellcheck="false">
+      <label for="rv_reason">Reason</label><input id="rv_reason" placeholder="Lab de-accredited">
+      <button class="btn alt" id="bReassign">Reassign</button>
+      <div class="out" id="oReassign"></div>
+    </div>
+    <div class="card">
+      <h2>Look up organization</h2>
+      <label for="o3_addr">Wallet address</label><input id="o3_addr" placeholder="0x…" autocapitalize="off" spellcheck="false">
+      <button class="btn" id="bOrgLookup">Look up</button>
+      <div class="out" id="oOrgLookup"></div>
+    </div>
+    <div class="card">
+      <h2>Emergency pause</h2>
+      <p class="sub">Admin only. Blocks all writes until unpaused.</p>
+      <button class="btn alt" id="bPause">Pause contract</button>
+      <button class="btn alt" id="bUnpause">Unpause contract</button>
+      <div class="out" id="oPause"></div>
+    </div>
+  </section>
+
+  <!-- SETUP -->
+  <section id="tab-setup" class="tab">
+    <div class="card">
+      <h2>Connection</h2>
+      <p class="sub">Paste the address of your deployed SampleChain contract.</p>
+      <label for="cfgAddr">Contract address</label>
+      <input id="cfgAddr" placeholder="0x…" autocapitalize="off" spellcheck="false">
+      <label for="cfgRpc">RPC URL (optional, for read-only use without a wallet)</label>
+      <input id="cfgRpc" placeholder="https://…" autocapitalize="off" spellcheck="false">
+      <button class="btn" id="bSave">Save</button>
+      <button class="btn alt" id="bConnect">Connect wallet</button>
+      <div class="out" id="oSetup"></div>
+      <p class="note">On a phone, open this page inside your wallet app's browser (e.g. MetaMask) to sign transactions.</p>
+      <p class="note">Share a pre-filled link by adding <code>?contract=0x…&amp;rpc=https://…</code> to the page URL.</p>
+    </div>
+  </section>
+</main>
+
+<nav id="nav">
+  <button data-tab="trace" class="active"><span>🔍</span>Trace</button>
+  <button data-tab="sample"><span>🧪</span>Sample</button>
+  <button data-tab="custody"><span>🔁</span>Custody</button>
+  <button data-tab="admin"><span>👤</span>Admin</button>
+  <button data-tab="setup"><span>⚙️</span>Setup</button>
+</nav>
+<div id="toast"></div>
+
+<script src="https://cdn.jsdelivr.net/npm/ethers@6.13.4/dist/ethers.umd.min.js"></script>
+<script>
+(function () {
+'use strict';
+
+/* ------------------------------------------------------------------ ABI */
+var REC_TUPLE = 'tuple(uint8 recType, address actor, uint64 timestamp, bytes32 dataHash, int32 temp, string note, string uri, bytes32 prevHash, bytes32 recordHash)';
+var SAMPLE_TUPLE = 'tuple(bytes32 sampleId, string externalId, string sampleType, address origin, address creator, uint64 collectedAt, bytes32 consentHash, bytes32 subjectHash, bytes32 parentId, address custodian, address pendingRecipient, uint8 status, bytes32 headHash)';
+var ORG_TUPLE = 'tuple(string name, uint8 orgType, bytes
