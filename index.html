@@ -68,9 +68,12 @@ nav button.active{background:var(--blue);color:#fff}
 </style>
 </head>
 <body>
-<div id="app"></div>
+<div id="app"><div style="padding:40px 20px;text-align:center;color:#2457A6;font-weight:700">Loading Tracechain…<div id="loaderr" style="margin-top:12px;color:#C23B30;font-size:13px;font-weight:600"></div></div></div>
 <div id="toast"></div>
 <script>
+window.__err=function(m){var e=document.getElementById('loaderr');if(e)e.textContent='Error: '+m;else{var t=document.getElementById('toast');if(t){t.textContent='Error: '+m;t.className='show'}}};
+window.addEventListener('error',function(e){window.__err(e.message)});
+window.addEventListener('unhandledrejection',function(e){window.__err(e.reason&&e.reason.message||e.reason)});
 (function(){
 'use strict';
 var $=function(i){return document.getElementById(i)};
@@ -91,8 +94,9 @@ var RPC='demo://tracechain.local (in-browser chain)';
 /* ---------- demo chain ---------- */
 var S={orgs:{},samples:{},hist:{},paused:false,seq:0},me=null,tab='trace';
 function save(){try{localStorage.setItem('tc_state',JSON.stringify(S))}catch(e){}}
+function safeLS(){try{return window.localStorage}catch(e){return null}}
 function sha(str){
- if(window.crypto&&crypto.subtle)return crypto.subtle.digest('SHA-256',new TextEncoder().encode(str)).then(hex);
+ if(window.crypto&&window.crypto.subtle)return crypto.subtle.digest('SHA-256',new TextEncoder().encode(str)).then(hex);
  var h=2166136261;for(var i=0;i<str.length;i++){h^=str.charCodeAt(i);h=Math.imul(h,16777619)}return Promise.resolve(('00000000'+(h>>>0).toString(16)).slice(-8).repeat(8));
 }
 function hex(b){return Array.prototype.map.call(new Uint8Array(b),function(x){return('0'+x.toString(16)).slice(-2)}).join('')}
@@ -177,7 +181,4 @@ var FORMS={
  custody:[
   {t:'Inbox',s:'Transfers waiting for you to accept or reject.',f:[],b:[['Check inbox',function(o){inbox(o)}]],o:'oInbox'},
   {t:'Send sample',s:'Hand a sample to another organization. They must accept it.',f:[['tr_id','Sample ID','0x…','','sid'],['tr_to','Recipient address','0x…'],['tr_note','Note','Dry ice, AWB 1234']],b:[['Send',function(o){run(o,function(){return A.send(v('tr_id'),v('tr_to'),v('tr_note'))})}],['Cancel pending transfer',function(o){run(o,function(){return A.cancel(v('tr_id'))})},1]],o:'oSend'},
-  {t:'Receive sample',f:[['rc_id','Sample ID','0x…','','sid'],['rc_ok','Condition on arrival','','select'],['rc_note','Note','Sealed, 4.1 °C']],b:[['Accept',function(o){run(o,function(){return A.accept(v('rc_id'),v('rc_ok')==='1',v('rc_note'))})}],['Reject',function(o){run(o,function(){return A.reject(v('rc_id'),v('rc_note'))})},1]],o:'oRecv'},
-  {t:'Quarantine',s:'Custodian or auditor can hold a sample. Only an auditor or admin can release it.',f:[['q_id','Sample ID','0x…','','sid'],['q_note','Reason / note','']],b:[['Put on hold',function(o){run(o,function(){return A.quarantine(v('q_id'),v('q_note'))})},1],['Release',function(o){run(o,function(){return A.release(v('q_id'),v('q_note'))})},1]],o:'oQ'}],
- admin:[
-  {t:'Register organization',s:'Admin only.',f:[['o_addr','Wallet address',
+  {t:'Receive sample',f:[['rc_id','Sample ID','0x…','','sid'],['rc_ok','Condition on arrival','','select'],['rc_note','Note','Sealed, 4.1 °C']]
