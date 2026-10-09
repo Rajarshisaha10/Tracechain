@@ -95,12 +95,17 @@ var RPC='demo://tracechain.local (in-browser chain)';
 var S={orgs:{},samples:{},hist:{},paused:false,seq:0},me=null,tab='trace';
 function save(){try{localStorage.setItem('tc_state',JSON.stringify(S))}catch(e){}}
 function safeLS(){try{return window.localStorage}catch(e){return null}}
-function sha(str){
- if(window.crypto&&window.crypto.subtle)return crypto.subtle.digest('SHA-256',new TextEncoder().encode(str)).then(hex);
- var h=2166136261;for(var i=0;i<str.length;i++){h^=str.charCodeAt(i);h=Math.imul(h,16777619)}return Promise.resolve(('00000000'+(h>>>0).toString(16)).slice(-8).repeat(8));
-}
-function hex(b){return Array.prototype.map.call(new Uint8Array(b),function(x){return('0'+x.toString(16)).slice(-2)}).join('')}
-function shaFile(f){return f.arrayBuffer().then(function(b){return crypto.subtle.digest('SHA-256',b)}).then(function(d){return '0x'+hex(d)})}
+var K=[],H0=[];(function(){var c=2,n=0;while(n<64){var ok=true;for(var d=2;d*d<=c;d++)if(c%d===0){ok=false;break}if(ok){if(n<8)H0.push((Math.pow(c,.5)*4294967296)|0);K.push((Math.pow(c,1/3)*4294967296)|0);n++}c++}})();
+function sha256b(m){var l=m.length,h=H0.slice(),n=((l+9+63)>>6)<<6,p=new Uint8Array(n);p.set(m);p[l]=128;var dv=new DataView(p.buffer);dv.setUint32(n-8,Math.floor(l/536870912));dv.setUint32(n-4,(l<<3)>>>0);var w=new Array(64),i,o;
+for(o=0;o<n;o+=64){for(i=0;i<16;i++)w[i]=dv.getUint32(o+i*4)|0;
+for(i=16;i<64;i++){var x=w[i-15],y=w[i-2];w[i]=(w[i-16]+(((x>>>7)|(x<<25))^((x>>>18)|(x<<14))^(x>>>3))+w[i-7]+(((y>>>17)|(y<<15))^((y>>>19)|(y<<13))^(y>>>10)))|0}
+var A=h[0],B=h[1],C=h[2],D=h[3],E=h[4],F=h[5],G=h[6],H=h[7];
+for(i=0;i<64;i++){var t1=(H+(((E>>>6)|(E<<26))^((E>>>11)|(E<<21))^((E>>>25)|(E<<7)))+((E&F)^(~E&G))+K[i]+w[i])|0,t2=((((A>>>2)|(A<<30))^((A>>>13)|(A<<19))^((A>>>22)|(A<<10)))+((A&B)^(A&C)^(B&C)))|0;H=G;G=F;F=E;E=(D+t1)|0;D=C;C=B;B=A;A=(t1+t2)|0}
+h[0]=(h[0]+A)|0;h[1]=(h[1]+B)|0;h[2]=(h[2]+C)|0;h[3]=(h[3]+D)|0;h[4]=(h[4]+E)|0;h[5]=(h[5]+F)|0;h[6]=(h[6]+G)|0;h[7]=(h[7]+H)|0}
+return h.map(function(q){return('00000000'+(q>>>0).toString(16)).slice(-8)}).join('')}
+function utf8(str){var o=[],i,c;str=unescape(encodeURIComponent(str));for(i=0;i<str.length;i++)o.push(str.charCodeAt(i));return new Uint8Array(o)}
+function sha(str){return Promise.resolve(sha256b(utf8(str)))}
+function shaFile(f){return new Promise(function(res,rej){var r=new FileReader();r.onload=function(){res('0x'+sha256b(new Uint8Array(r.result)))};r.onerror=function(){rej(new Error('Could not read file'))};r.readAsArrayBuffer(f)})}
 function org(a){return S.orgs[a]||null}
 function nm(a){var o=org(a);return o?o.name:short(a)}
 function fail(m){throw new Error(m)}
@@ -176,9 +181,4 @@ var FORMS={
   {t:'Log handling',f:[['hd_id','Sample ID','0x…','','sid'],['hd_act','Action','Centrifuged / Thawed / Aliquoted'],['hd_note','Details (optional)','10 min @ 2000g']],b:[['Log handling',function(o){run(o,function(){return A.handling(v('hd_id'),v('hd_act'),v('hd_note'))})}]],o:'oHd'},
   {t:'Record a test',s:'Laboratories and research institutions holding the sample.',f:[['ts_id','Sample ID','0x…','','sid'],['ts_name','Test name','Complete blood count'],['ts_hash','Report / result hash','0x…','','file']],b:[['Record test',function(o){run(o,function(){return A.test(v('ts_id'),v('ts_name'),v('ts_hash'))})}]],o:'oTs'},
   {t:'Create aliquot',s:'Split a child sample. It links back to its parent.',f:[['al_id','Parent sample ID','0x…','','sid'],['al_label','New label / barcode','L-001-A'],['al_type','Sample type','Plasma'],['al_note','Note (optional)','500 µL']],b:[['Create aliquot',function(o){run(o,function(){return A.aliquot(v('al_id'),v('al_label'),v('al_type'),v('al_note'))})}]],o:'oAl'},
-  {t:'Report an incident',s:'Custodian, receiving party in transit, or an auditor.',f:[['in_id','Sample ID','0x…','','sid'],['in_desc','What happened','Temperature excursion to 8 °C for 40 min'],['in_hash','Evidence hash (optional)','0x…','','file']],b:[['Report incident',function(o){run(o,function(){return A.incident(v('in_id'),v('in_desc'),v('in_hash'))}) },1]],o:'oIn'},
-  {t:'End of life',s:'Mark a sample as used up or destroyed. This is final.',f:[['eo_id','Sample ID','0x…','','sid'],['eo_reason','Reason / method','Used in assay']],b:[['Mark consumed',function(o){run(o,function(){return A.consume(v('eo_id'),v('eo_reason'))})},1],['Mark destroyed',function(o){run(o,function(){return A.destroy(v('eo_id'),v('eo_reason'))})},2]],o:'oEo'}],
- custody:[
-  {t:'Inbox',s:'Transfers waiting for you to accept or reject.',f:[],b:[['Check inbox',function(o){inbox(o)}]],o:'oInbox'},
-  {t:'Send sample',s:'Hand a sample to another organization. They must accept it.',f:[['tr_id','Sample ID','0x…','','sid'],['tr_to','Recipient address','0x…'],['tr_note','Note','Dry ice, AWB 1234']],b:[['Send',function(o){run(o,function(){return A.send(v('tr_id'),v('tr_to'),v('tr_note'))})}],['Cancel pending transfer',function(o){run(o,function(){return A.cancel(v('tr_id'))})},1]],o:'oSend'},
-  {t:'Receive sample',f:[['rc_id','Sample ID','0x…','','sid'],['rc_ok','Condition on arrival','','select'],['rc_note','Note','Sealed, 4.1 °C']]
+  {t:'Report an incident',s:'Custodian, receiving party in transit, or an auditor.',f:[['in_id','Sample ID','0x…','','sid'],['in_desc','What happened','Temperature excursion to 8 °C for 40 min'],['in_hash','Evidence hash (optional)','0x…','','file']],b:[['Report incident',function(o){run(o,function(){return A.incident(v('in_id'),v('in_desc'),v('in_hash'))}) },1]],
