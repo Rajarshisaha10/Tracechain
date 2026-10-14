@@ -1,7 +1,7 @@
 import React, { useState } from "react";
 import { useChain } from "../context/ChainContext";
 import { hashFile, hashString } from "../utils/crypto";
-import { X, PlusCircle, Upload } from "lucide-react";
+import { X, PlusCircle, Upload, ShieldCheck } from "lucide-react";
 
 export default function RegisterSampleModal({ onClose, onSuccess }) {
   const { registerSample } = useChain();
@@ -61,22 +61,22 @@ export default function RegisterSampleModal({ onClose, onSuccess }) {
 
   return (
     <div className="modal-overlay">
-      <div className="modal-content max-w-lg bg-[#FFFBF1] border-2 border-[#E3D7BC]">
+      <div className="modal-content max-w-lg bg-[#FFFFFF] border-[3px] border-[#162013] shadow-[8px_8px_0px_#162013] rounded-2xl">
         
         {/* Header */}
-        <div className="p-5 border-b-2 border-[#E3D7BC] flex items-center justify-between bg-[#FFFBF1]">
-          <div className="flex items-center gap-2.5">
-            <div className="w-8 h-8 rounded-lg bg-[#DCE6F5] text-[#2457A6] flex items-center justify-center border border-[#BDD0EE]">
-              <PlusCircle className="w-4 h-4" />
+        <div className="p-5 border-b-[2.5px] border-[#162013] flex items-center justify-between bg-[#FFFFFF]">
+          <div className="flex items-center gap-3">
+            <div className="w-9 h-9 rounded-xl bg-[#EAF2E5] text-[#435E2F] flex items-center justify-center border-2 border-[#162013] shadow-[1.5px_1.5px_0px_#162013]">
+              <PlusCircle className="w-5 h-5" />
             </div>
             <div>
-              <h3 className="text-base font-extrabold text-[#1B2B45]">Register Biological Specimen</h3>
-              <p className="text-[11px] text-[#596579] font-medium">Mint root provenance hash on-chain</p>
+              <h3 className="text-base font-extrabold text-[#162013] uppercase font-display tracking-tight">Register Biological Specimen</h3>
+              <p className="text-[11px] text-[#5D7057] font-mono font-bold">Mint root provenance hash on EVM</p>
             </div>
           </div>
           <button
             onClick={onClose}
-            className="p-1.5 rounded-lg bg-[#F5EEDC] text-[#1B2B45] hover:bg-[#EBDDB8]"
+            className="p-1.5 rounded-lg bg-[#FFFFFF] text-[#162013] hover:bg-[#FFE4E6] border-2 border-[#162013] shadow-[1.5px_1.5px_0px_#162013] active:translate-x-0.5 active:translate-y-0.5 transition-all"
           >
             <X className="w-4 h-4" />
           </button>
@@ -86,7 +86,7 @@ export default function RegisterSampleModal({ onClose, onSuccess }) {
         <form onSubmit={handleSubmit} className="p-6 space-y-4">
           
           {error && (
-            <div className="p-3 rounded-xl bg-[#F6D9D4] border border-[#EDB8B3] text-[#C23B30] text-xs font-bold">
+            <div className="p-3.5 rounded-xl bg-[#FFE4E6] border-2 border-[#162013] text-[#DC2626] text-xs font-extrabold shadow-[2px_2px_0px_#162013]">
               {error}
             </div>
           )}
@@ -146,28 +146,28 @@ export default function RegisterSampleModal({ onClose, onSuccess }) {
           <div>
             <div className="flex justify-between items-center mb-1">
               <label className="mb-0">Informed Consent Document Seal</label>
-              <span className="text-[10px] text-[#2457A6] font-mono font-bold">Keccak-256</span>
+              <span className="text-[10px] text-[#435E2F] font-mono font-extrabold bg-[#EAF2E5] px-2 py-0.5 rounded border border-[#162013]">Zero-Knowledge</span>
             </div>
             
-            <label className="border-2 border-dashed border-[#E3D7BC] hover:border-[#2457A6] rounded-xl p-3 text-center cursor-pointer block transition-all bg-[#F5EEDC]">
+            <label className="border-2 border-dashed border-[#162013] hover:bg-[#EAF2E5] rounded-xl p-3.5 text-center cursor-pointer block transition-all bg-[#F4F7F1]">
               <input
                 type="file"
                 className="hidden"
                 onChange={handleFileUpload}
               />
-              <div className="flex flex-col items-center gap-1 text-xs text-[#596579]">
-                <Upload className="w-4 h-4 text-[#2457A6]" />
+              <div className="flex flex-col items-center gap-1.5 text-xs text-[#33442E] font-bold">
+                <Upload className="w-5 h-5 text-[#435E2F]" />
                 {fileName ? (
-                  <span className="text-[#2457A6] font-bold truncate max-w-[200px]">
+                  <span className="text-[#435E2F] font-extrabold truncate max-w-[220px]">
                     ✓ {fileName}
                   </span>
                 ) : (
-                  <span>Click to compute cryptographic hash of consent PDF</span>
+                  <span>Click or drag consent form PDF to compute Keccak-256 seal</span>
                 )}
               </div>
             </label>
 
-            <div className="font-mono text-[10px] bg-[#EBDDB8] p-2 rounded-lg border border-[#D2C4A3] text-[#1B2B45] font-semibold truncate mt-1">
+            <div className="font-mono text-[10px] bg-[#EAF2E5] p-2 rounded-lg border-2 border-[#162013] text-[#162013] font-bold truncate mt-1.5 shadow-[1px_1px_0px_#162013]">
               {consentHash}
             </div>
           </div>
@@ -182,18 +182,18 @@ export default function RegisterSampleModal({ onClose, onSuccess }) {
             />
           </div>
 
-          <div className="pt-2 flex flex-col-reverse sm:flex-row justify-end gap-2">
+          <div className="pt-2 flex flex-col-reverse sm:flex-row justify-end gap-2.5">
             <button
               type="button"
               onClick={onClose}
-              className="btn-secondary text-xs w-full sm:w-auto"
+              className="btn-secondary text-xs w-full sm:w-auto uppercase"
             >
               Cancel
             </button>
             <button
               type="submit"
               disabled={loading}
-              className="btn-primary text-xs w-full sm:w-auto justify-center"
+              className="btn-primary text-xs w-full sm:w-auto justify-center uppercase font-extrabold"
             >
               {loading ? "Registering on Chain..." : "Confirm & Anchor on Chain"}
             </button>

@@ -47,7 +47,7 @@ export default function CustodyTransfers({ onSelectSample }) {
   const handleSend = async (e) => {
     e.preventDefault();
     if (!selectedSampleId || !recipientAddr) {
-      setMsg({ text: "Please select a sample and a destination organization.", type: "err" });
+      setMsg({ text: "Please select a specimen and a destination organization.", type: "err" });
       return;
     }
     try {
@@ -100,23 +100,35 @@ export default function CustodyTransfers({ onSelectSample }) {
   };
 
   return (
-    <div className="space-y-8 animate-fadeIn">
+    <div className="space-y-6 sm:space-y-7 animate-fadeIn">
       
-      {/* Header Banner */}
-      <div className="glass-panel p-4 sm:p-6 bg-[#FFFBF1] border-2 border-[#E3D7BC] flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-        <div>
-          <h2 className="text-lg sm:text-xl font-extrabold text-[#1B2B45] flex items-center gap-2">
-            <ArrowLeftRight className="w-5 h-5 text-[#2457A6] shrink-0" />
+      {/* Header Banner - Multi-Color Neo-Brutalist Panel */}
+      <div className="bg-[#FFFFFF] p-5 sm:p-6 border-[3px] border-[#162013] rounded-2xl shadow-[5px_5px_0px_#162013] flex flex-col sm:flex-row sm:items-center justify-between gap-4 relative overflow-hidden">
+        {/* Top color strip */}
+        <div className="absolute top-0 left-0 right-0 h-2 flex">
+          <div className="w-1/3 bg-[#FFE600]"></div>
+          <div className="w-1/3 bg-[#B4F000]"></div>
+          <div className="w-1/3 bg-[#FF70A6]"></div>
+        </div>
+
+        <div className="mt-1">
+          <div className="flex items-center gap-2 mb-1">
+            <span className="text-[10px] font-black uppercase font-mono px-2 py-0.5 rounded bg-[#FFE600] text-[#162013] border-2 border-[#162013] shadow-[1.5px_1.5px_0px_#162013] -rotate-1">
+              CHAIN OF CUSTODY
+            </span>
+          </div>
+          <h2 className="text-xl sm:text-2xl font-black text-[#162013] flex items-center gap-2.5 font-display">
+            <ArrowLeftRight className="w-5 h-5 text-[#435E2F] shrink-0" />
             <span>Two-Step Custody Handoffs & Chain Transfers</span>
           </h2>
-          <p className="text-xs text-[#596579] mt-1 font-medium">
-            Physical handoffs require cryptographic confirmation. Deliveries marked damaged or out-of-spec are automatically quarantined.
+          <p className="text-xs text-[#33442E] mt-1 font-bold">
+            Physical handoffs require cryptographic receipt. Out-of-spec or damaged arrivals automatically trigger quarantine.
           </p>
         </div>
 
-        <div className="sm:text-right pt-2 sm:pt-0 border-t sm:border-t-0 border-[#E3D7BC] flex sm:flex-col justify-between sm:justify-start items-center sm:items-end">
-          <span className="text-[11px] text-[#6B7287]">Acting Custodian:</span>
-          <div className="text-xs font-extrabold text-[#2457A6] font-mono">
+        <div className="sm:text-right pt-3 sm:pt-0 border-t-2 sm:border-t-0 border-[#162013] flex sm:flex-col justify-between sm:justify-start items-center sm:items-end">
+          <span className="text-[10px] text-[#5D7057] font-black uppercase tracking-wider font-mono">Current Acting Custodian:</span>
+          <div className="text-xs font-black text-[#162013] font-mono bg-[#B4F000] px-3 py-1 rounded-xl border-2 border-[#162013] mt-1 shadow-[2px_2px_0px_#162013]">
             {currentActor.name}
           </div>
         </div>
@@ -124,18 +136,18 @@ export default function CustodyTransfers({ onSelectSample }) {
 
       {msg.text && (
         <div
-          className={`p-4 rounded-2xl border-2 text-xs font-bold flex items-center gap-2 animate-fadeIn ${
+          className={`p-4 rounded-xl border-[2.5px] border-[#162013] text-xs font-black flex items-center gap-2.5 shadow-[3px_3px_0px_#162013] animate-fadeIn ${
             msg.type === "ok"
-              ? "bg-[#DCE6F5] border-[#BDD0EE] text-[#1B4385]"
-              : "bg-[#F6D9D4] border-[#EDB8B3] text-[#9E2A20]"
+              ? "bg-[#EEFDC8] text-[#162013]"
+              : "bg-[#FFE4E6] text-[#DC2626]"
           }`}
         >
           {msg.type === "ok" ? (
-            <ShieldCheck className="w-4 h-4 text-[#2457A6]" />
+            <ShieldCheck className="w-4 h-4 text-[#435E2F] shrink-0" />
           ) : (
-            <ShieldAlert className="w-4 h-4 text-[#C23B30]" />
+            <ShieldAlert className="w-4 h-4 text-[#DC2626] shrink-0" />
           )}
-          {msg.text}
+          <span>{msg.text}</span>
         </div>
       )}
 
@@ -143,56 +155,58 @@ export default function CustodyTransfers({ onSelectSample }) {
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         
         {/* Left: Incoming Transfers Waiting for Intake */}
-        <div className="glass-panel p-6 bg-[#FFFBF1] border-2 border-[#E3D7BC] flex flex-col justify-between">
-          <div>
-            <div className="flex items-center justify-between pb-3 border-b-2 border-[#E3D7BC]">
-              <h3 className="text-sm font-extrabold text-[#1B2B45] flex items-center gap-2">
-                <Inbox className="w-4 h-4 text-[#D97706]" />
-                Incoming Transfers Inbox ({incoming.length})
-              </h3>
-              <span className="text-[11px] text-[#6B7287] font-semibold">Awaiting Your Intake</span>
-            </div>
+        <div className="bg-[#FFFFFF] border-[3px] border-[#162013] rounded-2xl shadow-[5px_5px_0px_#162013] flex flex-col justify-between overflow-hidden">
+          <div className="bg-[#FFE600] px-5 py-3 border-b-2 border-[#162013] flex items-center justify-between">
+            <h3 className="text-sm font-black text-[#162013] flex items-center gap-2 uppercase font-display tracking-tight">
+              <Inbox className="w-4 h-4 text-[#162013]" />
+              Incoming Transfers Inbox ({incoming.length})
+            </h3>
+            <span className="text-[10px] text-[#162013] font-mono font-black bg-[#FFFFFF] px-2.5 py-0.5 rounded-full border-2 border-[#162013] shadow-[1px_1px_0px_#162013]">
+              Awaiting Intake
+            </span>
+          </div>
 
-            <div className="mt-4 space-y-4">
+          <div className="p-5 sm:p-6 flex-1 flex flex-col justify-between">
+            <div className="space-y-4">
               {incoming.length === 0 ? (
-                <div className="py-12 text-center text-[#6B7287] text-xs font-medium">
+                <div className="py-12 text-center text-[#5D7057] text-xs font-mono font-bold">
                   No shipments currently pending delivery to your organization.
                 </div>
               ) : (
                 incoming.map((s) => (
                   <div
                     key={s.sampleId}
-                    className="p-4.5 rounded-2xl bg-[#F5EEDC] border-2 border-[#E3D7BC] space-y-3"
+                    className="p-4 rounded-xl bg-[#F4F7F1] border-2 border-[#162013] shadow-[2.5px_2.5px_0px_#162013] space-y-3"
                   >
                     <div className="flex justify-between items-start">
                       <div>
                         <span
                           onClick={() => onSelectSample(s.sampleId)}
-                          className="font-extrabold text-sm text-[#2457A6] font-mono cursor-pointer hover:underline"
+                          className="font-black text-sm text-[#162013] hover:text-[#435E2F] font-mono cursor-pointer hover:underline"
                         >
                           {s.externalId}
                         </span>
-                        <p className="text-xs text-[#596579] mt-0.5 font-medium">{s.sampleType}</p>
+                        <p className="text-xs text-[#5D7057] mt-0.5 font-bold uppercase">{s.sampleType}</p>
                       </div>
-                      <span className="text-[10px] bg-[#FEF3C7] text-[#92400E] border border-[#FDE68A] px-2 py-0.5 rounded-full font-mono font-bold">
+                      <span className="text-[10px] bg-[#FFE600] text-[#162013] border-2 border-[#162013] px-2.5 py-0.5 rounded-full font-mono font-black shadow-[1px_1px_0px_#162013]">
                         IN TRANSIT
                       </span>
                     </div>
 
-                    <div className="text-xs text-[#596579] space-y-1">
+                    <div className="text-xs text-[#33442E] space-y-1 font-bold">
                       <div>
-                        Sender: <span className="text-[#1B2B45] font-bold">{getOrgName(s.custodian)}</span>
+                        Sender: <span className="text-[#162013] font-black">{getOrgName(s.custodian)}</span>
                       </div>
                       <div>
-                        Anchor: <span className="font-mono text-[#2457A6] font-bold">{shortHash(s.headHash, 4)}</span>
+                        Anchor: <span className="font-mono text-[#162013] font-black bg-[#EAF2E5] px-2 py-0.5 rounded border border-[#162013]">{shortHash(s.headHash, 4)}</span>
                       </div>
                     </div>
 
                     {/* Actions: Accept Intact vs Damaged vs Reject */}
-                    <div className="pt-2.5 border-t border-[#E3D7BC] flex flex-col sm:flex-row items-stretch sm:items-center gap-2">
+                    <div className="pt-3 border-t-2 border-[#162013] flex flex-col sm:flex-row items-stretch sm:items-center gap-2">
                       <button
                         onClick={() => handleAccept(s.sampleId, true)}
-                        className="btn-primary text-xs py-2 px-3 flex-1 justify-center"
+                        className="btn-lime text-xs py-2 px-3 flex-1 justify-center uppercase font-black"
                       >
                         <CheckCircle2 className="w-3.5 h-3.5" />
                         <span>Accept (Intact)</span>
@@ -201,23 +215,22 @@ export default function CustodyTransfers({ onSelectSample }) {
                       <div className="flex gap-2">
                         <button
                           onClick={() => handleAccept(s.sampleId, false)}
-                          className="btn-danger text-xs py-2 px-3 flex-1 justify-center"
+                          className="btn-pink text-xs py-2 px-3 flex-1 justify-center uppercase font-black"
                           title="Auto-quarantines the specimen due to compromise"
                         >
                           <AlertOctagon className="w-3.5 h-3.5" />
-                          <span>Damaged / Excursion</span>
+                          <span>Damaged / Compromised</span>
                         </button>
 
                         <button
                           onClick={() => handleReject(s.sampleId)}
-                          className="p-2.5 rounded-xl bg-[#EBDDB8] text-[#1B2B45] hover:bg-[#D2C4A3] transition-colors flex items-center justify-center min-w-[42px]"
+                          className="p-2.5 rounded-xl bg-[#FFFFFF] text-[#DC2626] hover:bg-[#FFE4E6] border-2 border-[#162013] shadow-[1.5px_1.5px_0px_#162013] active:translate-x-0.5 active:translate-y-0.5 transition-all flex items-center justify-center min-w-[42px]"
                           title="Reject Transfer"
                         >
-                          <XCircle className="w-4 h-4 text-[#C23B30]" />
+                          <XCircle className="w-4 h-4" />
                         </button>
                       </div>
                     </div>
-
                   </div>
                 ))
               )}
@@ -226,28 +239,30 @@ export default function CustodyTransfers({ onSelectSample }) {
         </div>
 
         {/* Right: Initiate Handoff Transfer Form */}
-        <div className="glass-panel p-6 bg-[#FFFBF1] border-2 border-[#E3D7BC]">
-          <div className="flex items-center justify-between pb-3 border-b-2 border-[#E3D7BC]">
-            <h3 className="text-sm font-extrabold text-[#1B2B45] flex items-center gap-2">
-              <Send className="w-4 h-4 text-[#2457A6]" />
+        <div className="bg-[#FFFFFF] border-[3px] border-[#162013] rounded-2xl shadow-[5px_5px_0px_#162013] overflow-hidden">
+          <div className="bg-[#22D3EE] px-5 py-3 border-b-2 border-[#162013] flex items-center justify-between">
+            <h3 className="text-sm font-black text-[#162013] flex items-center gap-2 uppercase font-display tracking-tight">
+              <Send className="w-4 h-4 text-[#162013]" />
               Initiate Custody Dispatch
             </h3>
-            <span className="text-[11px] text-[#6B7287] font-semibold">Handoff to Partner</span>
+            <span className="text-[10px] text-[#162013] font-mono font-black bg-[#FFFFFF] px-2.5 py-0.5 rounded-full border-2 border-[#162013] shadow-[1px_1px_0px_#162013]">
+              Handoff Sign
+            </span>
           </div>
 
-          <form onSubmit={handleSend} className="mt-4 space-y-4">
+          <form onSubmit={handleSend} className="p-5 sm:p-6 space-y-4">
             
             <div>
               <label>Select Specimen in Your Custody</label>
               {myHoldings.length === 0 ? (
-                <div className="text-xs text-[#92400E] bg-[#FEF3C7] p-3 rounded-xl border border-[#FDE68A] font-bold">
+                <div className="text-xs text-[#713F12] bg-[#FEF9C3] p-3 rounded-xl border-2 border-[#162013] font-bold shadow-[2px_2px_0px_#162013]">
                   You currently have no active specimens in your custody to transfer.
                 </div>
               ) : (
                 <select
                   value={selectedSampleId}
                   onChange={(e) => setSelectedSampleId(e.target.value)}
-                  className="text-sm font-bold"
+                  className="text-sm font-bold bg-[#FFFFFF] border-2 border-[#162013] rounded-xl shadow-[2px_2px_0px_#162013]"
                   required
                 >
                   <option value="">-- Choose specimen --</option>
@@ -265,7 +280,7 @@ export default function CustodyTransfers({ onSelectSample }) {
               <select
                 value={recipientAddr}
                 onChange={(e) => setRecipientAddr(e.target.value)}
-                className="text-sm font-bold"
+                className="text-sm font-bold bg-[#FFFFFF] border-2 border-[#162013] rounded-xl shadow-[2px_2px_0px_#162013]"
                 required
               >
                 <option value="">-- Choose recipient partner --</option>
@@ -286,15 +301,17 @@ export default function CustodyTransfers({ onSelectSample }) {
                 placeholder="e.g. Dry ice shipper container #CRYO-9921, AWB #88123"
                 value={transferNote}
                 onChange={(e) => setTransferNote(e.target.value)}
+                className="bg-[#FFFFFF] border-2 border-[#162013] rounded-xl shadow-[2px_2px_0px_#162013] font-bold"
               />
             </div>
 
             <button
               type="submit"
               disabled={loading || myHoldings.length === 0}
-              className="btn-primary w-full text-xs py-2.5 mt-2"
+              className="btn-yellow w-full text-xs py-3 mt-2 uppercase font-black"
             >
-              {loading ? "Recording Handoff on Chain..." : "Sign & Dispatch Transfer"}
+              <Send className="w-4 h-4 shrink-0" />
+              <span>{loading ? "Recording Handoff on Chain..." : "Sign & Dispatch Transfer"}</span>
             </button>
 
           </form>
@@ -304,30 +321,30 @@ export default function CustodyTransfers({ onSelectSample }) {
 
       {/* Outgoing Shipments in Flight */}
       {outgoing.length > 0 && (
-        <div className="glass-panel p-6 bg-[#FFFBF1] border-2 border-[#E3D7BC]">
-          <h3 className="text-sm font-extrabold text-[#1B2B45] flex items-center gap-2 mb-4">
-            <Truck className="w-4 h-4 text-[#2457A6]" />
+        <div className="bg-[#FFFFFF] p-5 sm:p-6 border-[2.5px] border-[#162013] rounded-2xl shadow-[4px_4px_0px_#162013]">
+          <h3 className="text-sm font-extrabold text-[#162013] flex items-center gap-2 mb-4 uppercase font-display tracking-tight">
+            <Truck className="w-4 h-4 text-[#435E2F]" />
             Your Outgoing Shipments Currently in Transit ({outgoing.length})
           </h3>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
             {outgoing.map((s) => (
               <div
                 key={s.sampleId}
-                className="p-4 rounded-xl bg-[#F5EEDC] border-2 border-[#E3D7BC] space-y-2"
+                className="p-4 rounded-xl bg-[#F4F7F1] border-2 border-[#162013] shadow-[2px_2px_0px_#162013] space-y-2"
               >
                 <div className="flex justify-between items-start">
                   <span
                     onClick={() => onSelectSample(s.sampleId)}
-                    className="font-extrabold text-xs text-[#2457A6] font-mono hover:underline cursor-pointer"
+                    className="font-extrabold text-xs text-[#162013] hover:text-[#435E2F] font-mono hover:underline cursor-pointer"
                   >
                     {s.externalId}
                   </span>
-                  <span className="text-[10px] text-[#92400E] bg-[#FEF3C7] px-2 py-0.5 rounded-full font-bold">
+                  <span className="text-[10px] text-[#713F12] bg-[#FEF9C3] px-2 py-0.5 rounded-full font-extrabold border border-[#162013]">
                     Waiting for intake
                   </span>
                 </div>
-                <div className="text-xs text-[#596579]">
-                  Destination: <span className="text-[#1B2B45] font-bold">{getOrgName(s.pendingRecipient)}</span>
+                <div className="text-xs text-[#33442E] font-medium">
+                  Destination: <span className="text-[#162013] font-bold">{getOrgName(s.pendingRecipient)}</span>
                 </div>
               </div>
             ))}

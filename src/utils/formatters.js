@@ -57,12 +57,12 @@ export const RECORD_TYPE_NAMES = [
 ];
 
 export const STATUS_CONFIG = {
-  0: { label: "None", color: "bg-[#EAE1CB] text-[#596579] border border-[#D5C7A8]", dot: "bg-[#8B98AA]" },
-  1: { label: "Active", color: "bg-[#DCE6F5] text-[#2457A6] border border-[#BDD0EE]", dot: "bg-[#2457A6]" },
-  2: { label: "In Transit", color: "bg-[#FEF3C7] text-[#92400E] border border-[#FDE68A]", dot: "bg-[#D97706]" },
-  3: { label: "Quarantined", color: "bg-[#F6D9D4] text-[#C23B30] border border-[#EDB8B3]", dot: "bg-[#C23B30]" },
-  4: { label: "Consumed", color: "bg-[#EDE9FE] text-[#5B21B6] border border-[#DDD6FE]", dot: "bg-[#7C3AED]" },
-  5: { label: "Destroyed", color: "bg-[#EAE1CB] text-[#596579] border border-[#D5C7A8]", dot: "bg-[#596579]" },
+  0: { label: "None", color: "bg-[#F1F5F9] text-[#334155] border-2 border-[#162013] shadow-[2px_2px_0px_#162013]", dot: "bg-[#64748B]" },
+  1: { label: "Active", color: "bg-[#EAF2E5] text-[#263E19] border-2 border-[#162013] shadow-[2px_2px_0px_#162013]", dot: "bg-[#4E6F34]" },
+  2: { label: "In Transit", color: "bg-[#FEF9C3] text-[#713F12] border-2 border-[#162013] shadow-[2px_2px_0px_#162013]", dot: "bg-[#CA8A04]" },
+  3: { label: "Quarantined", color: "bg-[#FFE4E6] text-[#9F1239] border-2 border-[#162013] shadow-[2px_2px_0px_#162013]", dot: "bg-[#E11D48]" },
+  4: { label: "Consumed", color: "bg-[#EDE9FE] text-[#4C1D95] border-2 border-[#162013] shadow-[2px_2px_0px_#162013]", dot: "bg-[#7C3AED]" },
+  5: { label: "Destroyed", color: "bg-[#F1F5F9] text-[#0F172A] border-2 border-[#162013] shadow-[2px_2px_0px_#162013]", dot: "bg-[#334155]" },
 };
 
 export const ORG_TYPE_NAMES = [
