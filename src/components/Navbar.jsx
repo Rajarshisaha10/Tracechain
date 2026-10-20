@@ -162,59 +162,71 @@ export default function Navbar({ activeTab, setActiveTab }) {
                 </button>
 
                 {showRoleDropdown && (
-                  <div className="absolute right-0 mt-2.5 w-72 sm:w-80 bg-[#FFFFFF] border-[3px] border-[#162013] rounded-2xl shadow-[6px_6px_0px_#162013] p-3 z-50 animate-fadeIn">
-                    <div className="px-3 py-2 border-2 border-[#162013] flex items-center justify-between mb-2.5 bg-[#FFE600] rounded-xl shadow-[1.5px_1.5px_0px_#162013]">
-                      <div className="flex items-center gap-1.5">
-                        <ShieldCheck className="w-4 h-4 text-[#162013]" />
-                        <span className="text-[10px] font-black text-[#162013] uppercase tracking-wider font-mono">
-                          Switch Clearance Actor
-                        </span>
+                  <>
+                    {/* Backdrop to isolate dropdown and prevent background interference */}
+                    <div
+                      className="fixed inset-0 z-40 bg-black/25"
+                      onClick={() => setShowRoleDropdown(false)}
+                    />
+                    <div
+                      className="absolute right-0 mt-2.5 w-72 sm:w-80 bg-white border-[3px] border-[#162013] rounded-2xl shadow-[6px_6px_0px_#162013] p-3 z-50 animate-fadeIn"
+                      style={{ backgroundColor: "#FFFFFF" }}
+                    >
+                      <div className="px-3 py-2 border-2 border-[#162013] flex items-center justify-between mb-2.5 bg-[#FFE600] rounded-xl shadow-[1.5px_1.5px_0px_#162013]">
+                        <div className="flex items-center gap-1.5">
+                          <ShieldCheck className="w-4 h-4 text-[#162013]" />
+                          <span className="text-[10px] font-black text-[#162013] uppercase tracking-wider font-mono">
+                            Switch Clearance Actor
+                          </span>
+                        </div>
+                        <button
+                          onClick={resetSandbox}
+                          className="text-[10px] text-[#FFFFFF] bg-[#DC2626] hover:bg-[#B91C1C] px-2 py-0.5 rounded border border-[#162013] flex items-center gap-1 font-bold shadow-[1px_1px_0px_#162013] active:translate-x-0.5 active:translate-y-0.5"
+                        >
+                          <RotateCcw className="w-3 h-3" />
+                          Reset
+                        </button>
                       </div>
-                      <button
-                        onClick={resetSandbox}
-                        className="text-[10px] text-[#FFFFFF] bg-[#DC2626] hover:bg-[#B91C1C] px-2 py-0.5 rounded border border-[#162013] flex items-center gap-1 font-bold shadow-[1px_1px_0px_#162013] active:translate-x-0.5 active:translate-y-0.5"
-                      >
-                        <RotateCcw className="w-3 h-3" />
-                        Reset
-                      </button>
-                    </div>
 
-                    <div className="space-y-1.5 max-h-64 overflow-y-auto pr-1">
-                      {Object.values(sandboxData.orgs).map((org) => {
-                        const isSelected = activeAccount.toLowerCase() === org.address.toLowerCase();
-                        return (
-                          <button
-                            key={org.address}
-                            onClick={() => handleRoleSelect(org.address)}
-                            className={`w-full text-left px-3 py-2 rounded-xl text-xs transition-all flex items-center justify-between border-2 ${
-                              isSelected
-                                ? "bg-[#B4F000] border-[#162013] shadow-[2.5px_2.5px_0px_#162013] text-[#162013] font-bold"
-                                : "bg-[#FFFFFF] border-transparent hover:border-[#162013] hover:bg-[#F4F7F1] text-[#33442E]"
-                            }`}
-                          >
-                            <div className="truncate flex-1 pr-2">
-                              <div className="font-black truncate text-xs text-[#162013]">
-                                {org.name}
+                      <div className="space-y-1.5 max-h-64 overflow-y-auto pr-1">
+                        {Object.values(sandboxData.orgs).map((org) => {
+                          const isSelected = activeAccount.toLowerCase() === org.address.toLowerCase();
+                          return (
+                            <button
+                              key={org.address}
+                              type="button"
+                              onClick={() => handleRoleSelect(org.address)}
+                              className={`w-full text-left px-3 py-2 rounded-xl text-xs transition-all flex items-center justify-between border-2 cursor-pointer ${
+                                isSelected
+                                  ? "bg-[#B4F000] border-[#162013] shadow-[2.5px_2.5px_0px_#162013] text-[#162013] font-bold"
+                                  : "bg-white border-[#162013]/30 hover:border-[#162013] hover:bg-[#F4F7F1] text-[#33442E]"
+                              }`}
+                              style={{ backgroundColor: isSelected ? "#B4F000" : "#FFFFFF" }}
+                            >
+                              <div className="truncate flex-1 pr-2">
+                                <div className="font-black truncate text-xs text-[#162013]">
+                                  {org.name}
+                                </div>
+                                <div className="text-[10px] text-[#5D7057] font-mono truncate flex items-center gap-1.5 mt-0.5">
+                                  <span className="px-1.5 py-0.2 rounded bg-white border border-[#162013] text-[9px] font-black text-[#162013]">
+                                    {org.country || "GL"}
+                                  </span>
+                                  <span className="font-bold">{org.orgTypeName}</span>
+                                  <span>•</span>
+                                  <span>{shortHash(org.address, 3)}</span>
+                                </div>
                               </div>
-                              <div className="text-[10px] text-[#5D7057] font-mono truncate flex items-center gap-1.5 mt-0.5">
-                                <span className="px-1.5 py-0.2 rounded bg-[#FFFFFF] border border-[#162013] text-[9px] font-black text-[#162013]">
-                                  {org.country || "GL"}
-                                </span>
-                                <span className="font-bold">{org.orgTypeName}</span>
-                                <span>•</span>
-                                <span>{shortHash(org.address, 3)}</span>
-                              </div>
-                            </div>
-                            {isSelected && (
-                              <div className="w-3.5 h-3.5 rounded-full bg-[#162013] shrink-0 flex items-center justify-center">
-                                <div className="w-1.5 h-1.5 rounded-full bg-[#B4F000]"></div>
-                              </div>
-                            )}
-                          </button>
-                        );
-                      })}
+                              {isSelected && (
+                                <div className="w-3.5 h-3.5 rounded-full bg-[#162013] shrink-0 flex items-center justify-center">
+                                  <div className="w-1.5 h-1.5 rounded-full bg-[#B4F000]"></div>
+                                </div>
+                              )}
+                            </button>
+                          );
+                        })}
+                      </div>
                     </div>
-                  </div>
+                  </>
                 )}
               </div>
             )}

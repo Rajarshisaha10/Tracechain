@@ -739,19 +739,32 @@ button {
 
 .border { border: 2px solid #162013; }
 .border-2 { border: 2.5px solid #162013; }
+.border-\[2\.5px\] { border-width: 2.5px; border-style: solid; }
+.border-\[3px\] { border-width: 3px; border-style: solid; }
 .border-b { border-bottom: 2px solid #162013; }
 .border-b-2 { border-bottom: 2.5px solid #162013; }
+.border-b-\[2\.5px\] { border-bottom-width: 2.5px; border-bottom-style: solid; }
+.border-b-\[3px\] { border-bottom-width: 3px; border-bottom-style: solid; }
 .border-t { border-top: 2px solid #162013; }
 .border-t-2 { border-top: 2.5px solid #162013; }
+.border-t-\[2\.5px\] { border-top-width: 2.5px; border-top-style: solid; }
 .border-l-2 { border-left: 2.5px solid #162013; }
+.border-l-\[3px\] { border-left-width: 3px; border-left-style: solid; }
 .border-dashed { border-style: dashed; }
+.border-transparent { border-color: transparent !important; }
+.border-\[\#162013\] { border-color: #162013 !important; }
 
 /* Palette Redirects: Automatically shifts all legacy templates to Olive Green & White Neo-Brut */
 .bg-\[\#F5EEDC\] { background-color: #F4F7F1; }
 .bg-\[\#F5EEDC\]\/95 { background-color: rgba(244, 247, 241, 0.96); }
 .bg-\[\#F5EEDC\]\/60 { background-color: rgba(244, 247, 241, 0.75); }
-.bg-\[\#FFFBF1\] { background-color: #FFFFFF; }
-.bg-white { background-color: #FFFFFF; }
+.bg-\[\#FFFBF1\] { background-color: #FFFFFF !important; }
+.bg-white { background-color: #FFFFFF !important; }
+.bg-\[\#FFFFFF\] { background-color: #FFFFFF !important; }
+.bg-\[\#162013\] { background-color: #162013 !important; }
+.bg-black\/20 { background-color: rgba(0, 0, 0, 0.2); }
+.bg-black\/25 { background-color: rgba(0, 0, 0, 0.25); }
+.bg-black\/40 { background-color: rgba(0, 0, 0, 0.4); }
 .bg-\[\#EBDDB8\] { background-color: #E3EDE0; }
 .bg-\[\#EBDDB8\]\/50 { background-color: rgba(227, 237, 224, 0.6); }
 .bg-\[\#EBDDB8\]\/40 { background-color: rgba(227, 237, 224, 0.4); }
@@ -765,8 +778,10 @@ button {
 .bg-\[\#EDE9FE\] { background-color: #EDE9FE; }
 
 .text-\[\#1B2B45\] { color: #162013; }
+.text-\[\#162013\] { color: #162013; }
+.text-\[\#33442E\] { color: #33442E; }
 .text-\[\#596579\] { color: #364632; }
-.text-\[\#6B7287\] { color: #5D7057; }
+.text-\[\#5D7057\] { color: #5D7057; }
 .text-white { color: #FFFFFF; }
 .text-\[\#2457A6\] { color: #2A3D1D; }
 .text-\[\#1B4385\] { color: #203115; }
@@ -845,6 +860,26 @@ button {
 .shadow-sm { box-shadow: 2px 2px 0px #162013; }
 .shadow-md { box-shadow: 3.5px 3.5px 0px #162013; }
 .shadow-xl { box-shadow: 6px 6px 0px #162013; }
+.shadow-\[1px_1px_0px_\#162013\] { box-shadow: 1px 1px 0px #162013; }
+.shadow-\[1\.5px_1\.5px_0px_\#162013\] { box-shadow: 1.5px 1.5px 0px #162013; }
+.shadow-\[2px_2px_0px_\#162013\] { box-shadow: 2px 2px 0px #162013; }
+.shadow-\[2\.5px_2\.5px_0px_\#162013\] { box-shadow: 2.5px 2.5px 0px #162013; }
+.shadow-\[3px_3px_0px_\#162013\] { box-shadow: 3px 3px 0px #162013; }
+.shadow-\[3\.5px_3\.5px_0px_\#162013\] { box-shadow: 3.5px 3.5px 0px #162013; }
+.shadow-\[4px_4px_0px_\#162013\] { box-shadow: 4px 4px 0px #162013; }
+.shadow-\[4\.5px_4\.5px_0px_\#162013\] { box-shadow: 4.5px 4.5px 0px #162013; }
+.shadow-\[5px_5px_0px_\#162013\] { box-shadow: 5px 5px 0px #162013; }
+.shadow-\[6px_6px_0px_\#162013\] { box-shadow: 6px 6px 0px #162013; }
+.shadow-\[6\.5px_6\.5px_0px_\#162013\] { box-shadow: 6.5px 6.5px 0px #162013; }
+.shadow-\[7px_7px_0px_\#162013\] { box-shadow: 7px 7px 0px #162013; }
+.shadow-\[8px_8px_0px_\#162013\] { box-shadow: 8px 8px 0px #162013; }
+.shadow-\[0_4px_0px_\#162013\] { box-shadow: 0 4px 0px #162013; }
+.shadow-\[0_5px_0px_\#162013\] { box-shadow: 0 5px 0px #162013; }
+.shadow-\[0_-3px_0px_\#162013\] { box-shadow: 0 -3px 0px #162013; }
+.shadow-\[0_-4px_0px_\#162013\] { box-shadow: 0 -4px 0px #162013; }
+
+.w-80 { width: 20rem; }
+.sm\:w-80 { width: 20rem; }
 
 /* Transitions */
 .transition-all { transition-property: all; transition-timing-function: cubic-bezier(0.2, 0, 0, 1); transition-duration: 140ms; }
@@ -893,7 +928,7 @@ button {
   color: #FFFFFF !important;
   font-weight: 800 !important;
   letter-spacing: 0.02em;
-  border: 2.5px solid #162013 !important;
+  border: 3px solid #162013 !important;
   border-radius: 12px !important;
   padding: 10px 18px !important;
   cursor: pointer !important;
@@ -1031,7 +1066,7 @@ label {
 
 .modal-content {
   background: #FFFFFF;
-  border: 3px solid #162013;
+  border: 2.5px solid #162013;
   border-radius: 20px;
   max-width: 680px;
   width: 100%;
