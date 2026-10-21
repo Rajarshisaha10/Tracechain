@@ -1,4 +1,5 @@
 import React, { useState } from "react";
+import { motion } from "framer-motion";
 import { useChain } from "../context/ChainContext";
 import { formatTimestamp, shortHash, STATUS_CONFIG } from "../utils/formatters";
 import {
@@ -11,7 +12,7 @@ import {
   Thermometer,
   Building,
   Calendar,
-  Filter
+  Layers
 } from "lucide-react";
 
 export default function SampleExplorer({
@@ -50,81 +51,62 @@ export default function SampleExplorer({
     return sandboxData.orgs[addr]?.name || shortHash(addr, 4);
   };
 
-  const getTypeColor = (type = "") => {
+  const getTypeTheme = (type = "") => {
     const t = type.toLowerCase();
     if (t.includes("blood")) {
       return {
-        badge: "bg-[#FF70A6] text-white",
-        bar: "bg-[#FF70A6]",
-        light: "bg-[#FFF1F2]",
+        pill: "bg-[#FFE4E6] text-[#991B1B] border-[#0A0A0A]",
         tag: "BLOOD / HEMATOLOGY"
       };
     }
     if (t.includes("rna") || t.includes("dna") || t.includes("genom")) {
       return {
-        badge: "bg-[#22D3EE] text-[#162013]",
-        bar: "bg-[#22D3EE]",
-        light: "bg-[#ECFEFF]",
+        pill: "bg-[#E0F2FE] text-[#0369A1] border-[#0A0A0A]",
         tag: "NUCLEIC ACID / RNA"
       };
     }
     if (t.includes("biopsy") || t.includes("tissue")) {
       return {
-        badge: "bg-[#FFE600] text-[#162013]",
-        bar: "bg-[#FFE600]",
-        light: "bg-[#FEFCE8]",
+        pill: "bg-[#FEF9C3] text-[#854D0E] border-[#0A0A0A]",
         tag: "BIOPSY / HISTOLOGY"
       };
     }
     if (t.includes("plasma") || t.includes("serum")) {
       return {
-        badge: "bg-[#C084FC] text-[#162013]",
-        bar: "bg-[#C084FC]",
-        light: "bg-[#FAF5FF]",
+        pill: "bg-[#F3E8FF] text-[#6B21A8] border-[#0A0A0A]",
         tag: "PURIFIED PLASMA"
       };
     }
     return {
-      badge: "bg-[#B4F000] text-[#162013]",
-      bar: "bg-[#B4F000]",
-      light: "bg-[#F7FEE7]",
+      pill: "bg-[#D7FB38] text-[#0A0A0A] border-[#0A0A0A]",
       tag: "CRYO SPECIMEN"
     };
   };
 
   return (
-    <div className="space-y-4 sm:space-y-6 animate-fadeIn">
+    <div className="space-y-4 animate-fadeIn">
       
-      {/* Search and Action Bar - Neo-Brutalist Multi-Color Panel */}
-      <div className="bg-[#FFFFFF] p-4 sm:p-5 border-[3px] border-[#162013] rounded-2xl shadow-[5px_5px_0px_#162013] flex flex-col md:flex-row items-stretch md:items-center justify-between gap-3 sm:gap-4 relative overflow-hidden">
+      {/* Search and Action Bar */}
+      <div className="brutal-card p-3.5 sm:p-4 bg-[#FFFFFF] flex flex-col md:flex-row items-stretch md:items-center justify-between gap-3">
         
-        {/* Top colored strip */}
-        <div className="absolute top-0 left-0 right-0 h-2 flex">
-          <div className="w-1/4 bg-[#B4F000]"></div>
-          <div className="w-1/4 bg-[#FFE600]"></div>
-          <div className="w-1/4 bg-[#22D3EE]"></div>
-          <div className="w-1/4 bg-[#FF70A6]"></div>
-        </div>
-
         {/* Search Input */}
-        <div className="relative flex-1 mt-1">
-          <Search className="w-4 h-4 text-[#5D7057] absolute left-3.5 top-1/2 -translate-y-1/2" />
+        <div className="relative flex-1">
+          <Search className="w-4 h-4 text-[#71717A] absolute left-3 top-1/2 -translate-y-1/2" />
           <input
             type="text"
-            placeholder="Search specimen barcode, type, or custodian..."
+            placeholder="Search specimen barcode, sample type, or custodian address..."
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            className="pl-10 text-sm bg-[#FFFFFF] text-[#162013] border-2 border-[#162013] rounded-xl font-bold placeholder:text-[#8B9D85] shadow-[2px_2px_0px_#162013]"
+            className="w-full pl-9 pr-3 py-2 text-xs sm:text-sm brutal-input font-mono placeholder:text-[#A1A1AA]"
           />
         </div>
 
-        {/* Filters */}
-        <div className="flex flex-wrap sm:flex-nowrap items-center gap-2 sm:gap-3 mt-1">
-          
+        {/* Filters and CTA */}
+        <div className="flex flex-wrap sm:flex-nowrap items-center gap-2">
           <select
             value={statusFilter}
             onChange={(e) => setStatusFilter(e.target.value)}
-            className="flex-1 sm:w-auto text-xs py-2 px-3 bg-[#FFFFFF] border-2 border-[#162013] text-[#162013] rounded-xl font-black min-h-[42px] cursor-pointer shadow-[2.5px_2.5px_0px_#162013]"
+            className="text-xs py-2 px-2.5 brutal-input font-bold cursor-pointer"
           >
             <option value="all">Status: All</option>
             <option value="1">Active</option>
@@ -137,7 +119,7 @@ export default function SampleExplorer({
           <select
             value={typeFilter}
             onChange={(e) => setTypeFilter(e.target.value)}
-            className="flex-1 sm:w-auto text-xs py-2 px-3 bg-[#FFFFFF] border-2 border-[#162013] text-[#162013] rounded-xl font-black min-h-[42px] cursor-pointer shadow-[2.5px_2.5px_0px_#162013]"
+            className="text-xs py-2 px-2.5 brutal-input font-bold cursor-pointer"
           >
             <option value="all">Type: All</option>
             <option value="blood">Blood</option>
@@ -148,9 +130,9 @@ export default function SampleExplorer({
 
           <button
             onClick={onOpenRegister}
-            className="btn-lime text-xs w-full sm:w-auto shrink-0 uppercase font-black"
+            className="brutal-btn brutal-btn-primary text-xs px-3.5 py-2 shrink-0 uppercase"
           >
-            <PlusCircle className="w-4 h-4 shrink-0" />
+            <PlusCircle className="w-3.5 h-3.5" />
             <span>Register Specimen</span>
           </button>
         </div>
@@ -158,96 +140,105 @@ export default function SampleExplorer({
       </div>
 
       {/* Specimen Cards Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-5">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3.5 sm:gap-4">
         {filtered.length === 0 ? (
-          <div className="col-span-full bg-[#FFFFFF] p-10 text-center border-[3px] border-[#162013] rounded-2xl shadow-[5px_5px_0px_#162013]">
-            <p className="text-base font-extrabold text-[#162013] uppercase font-mono">No specimens found</p>
-            <p className="text-xs text-[#5D7057] mt-1 font-bold">
+          <div className="col-span-full brutal-card p-10 text-center bg-[#FFFFFF]">
+            <Layers className="w-8 h-8 text-[#71717A] mx-auto mb-2" />
+            <p className="text-sm font-extrabold text-[#0A0A0A] uppercase font-mono">No specimens found</p>
+            <p className="text-xs text-[#71717A] mt-1">
               Adjust your search keywords or register a new biological specimen.
             </p>
           </div>
         ) : (
-          filtered.map((s) => {
+          filtered.map((s, idx) => {
             const statusCfg = STATUS_CONFIG[s.status] || STATUS_CONFIG[0];
             const isChild = s.parentId && s.parentId !== "0x0000000000000000000000000000000000000000000000000000000000000000";
             const children = sandboxData.childrenMap?.[s.sampleId] || [];
-            const typeTheme = getTypeColor(s.sampleType);
+            const typeTheme = getTypeTheme(s.sampleType);
 
             return (
-              <div
+              <motion.div
                 key={s.sampleId}
-                className="bg-[#FFFFFF] border-[3px] border-[#162013] rounded-2xl shadow-[4.5px_4.5px_0px_#162013] hover:translate-x-[-1.5px] hover:translate-y-[-1.5px] hover:shadow-[6.5px_6.5px_0px_#162013] flex flex-col justify-between transition-all group overflow-hidden"
+                initial={{ opacity: 0, y: 15 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.2, delay: Math.min(idx * 0.03, 0.25) }}
+                whileHover={{ y: -4, x: -2 }}
+                className="brutal-card bg-[#FFFFFF] flex flex-col justify-between overflow-hidden relative group"
               >
-                {/* Colorful Neo-Brutalist Top Category Banner */}
-                <div className={`px-4 py-2 border-b-2 border-[#162013] flex items-center justify-between ${typeTheme.bar}`}>
-                  <span className="text-[10px] font-black tracking-wider uppercase font-mono text-[#162013] flex items-center gap-1.5">
-                    <span className="w-2 h-2 rounded-full bg-[#162013]"></span>
+                {/* High-tech Cryptographic Laser Beam on Hover (Absolute positioning) */}
+                <div className="absolute inset-0 pointer-events-none opacity-0 group-hover:opacity-100 transition-opacity">
+                  <div className="animate-laser" />
+                </div>
+
+                {/* Top Category Ribbon */}
+                <div className="px-3.5 py-1.5 border-b-2 border-[#0A0A0A] bg-[#F7F8F4] flex items-center justify-between">
+                  <span className={`text-[9px] font-mono font-bold px-2 py-0.5 rounded border ${typeTheme.pill}`}>
                     {typeTheme.tag}
                   </span>
-                  <span className={`text-[10px] font-mono px-2 py-0.5 rounded-full border-2 border-[#162013] shadow-[1px_1px_0px_#162013] font-black uppercase ${
-                    s.status === 1 ? "bg-[#FFFFFF] text-[#162013]" :
-                    s.status === 2 ? "bg-[#FFE600] text-[#162013]" :
-                    s.status === 3 ? "bg-[#FF6B4A] text-[#FFFFFF]" :
-                    "bg-[#FFFFFF] text-[#162013]"
+                  <span className={`text-[9px] font-mono px-2 py-0.5 rounded border border-[#0A0A0A] font-extrabold uppercase ${
+                    s.status === 1 ? "bg-[#D7FB38] text-[#0A0A0A]" :
+                    s.status === 2 ? "bg-[#38BDF8] text-[#0A0A0A]" :
+                    s.status === 3 ? "bg-[#FF5A5F] text-white animate-pulse" :
+                    "bg-[#F4F4F5] text-[#0A0A0A]"
                   }`}>
                     {statusCfg.label}
                   </span>
                 </div>
 
-                <div className="p-4 sm:p-5">
+                <div className="p-3.5 sm:p-4 flex-1">
                   {/* Card Header: Barcode & Aliquot Pill */}
-                  <div className="flex items-start justify-between gap-2.5">
+                  <div className="flex items-start justify-between gap-2">
                     <div className="min-w-0">
-                      <div className="flex items-center gap-2 flex-wrap">
-                        <h3 className="text-base sm:text-lg font-black text-[#162013] group-hover:text-[#435E2F] transition-colors font-mono truncate">
+                      <div className="flex items-center gap-1.5 flex-wrap">
+                        <h3 className="text-base font-black text-[#0A0A0A] font-mono truncate">
                           {s.externalId}
                         </h3>
                         {isChild && (
-                          <span className="text-[10px] font-mono bg-[#FFE600] text-[#162013] border-2 border-[#162013] px-2 py-0.2 rounded font-black uppercase shadow-[1.5px_1.5px_0px_#162013] -rotate-1">
+                          <span className="text-[9px] font-mono bg-[#FDE047] text-[#0A0A0A] border border-[#0A0A0A] px-1.5 py-0.2 rounded font-extrabold uppercase">
                             Aliquot
                           </span>
                         )}
                       </div>
-                      <p className="text-xs text-[#33442E] font-bold mt-0.5 truncate uppercase tracking-wider">
+                      <p className="text-xs text-[#52525B] mt-0.5 font-bold truncate">
                         {s.sampleType}
                       </p>
                     </div>
                   </div>
 
                   {/* Metadata fields */}
-                  <div className="mt-4 space-y-2 text-xs">
+                  <div className="mt-3 space-y-1.5 text-xs">
                     
-                    <div className="flex items-center justify-between py-1.5 border-b border-[#162013]/20">
-                      <span className="text-[#5D7057] flex items-center gap-1.5 font-bold uppercase text-[11px]">
-                        <Building className="w-3.5 h-3.5 text-[#435E2F]" /> Custodian:
+                    <div className="flex items-center justify-between py-1 border-b border-[#E5E7EB]">
+                      <span className="text-[#52525B] flex items-center gap-1 text-[11px] font-semibold">
+                        <Building className="w-3 h-3 text-[#0A0A0A]" /> Custodian:
                       </span>
-                      <span className="font-black text-[#162013] text-right truncate max-w-[150px]">
+                      <span className="font-bold text-[#0A0A0A] text-right truncate max-w-[150px]">
                         {getOrgName(s.custodian)}
                       </span>
                     </div>
 
-                    <div className="flex items-center justify-between py-1.5 border-b border-[#162013]/20">
-                      <span className="text-[#5D7057] flex items-center gap-1.5 font-bold uppercase text-[11px]">
-                        <Calendar className="w-3.5 h-3.5 text-[#435E2F]" /> Collected:
+                    <div className="flex items-center justify-between py-1 border-b border-[#E5E7EB]">
+                      <span className="text-[#52525B] flex items-center gap-1 text-[11px] font-semibold">
+                        <Calendar className="w-3 h-3 text-[#0A0A0A]" /> Collected:
                       </span>
-                      <span className="text-[#162013] font-bold font-mono">
+                      <span className="text-[#0A0A0A] font-bold font-mono">
                         {formatTimestamp(s.collectedAt)}
                       </span>
                     </div>
 
-                    <div className="flex items-center justify-between py-1.5 border-b border-[#162013]/20">
-                      <span className="text-[#5D7057] font-bold uppercase text-[11px]">Hash Anchor:</span>
-                      <span className="font-mono text-[#162013] font-black text-[11px] bg-[#EAF2E5] px-2 py-0.5 rounded border border-[#162013] shadow-[1px_1px_0px_#162013]">
+                    <div className="flex items-center justify-between py-1 border-b border-[#E5E7EB]">
+                      <span className="text-[#52525B] text-[11px] font-semibold">Anchor:</span>
+                      <span className="font-mono text-[#0A0A0A] font-black text-[11px] bg-[#F7F8F4] px-1.5 py-0.2 rounded border border-[#0A0A0A]">
                         {shortHash(s.headHash, 4)}
                       </span>
                     </div>
 
                     {children.length > 0 && (
-                      <div className="flex items-center justify-between py-1.5 border-b border-[#162013]/20">
-                        <span className="text-[#5D7057] flex items-center gap-1.5 font-bold uppercase text-[11px]">
-                          <GitFork className="w-3.5 h-3.5 text-[#FF70A6]" /> Derived Aliquots:
+                      <div className="flex items-center justify-between py-1 border-b border-[#E5E7EB]">
+                        <span className="text-[#52525B] flex items-center gap-1 text-[11px] font-semibold">
+                          <GitFork className="w-3 h-3 text-[#C084FC]" /> Child Aliquots:
                         </span>
-                        <span className="font-black text-[#162013] bg-[#FCE7F3] px-2 py-0.5 rounded border border-[#162013] font-mono shadow-[1px_1px_0px_#162013]">
+                        <span className="font-mono text-[#0A0A0A] bg-[#F3E8FF] border border-[#0A0A0A] px-1.5 py-0.2 rounded text-[10px] font-bold">
                           {children.length} vials
                         </span>
                       </div>
@@ -256,49 +247,49 @@ export default function SampleExplorer({
                   </div>
                 </div>
 
-                {/* Card Footer Actions - Multi-Color Tactile Neo-Brutalist Buttons */}
-                <div className="p-3 bg-[#F4F7F1] border-t-2 border-[#162013] flex items-center justify-between gap-1.5">
-                  <div className="flex items-center gap-1.5">
+                {/* Card Footer Actions */}
+                <div className="p-2.5 bg-[#F7F8F4] border-t-2 border-[#0A0A0A] flex items-center justify-between gap-1.5">
+                  <div className="flex items-center gap-1">
                     <button
                       onClick={() => onOpenQr(s)}
                       title="Print Cryo QR Barcode"
-                      className="p-2 rounded-xl bg-[#FFE600] text-[#162013] hover:bg-[#FACC15] transition-all border-2 border-[#162013] shadow-[1.5px_1.5px_0px_#162013] active:translate-x-0.5 active:translate-y-0.5 min-h-[36px] min-w-[36px] flex items-center justify-center font-bold"
+                      className="p-1.5 rounded-lg bg-[#FFFFFF] hover:bg-[#F4F4F5] border border-[#0A0A0A] shadow-[1px_1px_0px_#0A0A0A] active:translate-x-[1px] active:translate-y-[1px] cursor-pointer"
                     >
-                      <QrCode className="w-4 h-4" />
+                      <QrCode className="w-3.5 h-3.5" />
                     </button>
                     <button
                       onClick={() => onOpenTransfer(s)}
                       title="Initiate Transfer Handoff"
-                      className="p-2 rounded-xl bg-[#B4F000] text-[#162013] hover:bg-[#A3E635] transition-all border-2 border-[#162013] shadow-[1.5px_1.5px_0px_#162013] active:translate-x-0.5 active:translate-y-0.5 min-h-[36px] min-w-[36px] flex items-center justify-center font-bold"
+                      className="p-1.5 rounded-lg bg-[#FFFFFF] hover:bg-[#F4F4F5] border border-[#0A0A0A] shadow-[1px_1px_0px_#0A0A0A] active:translate-x-[1px] active:translate-y-[1px] cursor-pointer"
                     >
-                      <ArrowLeftRight className="w-4 h-4" />
+                      <ArrowLeftRight className="w-3.5 h-3.5" />
                     </button>
                     <button
                       onClick={() => onOpenStorage(s)}
                       title="Log Storage & Temperature"
-                      className="p-2 rounded-xl bg-[#22D3EE] text-[#162013] hover:bg-[#38BDF8] transition-all border-2 border-[#162013] shadow-[1.5px_1.5px_0px_#162013] active:translate-x-0.5 active:translate-y-0.5 min-h-[36px] min-w-[36px] flex items-center justify-center font-bold"
+                      className="p-1.5 rounded-lg bg-[#FFFFFF] hover:bg-[#F4F4F5] border border-[#0A0A0A] shadow-[1px_1px_0px_#0A0A0A] active:translate-x-[1px] active:translate-y-[1px] cursor-pointer"
                     >
-                      <Thermometer className="w-4 h-4" />
+                      <Thermometer className="w-3.5 h-3.5" />
                     </button>
                     <button
                       onClick={() => onOpenAliquot(s)}
                       title="Split Aliquot Child"
-                      className="p-2 rounded-xl bg-[#FF70A6] text-white hover:bg-[#F43F5E] transition-all border-2 border-[#162013] shadow-[1.5px_1.5px_0px_#162013] active:translate-x-0.5 active:translate-y-0.5 min-h-[36px] min-w-[36px] flex items-center justify-center font-bold"
+                      className="p-1.5 rounded-lg bg-[#FFFFFF] hover:bg-[#F4F4F5] border border-[#0A0A0A] shadow-[1px_1px_0px_#0A0A0A] active:translate-x-[1px] active:translate-y-[1px] cursor-pointer"
                     >
-                      <GitFork className="w-4 h-4" />
+                      <GitFork className="w-3.5 h-3.5" />
                     </button>
                   </div>
 
                   <button
                     onClick={() => onSelectSample(s.sampleId)}
-                    className="flex items-center gap-1.5 text-xs font-black text-[#162013] bg-[#FFFFFF] hover:bg-[#B4F000] border-2 border-[#162013] px-3.5 py-1.5 rounded-xl shadow-[2px_2px_0px_#162013] hover:shadow-[3px_3px_0px_#162013] active:translate-x-0.5 active:translate-y-0.5 transition-all min-h-[36px] uppercase tracking-wider font-mono"
+                    className="brutal-btn brutal-btn-primary text-xs px-2.5 py-1 font-mono uppercase"
                   >
                     <span>Inspect</span>
-                    <ArrowRight className="w-3.5 h-3.5" />
+                    <ArrowRight className="w-3 h-3" />
                   </button>
                 </div>
 
-              </div>
+              </motion.div>
             );
           })
         )}

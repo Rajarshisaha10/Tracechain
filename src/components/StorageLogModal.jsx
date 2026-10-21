@@ -36,44 +36,45 @@ export default function StorageLogModal({ sample, onClose, onSuccess }) {
   };
 
   return (
-    <div className="modal-overlay">
-      <div className="modal-content max-w-md bg-[#FFFFFF] border-[3px] border-[#162013] shadow-[8px_8px_0px_#162013] rounded-2xl">
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-5 bg-black/60 backdrop-blur-sm animate-fadeIn">
+      <div className="bg-[#FFFFFF] border-[2.5px] border-[#0A0A0A] shadow-[6px_6px_0px_#0A0A0A] rounded-2xl max-w-md w-full overflow-hidden text-[#0A0A0A]">
         
-        <div className="p-5 border-b-[2.5px] border-[#162013] flex items-center justify-between bg-[#FFFFFF]">
+        <div className="p-4 sm:p-5 border-b-2 border-[#0A0A0A] bg-[#FFFFFF] flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <div className="w-9 h-9 rounded-xl bg-[#EAF2E5] text-[#435E2F] flex items-center justify-center border-2 border-[#162013] shadow-[1.5px_1.5px_0px_#162013]">
+            <div className="w-9 h-9 rounded-xl bg-[#38BDF8] text-[#0A0A0A] flex items-center justify-center border-2 border-[#0A0A0A] shadow-[2px_2px_0px_#0A0A0A]">
               <Thermometer className="w-5 h-5" />
             </div>
             <div>
-              <h3 className="text-sm font-extrabold text-[#162013] uppercase font-display tracking-tight">Log Storage & Temperature</h3>
-              <p className="text-[11px] text-[#5D7057] font-mono font-bold">{sample.externalId}</p>
+              <h3 className="text-base font-extrabold text-[#0A0A0A] tracking-tight">Log Storage & Temperature</h3>
+              <p className="text-[11px] text-[#52525B] font-mono font-bold">{sample.externalId}</p>
             </div>
           </div>
-          <button onClick={onClose} className="p-1.5 rounded-lg bg-[#FFFFFF] text-[#162013] hover:bg-[#FFE4E6] border-2 border-[#162013] shadow-[1.5px_1.5px_0px_#162013] active:translate-x-0.5 active:translate-y-0.5 transition-all">
+          <button onClick={onClose} className="p-1.5 rounded-lg bg-[#FFFFFF] hover:bg-[#FFE4E6] border-2 border-[#0A0A0A] shadow-[1.5px_1.5px_0px_#0A0A0A] active:translate-x-[1px] active:translate-y-[1px] transition-all cursor-pointer">
             <X className="w-4 h-4" />
           </button>
         </div>
 
-        <form onSubmit={handleSubmit} className="p-6 space-y-4">
+        <form onSubmit={handleSubmit} className="p-5 sm:p-6 space-y-4">
           {error && (
-            <div className="p-3.5 rounded-xl bg-[#FFE4E6] border-2 border-[#162013] text-[#DC2626] text-xs font-extrabold shadow-[2px_2px_0px_#162013]">
+            <div className="p-3.5 rounded-xl bg-[#FFF1F2] border-2 border-[#FF5A5F] text-[#BE123C] text-xs font-bold shadow-[2px_2px_0px_#FF5A5F]">
               {error}
             </div>
           )}
 
           <div>
-            <label>Physical Storage Location</label>
+            <label className="block text-xs font-bold uppercase tracking-wider text-[#0A0A0A] mb-1.5">Physical Storage Location</label>
             <input
               type="text"
               value={location}
               onChange={(e) => setLocation(e.target.value)}
               placeholder="e.g. CryoFreezer A-2, Tray 4"
               required
+              className="brutal-input w-full text-xs sm:text-sm p-2.5 font-mono"
             />
           </div>
 
           <div>
-            <label>Storage Temperature (°C)</label>
+            <label className="block text-xs font-bold uppercase tracking-wider text-[#0A0A0A] mb-1.5">Storage Temperature (°C)</label>
             <div className="space-y-2.5">
               <input
                 type="number"
@@ -81,27 +82,27 @@ export default function StorageLogModal({ sample, onClose, onSuccess }) {
                 value={tempCelsius}
                 onChange={(e) => setTempCelsius(e.target.value)}
                 placeholder="-80.0"
-                className="w-full font-mono text-sm font-bold"
+                className="brutal-input w-full text-xs sm:text-sm p-2.5 font-mono font-bold"
               />
               <div className="flex gap-2">
                 <button
                   type="button"
                   onClick={() => setTempCelsius("-80.0")}
-                  className="flex-1 py-1.5 text-xs bg-[#FFFFFF] hover:bg-[#EAF2E5] border-2 border-[#162013] rounded-lg text-[#162013] font-extrabold font-mono shadow-[2px_2px_0px_#162013] active:translate-x-0.5 active:translate-y-0.5 transition-all"
+                  className="flex-1 py-1.5 text-xs bg-[#FFFFFF] hover:bg-[#D7FB38] border-2 border-[#0A0A0A] shadow-[1.5px_1.5px_0px_#0A0A0A] active:translate-x-[1px] active:translate-y-[1px] rounded-lg text-[#0A0A0A] font-mono font-bold transition-all cursor-pointer"
                 >
                   -80°C
                 </button>
                 <button
                   type="button"
                   onClick={() => setTempCelsius("-20.0")}
-                  className="flex-1 py-1.5 text-xs bg-[#FFFFFF] hover:bg-[#EAF2E5] border-2 border-[#162013] rounded-lg text-[#162013] font-extrabold font-mono shadow-[2px_2px_0px_#162013] active:translate-x-0.5 active:translate-y-0.5 transition-all"
+                  className="flex-1 py-1.5 text-xs bg-[#FFFFFF] hover:bg-[#38BDF8] border-2 border-[#0A0A0A] shadow-[1.5px_1.5px_0px_#0A0A0A] active:translate-x-[1px] active:translate-y-[1px] rounded-lg text-[#0A0A0A] font-mono font-bold transition-all cursor-pointer"
                 >
                   -20°C
                 </button>
                 <button
                   type="button"
                   onClick={() => setTempCelsius("4.0")}
-                  className="flex-1 py-1.5 text-xs bg-[#FFFFFF] hover:bg-[#EAF2E5] border-2 border-[#162013] rounded-lg text-[#162013] font-extrabold font-mono shadow-[2px_2px_0px_#162013] active:translate-x-0.5 active:translate-y-0.5 transition-all"
+                  className="flex-1 py-1.5 text-xs bg-[#FFFFFF] hover:bg-[#FDE047] border-2 border-[#0A0A0A] shadow-[1.5px_1.5px_0px_#0A0A0A] active:translate-x-[1px] active:translate-y-[1px] rounded-lg text-[#0A0A0A] font-mono font-bold transition-all cursor-pointer"
                 >
                   +4°C
                 </button>
@@ -110,20 +111,21 @@ export default function StorageLogModal({ sample, onClose, onSuccess }) {
           </div>
 
           <div>
-            <label>Inspection Note</label>
+            <label className="block text-xs font-bold uppercase tracking-wider text-[#0A0A0A] mb-1.5">Inspection Note</label>
             <input
               type="text"
               value={note}
               onChange={(e) => setNote(e.target.value)}
               placeholder="e.g. Verified data logger telemetry"
+              className="brutal-input w-full text-xs sm:text-sm p-2.5 font-mono"
             />
           </div>
 
-          <div className="pt-2 flex flex-col-reverse sm:flex-row justify-end gap-2.5">
-            <button type="button" onClick={onClose} className="btn-secondary text-xs w-full sm:w-auto uppercase">
+          <div className="pt-3 flex flex-col-reverse sm:flex-row justify-end gap-2.5 border-t-2 border-[#0A0A0A]">
+            <button type="button" onClick={onClose} className="brutal-btn brutal-btn-secondary text-xs py-2.5 px-4 cursor-pointer">
               Cancel
             </button>
-            <button type="submit" disabled={loading} className="btn-primary text-xs w-full sm:w-auto justify-center uppercase font-extrabold">
+            <button type="submit" disabled={loading} className="brutal-btn brutal-btn-cyan text-xs py-2.5 px-5 uppercase flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50">
               {loading ? "Recording..." : "Record on Chain"}
             </button>
           </div>

@@ -21,7 +21,7 @@ export default function BarcodeModal({ sample, onClose }) {
       width: 280,
       margin: 1.5,
       color: {
-        dark: "#162013",
+        dark: "#0F172A",
         light: "#FFFFFF"
       }
     }).then(setQrUrl).catch(console.error);
@@ -40,41 +40,49 @@ export default function BarcodeModal({ sample, onClose }) {
   };
 
   return (
-    <div className="modal-overlay">
-      <div className="modal-content max-w-sm text-center bg-[#FFFFFF] border-[3px] border-[#162013] shadow-[8px_8px_0px_#162013] rounded-2xl">
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-5 bg-black/60 backdrop-blur-sm animate-fadeIn">
+      <div className="bg-[#FFFFFF] border-[2.5px] border-[#0A0A0A] shadow-[6px_6px_0px_#0A0A0A] rounded-2xl max-w-sm w-full text-center overflow-hidden text-[#0A0A0A]">
         
-        <div className="p-5 border-b-[2.5px] border-[#162013] flex items-center justify-between bg-[#FFFFFF]">
-          <div className="flex items-center gap-2">
-            <QrCode className="w-5 h-5 text-[#435E2F]" />
-            <h3 className="text-sm font-extrabold text-[#162013] uppercase font-display tracking-tight">Cryo-Vial Barcode Label</h3>
+        <div className="p-4 sm:p-5 border-b-2 border-[#0A0A0A] bg-[#FFFFFF] flex items-center justify-between text-left">
+          <div className="flex items-center gap-3">
+            <div className="w-9 h-9 rounded-xl bg-[#D7FB38] text-[#0A0A0A] flex items-center justify-center border-2 border-[#0A0A0A] shadow-[2px_2px_0px_#0A0A0A]">
+              <QrCode className="w-5 h-5" />
+            </div>
+            <div>
+              <h3 className="text-base font-extrabold text-[#0A0A0A] tracking-tight">Cryo-Vial Barcode Label</h3>
+              <p className="text-[11px] text-[#52525B] font-mono font-bold">Physical specimen tag</p>
+            </div>
           </div>
-          <button onClick={onClose} className="p-1.5 rounded-lg bg-[#FFFFFF] text-[#162013] hover:bg-[#FFE4E6] border-2 border-[#162013] shadow-[1.5px_1.5px_0px_#162013] active:translate-x-0.5 active:translate-y-0.5 transition-all">
+          <button onClick={onClose} className="p-1.5 rounded-lg bg-[#FFFFFF] hover:bg-[#FFE4E6] border-2 border-[#0A0A0A] shadow-[1.5px_1.5px_0px_#0A0A0A] active:translate-x-[1px] active:translate-y-[1px] transition-all cursor-pointer">
             <X className="w-4 h-4" />
           </button>
         </div>
 
-        <div className="p-6 space-y-4">
+        <div className="p-5 sm:p-6 space-y-4">
           {/* Printable Label Preview Box */}
-          <div className="p-5 bg-[#FFFFFF] rounded-2xl text-[#162013] border-[2.5px] border-[#162013] shadow-[4px_4px_0px_#162013] inline-block w-full">
-            <div className="text-[10px] font-extrabold tracking-widest text-[#435E2F] uppercase font-mono">
+          <div className="p-5 bg-[#FFFFFF] rounded-xl text-[#0A0A0A] shadow-[4px_4px_0px_#0A0A0A] inline-block w-full border-2 border-[#0A0A0A]">
+            <div className="text-[10px] font-black tracking-widest text-[#0A0A0A] uppercase font-mono bg-[#D7FB38] border-2 border-[#0A0A0A] px-2 py-0.5 rounded-md inline-block shadow-[1px_1px_0px_#0A0A0A]">
               TRACECHAIN REGISTRY // EVM
             </div>
             
             {qrUrl && (
-              <img
-                src={qrUrl}
-                alt="Barcode QR"
-                className="w-44 h-44 mx-auto my-3 rounded-lg border-2 border-[#162013] shadow-[2px_2px_0px_#162013]"
-              />
+              <div className="relative w-44 h-44 mx-auto my-3 overflow-hidden rounded-lg border-2 border-[#0A0A0A]">
+                <img
+                  src={qrUrl}
+                  alt="Barcode QR"
+                  className="w-full h-full object-contain"
+                />
+                <div className="animate-laser" />
+              </div>
             )}
 
-            <div className="font-mono text-base font-extrabold tracking-wider text-[#162013]">
+            <div className="font-mono text-base font-black tracking-wider text-[#0A0A0A]">
               {sample.externalId}
             </div>
-            <div className="text-xs font-extrabold text-[#5D7057] mt-0.5 uppercase">
+            <div className="text-xs font-bold text-[#52525B] mt-0.5 uppercase">
               {sample.sampleType}
             </div>
-            <div className="text-[10px] font-mono text-[#162013] bg-[#EAF2E5] px-2 py-0.5 rounded border border-[#162013] mt-2 truncate font-bold">
+            <div className="text-[10px] font-mono text-[#0A0A0A] font-bold bg-[#F7F8F4] px-2 py-1 rounded-md border-2 border-[#0A0A0A] mt-2 truncate shadow-[1px_1px_0px_#0A0A0A]">
               ID: {shortHash(sample.sampleId, 6)}
             </div>
           </div>
@@ -82,14 +90,14 @@ export default function BarcodeModal({ sample, onClose }) {
           <div className="space-y-2.5">
             <button
               onClick={handleCopyId}
-              className="btn-secondary w-full text-xs py-2.5 flex items-center justify-center gap-2 font-extrabold uppercase font-mono"
+              className="brutal-btn brutal-btn-secondary w-full text-xs py-2.5 cursor-pointer font-mono"
             >
-              {copied ? <Check className="w-4 h-4 text-[#435E2F]" /> : <Copy className="w-4 h-4" />}
+              {copied ? <Check className="w-4 h-4 text-[#0A0A0A]" /> : <Copy className="w-4 h-4" />}
               <span>{copied ? "Sample ID Copied" : "Copy Cryptographic ID"}</span>
             </button>
             <button
               onClick={handlePrint}
-              className="btn-primary w-full text-xs py-2.5 flex items-center justify-center gap-2 font-extrabold uppercase"
+              className="brutal-btn brutal-btn-primary w-full text-xs py-2.5 cursor-pointer uppercase"
             >
               <Printer className="w-4 h-4" />
               <span>Print Cryo-Vial Label</span>

@@ -1,4 +1,5 @@
 import React, { useState } from "react";
+import { motion, AnimatePresence } from "framer-motion";
 import { ChainProvider, useChain } from "./context/ChainContext";
 import Navbar from "./components/Navbar";
 import Dashboard from "./components/Dashboard";
@@ -17,6 +18,7 @@ import StorageLogModal from "./components/StorageLogModal";
 import BarcodeModal from "./components/BarcodeModal";
 
 import { shortHash } from "./utils/formatters";
+import { ShieldCheck, Cpu } from "lucide-react";
 
 function MainContent() {
   const [activeTab, setActiveTab] = useState("dashboard");
@@ -30,57 +32,67 @@ function MainContent() {
   const [qrSample, setQrSample] = useState(null);
 
   return (
-    <div className="min-h-screen flex flex-col bg-[#F4F7F1] text-[#162013] relative selection:bg-[#8FB339] selection:text-[#162013]">
+    <div className="min-h-screen flex flex-col bg-[#F7F8F4] text-[#0A0A0A] relative selection:bg-[#D7FB38] selection:text-[#0A0A0A]">
       
-      {/* Top Navbar & Mobile Bottom Bar */}
+      {/* Top Fixed / Sticky Navigation Bar */}
       <Navbar activeTab={activeTab} setActiveTab={setActiveTab} />
 
-      {/* Neo-Brutalist Live Blockchain & Telemetry Marquee */}
+      {/* Real-time Technical Telemetry Ribbon */}
       <NeoTicker />
 
-      {/* Main Container with Mobile Bottom Spacing */}
-      <main className="max-w-7xl mx-auto w-full px-3.5 sm:px-6 lg:px-8 py-4 sm:py-6 flex-1 pb-24 md:pb-8">
-        {activeTab === "dashboard" && (
-          <Dashboard
-            onSelectSample={(id) => setInspectSampleId(id)}
-            onOpenRegister={() => setRegisterModalOpen(true)}
-            onOpenTransfer={() => setActiveTab("custody")}
-            onOpenAliquot={() => setActiveTab("lineage")}
-          />
-        )}
+      {/* Main Content Area - Moved up with animated tab transitions */}
+      <main className="max-w-7xl mx-auto w-full px-3.5 sm:px-6 lg:px-8 pt-3 sm:pt-4 pb-14 flex-1">
+        <AnimatePresence mode="wait">
+          <motion.div
+            key={activeTab}
+            initial={{ opacity: 0, y: 8 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -8 }}
+            transition={{ duration: 0.16, ease: "easeOut" }}
+          >
+            {activeTab === "dashboard" && (
+              <Dashboard
+                onSelectSample={(id) => setInspectSampleId(id)}
+                onOpenRegister={() => setRegisterModalOpen(true)}
+                onOpenTransfer={() => setActiveTab("custody")}
+                onOpenAliquot={() => setActiveTab("lineage")}
+              />
+            )}
 
-        {activeTab === "samples" && (
-          <SampleExplorer
-            onSelectSample={(id) => setInspectSampleId(id)}
-            onOpenRegister={() => setRegisterModalOpen(true)}
-            onOpenTransfer={(s) => setTransferSample(s)}
-            onOpenAliquot={(s) => setActiveTab("lineage")}
-            onOpenStorage={(s) => setStorageSample(s)}
-            onOpenQr={(s) => setQrSample(s)}
-          />
-        )}
+            {activeTab === "samples" && (
+              <SampleExplorer
+                onSelectSample={(id) => setInspectSampleId(id)}
+                onOpenRegister={() => setRegisterModalOpen(true)}
+                onOpenTransfer={(s) => setTransferSample(s)}
+                onOpenAliquot={(s) => setActiveTab("lineage")}
+                onOpenStorage={(s) => setStorageSample(s)}
+                onOpenQr={(s) => setQrSample(s)}
+              />
+            )}
 
-        {activeTab === "custody" && (
-          <CustodyTransfers
-            onSelectSample={(id) => setInspectSampleId(id)}
-          />
-        )}
+            {activeTab === "custody" && (
+              <CustodyTransfers
+                onSelectSample={(id) => setInspectSampleId(id)}
+              />
+            )}
 
-        {activeTab === "lineage" && (
-          <AliquotManager
-            onSelectSample={(id) => setInspectSampleId(id)}
-          />
-        )}
+            {activeTab === "lineage" && (
+              <AliquotManager
+                onSelectSample={(id) => setInspectSampleId(id)}
+              />
+            )}
 
-        {activeTab === "compliance" && (
-          <AuditCompliance
-            onSelectSample={(id) => setInspectSampleId(id)}
-          />
-        )}
+            {activeTab === "compliance" && (
+              <AuditCompliance
+                onSelectSample={(id) => setInspectSampleId(id)}
+              />
+            )}
 
-        {activeTab === "directory" && (
-          <OrgDirectory />
-        )}
+            {activeTab === "directory" && (
+              <OrgDirectory />
+            )}
+          </motion.div>
+        </AnimatePresence>
       </main>
 
       {/* Modals */}
@@ -128,26 +140,25 @@ function MainContent() {
         />
       )}
 
-      {/* Desktop Footer */}
-      <footer className="hidden md:block border-t-[2.5px] border-[#162013] bg-[#FFFFFF] px-4 lg:px-8 py-5 text-xs text-[#33442E] mt-auto">
-        <div className="max-w-7xl mx-auto flex flex-col md:flex-row items-center justify-between gap-4">
+      {/* Crisp Professional Neo-Brutalist Footer */}
+      <footer className="border-t-2 border-[#0A0A0A] bg-[#FFFFFF] px-4 sm:px-6 lg:px-8 py-3 text-xs text-[#0A0A0A] mt-auto">
+        <div className="max-w-7xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-3">
           <div className="flex items-center gap-2.5">
-            <div className="w-5 h-5 rounded-md bg-[#435E2F] border-2 border-[#162013] flex items-center justify-center shadow-[1.5px_1.5px_0px_#162013]">
-              <div className="w-1.5 h-1.5 rounded-full bg-[#FFFFFF]"></div>
-            </div>
-            <span className="font-extrabold tracking-tight text-[#162013] uppercase">
-              Tracechain EVM Core • Solidity ^0.8.20
+            <span className="w-2.5 h-2.5 rounded-full bg-[#D7FB38] border-2 border-[#0A0A0A] inline-block animate-pulse"></span>
+            <span className="font-extrabold uppercase font-mono tracking-tight text-[11px]">
+              TRACECHAIN EVM CORE • SOLIDITY ^0.8.20
             </span>
           </div>
 
           <div className="flex items-center gap-3 font-mono text-[11px]">
-            <span>Contract: <span className="text-[#2A3D1D] font-bold bg-[#EAF2E5] px-2 py-0.5 rounded border border-[#162013]">{shortHash(contractAddress, 5)}</span></span>
+            <span>Contract: <strong className="bg-[#F3F4F6] px-2 py-0.5 rounded border border-[#0A0A0A] font-bold">{shortHash(contractAddress, 5)}</strong></span>
             <span>•</span>
-            <span>Mode: <span className="text-[#162013] font-extrabold uppercase bg-[#8FB339] px-2.5 py-0.5 rounded-full border-2 border-[#162013] shadow-[1.5px_1.5px_0px_#162013]">{mode}</span></span>
+            <span>Mode: <strong className="bg-[#D7FB38] px-2 py-0.5 rounded border border-[#0A0A0A] font-extrabold uppercase">{mode}</strong></span>
           </div>
 
-          <div className="text-[11px] text-[#5D7057] font-bold tracking-wide uppercase">
-            ISO 20387 Biobanking & 21 CFR Part 11 Integrity
+          <div className="flex items-center gap-1.5 text-[11px] font-bold uppercase font-mono text-[#52525B]">
+            <ShieldCheck className="w-3.5 h-3.5 text-[#0A0A0A]" />
+            <span>ISO 20387 Biobanking & 21 CFR §11</span>
           </div>
         </div>
       </footer>
