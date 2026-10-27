@@ -7,6 +7,7 @@ import SampleExplorer from "./components/SampleExplorer";
 import CustodyTransfers from "./components/CustodyTransfers";
 import AliquotManager from "./components/AliquotManager";
 import AuditCompliance from "./components/AuditCompliance";
+import DiscrepancyWorkbench from "./components/DiscrepancyWorkbench";
 import OrgDirectory from "./components/OrgDirectory";
 import NeoTicker from "./components/NeoTicker";
 
@@ -40,7 +41,7 @@ function MainContent() {
       {/* Real-time Technical Telemetry Ribbon */}
       <NeoTicker />
 
-      {/* Main Content Area - Moved up with animated tab transitions */}
+      {/* Main Content Area - Animated tab transitions */}
       <main className="max-w-7xl mx-auto w-full px-3.5 sm:px-6 lg:px-8 pt-3 sm:pt-4 pb-14 flex-1">
         <AnimatePresence mode="wait">
           <motion.div
@@ -56,6 +57,7 @@ function MainContent() {
                 onOpenRegister={() => setRegisterModalOpen(true)}
                 onOpenTransfer={() => setActiveTab("custody")}
                 onOpenAliquot={() => setActiveTab("lineage")}
+                onOpenWorkbench={() => setActiveTab("workbench")}
               />
             )}
 
@@ -84,6 +86,12 @@ function MainContent() {
 
             {activeTab === "compliance" && (
               <AuditCompliance
+                onSelectSample={(id) => setInspectSampleId(id)}
+              />
+            )}
+
+            {activeTab === "workbench" && (
+              <DiscrepancyWorkbench
                 onSelectSample={(id) => setInspectSampleId(id)}
               />
             )}
@@ -146,7 +154,7 @@ function MainContent() {
           <div className="flex items-center gap-2.5">
             <span className="w-2.5 h-2.5 rounded-full bg-[#D7FB38] border-2 border-[#0A0A0A] inline-block animate-pulse"></span>
             <span className="font-extrabold uppercase font-mono tracking-tight text-[11px]">
-              TRACECHAIN EVM CORE • SOLIDITY ^0.8.20
+              TRACECHAIN 2.0 EVM CORE • SOLIDITY ^0.8.20
             </span>
           </div>
 

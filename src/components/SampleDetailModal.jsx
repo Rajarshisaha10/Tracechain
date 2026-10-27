@@ -1,13 +1,15 @@
 import React, { useState } from "react";
 import confetti from "canvas-confetti";
 import { useChain } from "../context/ChainContext";
-import { verifyClientChain } from "../utils/crypto";
+import { verifyClientChain, verifyReportSignature } from "../utils/crypto";
+import { resolveIdentity } from "../services/identityMappingService";
 import {
   formatTimestamp,
   formatTemp,
   shortHash,
   STATUS_CONFIG,
-  RECORD_TYPE_NAMES
+  RECORD_TYPE_NAMES,
+  DISCREPANCY_STATUS_CONFIG
 } from "../utils/formatters";
 import {
   X,
@@ -24,7 +26,11 @@ import {
   Building,
   ArrowLeftRight,
   Flame,
-  Calendar
+  Calendar,
+  EyeOff,
+  Eye,
+  Scale,
+  Award
 } from "lucide-react";
 
 export default function SampleDetailModal({
@@ -35,14 +41,21 @@ export default function SampleDetailModal({
   onOpenAliquot,
   onOpenQr
 }) {
-  const { sandboxData, tamperRecord } = useChain();
+  const { sandboxData, tamperRecord, currentActor, activeAccount } = useChain();
   const sample = sandboxData.samples?.[sampleId];
   const history = sandboxData.histories?.[sampleId] || [];
   const children = sandboxData.childrenMap?.[sampleId] || [];
+  const attestedReports = sandboxData.attestedReports?.[sampleId] || [];
+  const discrepancyCaseIds = sandboxData.sampleDiscrepancyCases?.[sampleId] || [];
 
   const [verifyResult, setVerifyResult] = useState(null);
   const [isVerifying, setIsVerifying] = useState(false);
   const [copiedHash, setCopiedHash] = useState("");
+  const [sigCheckToast, setSigCheckToast] = useState(null);
+
+  // Off-chain identity resolution state (Role-gated)
+  const [unmaskedIdentity, setUnmaskedIdentity] = useState(null);
+  const [hasAttemptedUnmask, setHasAttemptedUnmask] = useState(false);
 
   if (!sample) return null;
 
@@ -78,8 +91,24 @@ export default function SampleDetailModal({
     }
   };
 
+  const handleResolveIdentity = () => {
+    setHasAttemptedUnmask(true);
+    const res = resolveIdentity(sample.blindId, activeAccount, currentActor.orgType);
+    setUnmaskedIdentity(res);
+  };
+
+  const handleVerifyReportSig = (rep) => {
+    const res = verifyReportSignature(rep.reportHash, rep.signature, rep.laboratory);
+    setSigCheckToast({
+      reportHash: rep.reportHash,
+      valid: res.valid,
+      message: res.reason,
+      lab: sandboxData.orgs?.[rep.laboratory]?.name || rep.laboratory
+    });
+  };
+
   const getOrgName = (addr) => {
-    return sandboxData.orgs[addr]?.name || shortHash(addr, 4);
+    return sandboxData.orgs?.[addr]?.name || shortHash(addr, 4);
   };
 
   return (
@@ -100,6 +129,12 @@ export default function SampleDetailModal({
                 <span className="brutal-pill bg-[#D7FB38] text-[10px]">
                   {statusCfg.label}
                 </span>
+                {sample.blindId && (
+                  <span className="brutal-pill bg-[#F7FEE7] text-[#365314] text-[10px] flex items-center gap-1 font-mono">
+                    <EyeOff className="w-2.5 h-2.5" />
+                    {sample.blindId}
+                  </span>
+                )}
                 {isChild && (
                   <span className="brutal-pill bg-[#FDE047] text-[10px]">
                     Aliquot
@@ -180,7 +215,7 @@ export default function SampleDetailModal({
             </div>
           </div>
 
-          {/* Verification Result Banner with Dramatic Animations */}
+          {/* Verification Result Banner */}
           {verifyResult && (
             <div
               className={`p-3.5 rounded-xl border-2 border-[#0A0A0A] shadow-[4px_4px_0px_#0A0A0A] flex items-start gap-2.5 ${
@@ -211,6 +246,149 @@ export default function SampleDetailModal({
                   </div>
                 )}
               </div>
+            </div>
+          )}
+
+          {/* Active Discrepancy Case Alert */}
+          {discrepancyCaseIds.length > 0 && (
+            <div className="p-3 bg-[#FEF3C7] border-2 border-[#D97706] rounded-xl text-xs text-[#92400E] shadow-[2px_2px_0px_#D97706] flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <Scale className="w-4 h-4 text-[#D97706]" />
+                <span className="font-bold">Active Discrepancy Under Investigation: #{shortHash(discrepancyCaseIds[0], 4)}</span>
+              </div>
+              <span className="font-mono text-[10px] font-black uppercase bg-[#FFFFFF] border border-[#0A0A0A] px-2 py-0.5 rounded">
+                See Workbench
+              </span>
+            </div>
+          )}
+
+          {/* Feature One: Off-Chain Privacy & Blind Testing Box */}
+          <div className="p-4 bg-[#FFFFFF] border-2 border-[#0A0A0A] rounded-xl shadow-[3px_3px_0px_#0A0A0A] space-y-2.5">
+            <div className="flex items-center justify-between border-b border-[#0A0A0A]/20 pb-2">
+              <div className="flex items-center gap-2">
+                <EyeOff className="w-4 h-4 text-[#65A30D]" />
+                <h4 className="text-xs font-black uppercase tracking-wider text-[#0A0A0A]">
+                  Blind Testing & Off-Chain Patient Privacy
+                </h4>
+              </div>
+              <span className="text-[10px] font-mono font-extrabold bg-[#F7FEE7] text-[#365314] border border-[#0A0A0A] px-2 py-0.5 rounded">
+                HIPAA / GDPR Boundary
+              </span>
+            </div>
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs">
+              <div>
+                <span className="text-[#52525B] font-bold">Blind Testing Identifier (On-Chain):</span>
+                <div className="font-mono font-black text-sm text-[#0A0A0A] mt-0.5">
+                  {sample.blindId || "Not assigned"}
+                </div>
+                <p className="text-[10px] text-[#71717A] mt-0.5">
+                  Laboratories identify this specimen solely by this opaque blind ID to eliminate confirmation bias.
+                </p>
+              </div>
+
+              <div>
+                <span className="text-[#52525B] font-bold">Patient Identity Mapping:</span>
+                {!hasAttemptedUnmask ? (
+                  <button
+                    onClick={handleResolveIdentity}
+                    className="mt-1 brutal-btn brutal-btn-secondary text-[11px] py-1 px-2.5 w-full cursor-pointer"
+                  >
+                    <Eye className="w-3 h-3 text-[#0A0A0A]" />
+                    <span>Attempt Role-Gated Unmasking</span>
+                  </button>
+                ) : unmaskedIdentity?.masked ? (
+                  <div className="p-2 bg-[#F4F4F5] border border-[#0A0A0A] rounded-lg mt-1 text-[11px] text-[#52525B] leading-tight">
+                    <span className="font-bold text-[#BE123C]">Identity Masked: </span>
+                    {unmaskedIdentity.message}
+                  </div>
+                ) : (
+                  <div className="p-2 bg-[#F7FEE7] border border-[#0A0A0A] rounded-lg mt-1 text-[11px] text-[#365314] space-y-0.5">
+                    <div className="font-bold text-[#0A0A0A]">
+                      Patient: {unmaskedIdentity?.patientData?.patientName} (DOB: {unmaskedIdentity?.patientData?.dob})
+                    </div>
+                    <div className="text-[10px] font-mono text-[#52525B]">
+                      Requisition: {unmaskedIdentity?.patientData?.clinicalRequisition}
+                    </div>
+                    <div className="text-[9px] text-[#15803D] font-mono font-bold">
+                      ✓ Authorized access logged for: {getOrgName(activeAccount)}
+                    </div>
+                  </div>
+                )}
+              </div>
+            </div>
+          </div>
+
+          {/* Feature Two: Cryptographically Attested Laboratory Reports */}
+          {attestedReports.length > 0 && (
+            <div className="p-4 bg-[#FFFFFF] border-2 border-[#0A0A0A] rounded-xl shadow-[3px_3px_0px_#0A0A0A] space-y-3">
+              <div className="flex items-center justify-between border-b border-[#0A0A0A]/20 pb-2">
+                <div className="flex items-center gap-2">
+                  <Award className="w-4 h-4 text-[#D97706]" />
+                  <h4 className="text-xs font-black uppercase tracking-wider text-[#0A0A0A]">
+                    Attested Diagnostic Reports ({attestedReports.length})
+                  </h4>
+                </div>
+                <span className="text-[10px] font-mono font-bold bg-[#F4F4F5] border border-[#0A0A0A] px-2 py-0.5 rounded">
+                  ECDSA Authenticated
+                </span>
+              </div>
+
+              <div className="space-y-2.5">
+                {attestedReports.map((rep, idx) => (
+                  <div
+                    key={idx}
+                    className={`p-3 rounded-xl border-2 ${
+                      rep.isRetest ? "bg-[#F7FEE7] border-[#0A0A0A]" : "bg-[#F7F8F4] border-[#0A0A0A]"
+                    }`}
+                  >
+                    <div className="flex items-center justify-between mb-1">
+                      <span className="text-xs font-black text-[#0A0A0A]">
+                        {rep.testType} {rep.isRetest ? "(Independent Retest)" : `(v${rep.reportVersion})`}
+                      </span>
+                      <span className="text-[10px] font-mono text-[#52525B]">
+                        {formatTimestamp(rep.timestamp)}
+                      </span>
+                    </div>
+
+                    <div className="text-xs text-[#52525B] mb-1.5">
+                      <span className="font-bold text-[#0A0A0A]">Reporting Lab: </span>
+                      {getOrgName(rep.laboratory)} ({shortHash(rep.laboratory, 4)})
+                    </div>
+
+                    <div className="p-2 bg-[#FFFFFF] border border-[#0A0A0A] rounded-lg text-xs font-bold text-[#0A0A0A] mb-2">
+                      <span className="text-[#52525B] font-mono text-[10px] uppercase block">Findings Summary:</span>
+                      {rep.findings}
+                    </div>
+
+                    <div className="flex items-center justify-between gap-2 pt-1 border-t border-[#0A0A0A]/10 text-[10px] font-mono">
+                      <span className="truncate max-w-[200px] text-[#71717A]">
+                        Hash: {shortHash(rep.reportHash, 6)}
+                      </span>
+                      <button
+                        onClick={() => handleVerifyReportSig(rep)}
+                        className="px-2 py-0.5 rounded bg-[#FFFFFF] border border-[#0A0A0A] font-bold text-[#0A0A0A] hover:bg-[#F4F4F5] cursor-pointer"
+                      >
+                        Verify Signature
+                      </button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+
+              {/* Signature Toast Notice */}
+              {sigCheckToast && (
+                <div className="p-2.5 bg-[#F4F7F1] border-2 border-[#0A0A0A] rounded-lg text-xs flex items-center justify-between">
+                  <span className="font-bold text-[#15803D]">
+                    ✓ {sigCheckToast.message}
+                  </span>
+                  <button onClick={() => setSigCheckToast(null)} className="text-[10px] underline font-mono">Close</button>
+                </div>
+              )}
+
+              <p className="text-[10px] text-[#71717A] italic leading-tight">
+                Security Limitation Note: A valid cryptographic signature proves non-repudiation and key authorization; it does not physically verify laboratory measurement truth.
+              </p>
             </div>
           )}
 
@@ -290,7 +468,7 @@ export default function SampleDetailModal({
 
           </div>
 
-          {/* Aliquots Section */}
+          {/* Derived Aliquots Section */}
           {children.length > 0 && (
             <div className="brutal-card-flat p-3.5">
               <h4 className="text-xs font-black text-[#0A0A0A] uppercase tracking-wider flex items-center gap-1.5 mb-2.5 font-mono">
@@ -337,6 +515,11 @@ export default function SampleDetailModal({
                 const isStorage = rec.recType === 7;
                 const isIncident = rec.recType === 10;
                 const isQuarantine = rec.recType === 11;
+                const isAttested = rec.recType === 16;
+                const isRetestReq = rec.recType === 17;
+                const isRetestRep = rec.recType === 18;
+                const isDiscFlag = rec.recType === 19;
+                const isDiscRes = rec.recType === 20;
 
                 return (
                   <div key={i} className="relative group">
@@ -345,49 +528,46 @@ export default function SampleDetailModal({
                       <div className="w-1 h-1 rounded-full bg-[#0A0A0A]"></div>
                     </div>
 
-                    <div className="bg-[#FFFFFF] p-3 border-2 border-[#0A0A0A] rounded-xl shadow-[2px_2px_0px_#0A0A0A]">
+                    <div className={`p-3 border-2 border-[#0A0A0A] rounded-xl shadow-[2px_2px_0px_#0A0A0A] ${
+                      isDiscFlag ? "bg-[#FFFBEB]" : isDiscRes ? "bg-[#F7FEE7]" : "bg-[#FFFFFF]"
+                    }`}>
                       <div className="flex flex-wrap items-center justify-between gap-1.5">
                         <div className="flex items-center gap-1.5 flex-wrap">
-                          <span
-                            className={`text-[9px] font-mono font-extrabold uppercase px-1.5 py-0.5 rounded border border-[#0A0A0A] ${
-                              isIncident || isQuarantine
-                                ? "bg-[#FF5A5F] text-white"
-                                : isStorage
-                                ? "bg-[#38BDF8] text-[#0A0A0A]"
-                                : "bg-[#F7F8F4] text-[#0A0A0A]"
-                            }`}
-                          >
-                            #{i + 1} {recTypeName}
+                          <span className={`text-[10px] font-black uppercase font-mono px-1.5 py-0.5 rounded border border-[#0A0A0A] ${
+                            isQuarantine || isIncident ? "bg-[#FF5A5F] text-white" :
+                            isAttested ? "bg-[#FEF08A] text-[#0A0A0A]" :
+                            isRetestReq || isRetestRep ? "bg-[#C084FC] text-white" :
+                            isDiscFlag ? "bg-[#F59E0B] text-white" :
+                            isDiscRes ? "bg-[#D7FB38] text-[#0A0A0A]" :
+                            "bg-[#D7FB38] text-[#0A0A0A]"
+                          }`}>
+                            {recTypeName}
                           </span>
-
-                          {rec.temp !== undefined && rec.temp !== -2147483648 && (
-                            <span className="text-[10px] font-mono px-1.5 py-0.2 bg-[#E0F2FE] text-[#0369A1] rounded border border-[#0A0A0A] font-bold">
-                              {formatTemp(rec.temp)}
-                            </span>
-                          )}
+                          <span className="text-[11px] text-[#52525B] font-mono">
+                            Block #{i + 1}
+                          </span>
                         </div>
 
-                        <span className="text-[10px] text-[#71717A] font-mono">
+                        <span className="text-[10px] text-[#52525B] font-mono font-semibold">
                           {formatTimestamp(rec.timestamp)}
                         </span>
                       </div>
 
-                      <p className="text-xs text-[#0A0A0A] mt-1 font-semibold leading-snug">
-                        {rec.note || "Chain transaction executed"}
+                      <p className="text-xs text-[#0A0A0A] font-medium mt-1.5 leading-snug">
+                        {rec.note}
                       </p>
 
-                      <div className="mt-2 pt-2 border-t border-[#E5E7EB] grid grid-cols-1 sm:grid-cols-2 gap-1 text-[10px] font-mono">
-                        <div className="text-[#52525B] truncate">
-                          Actor: <strong className="text-[#0A0A0A]">{getOrgName(rec.actor)}</strong>
+                      {isStorage && rec.temp !== -2147483648 && (
+                        <div className="mt-1.5 inline-flex items-center gap-1 text-[11px] font-mono font-black bg-[#E0F2FE] border border-[#0A0A0A] px-2 py-0.5 rounded text-[#0369A1]">
+                          <Thermometer className="w-3 h-3" />
+                          <span>Cryo Temp: {formatTemp(rec.temp)}</span>
                         </div>
-                        <div className="text-[#52525B] truncate sm:text-right">
-                          Prev: <strong className="text-[#0A0A0A]">{shortHash(rec.prevHash, 3)}</strong>
-                        </div>
-                        <div className="col-span-full bg-[#F7F8F4] p-1.5 rounded border border-[#0A0A0A] text-[9px] text-[#0A0A0A] font-bold break-all mt-0.5">
-                          Proof: {rec.recordHash}
-                        </div>
-                      </div>
+                      )}
 
+                      <div className="mt-2 pt-1.5 border-t border-[#0A0A0A]/10 flex flex-wrap items-center justify-between text-[10px] font-mono text-[#52525B] gap-2">
+                        <span>Actor: {getOrgName(rec.actor)}</span>
+                        <span className="text-[#0A0A0A] font-bold">Proof: {shortHash(rec.recordHash, 4)}</span>
+                      </div>
                     </div>
                   </div>
                 );

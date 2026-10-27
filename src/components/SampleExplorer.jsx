@@ -12,7 +12,8 @@ import {
   Thermometer,
   Building,
   Calendar,
-  Layers
+  Layers,
+  EyeOff
 } from "lucide-react";
 
 export default function SampleExplorer({
@@ -39,7 +40,7 @@ export default function SampleExplorer({
     }
     if (search.trim()) {
       const q = search.toLowerCase();
-      const matchId = s.externalId?.toLowerCase().includes(q) || s.sampleId?.toLowerCase().includes(q);
+      const matchId = s.externalId?.toLowerCase().includes(q) || s.sampleId?.toLowerCase().includes(q) || s.blindId?.toLowerCase().includes(q);
       const matchType = s.sampleType?.toLowerCase().includes(q);
       const matchCustodian = s.custodian?.toLowerCase().includes(q);
       if (!matchId && !matchType && !matchCustodian) return false;
@@ -48,7 +49,7 @@ export default function SampleExplorer({
   });
 
   const getOrgName = (addr) => {
-    return sandboxData.orgs[addr]?.name || shortHash(addr, 4);
+    return sandboxData.orgs?.[addr]?.name || shortHash(addr, 4);
   };
 
   const getTypeTheme = (type = "") => {
@@ -94,7 +95,7 @@ export default function SampleExplorer({
           <Search className="w-4 h-4 text-[#71717A] absolute left-3 top-1/2 -translate-y-1/2" />
           <input
             type="text"
-            placeholder="Search specimen barcode, sample type, or custodian address..."
+            placeholder="Search specimen barcode, blind testing ID, sample type, or custodian..."
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             className="w-full pl-9 pr-3 py-2 text-xs sm:text-sm brutal-input font-mono placeholder:text-[#A1A1AA]"
@@ -155,6 +156,8 @@ export default function SampleExplorer({
             const isChild = s.parentId && s.parentId !== "0x0000000000000000000000000000000000000000000000000000000000000000";
             const children = sandboxData.childrenMap?.[s.sampleId] || [];
             const typeTheme = getTypeTheme(s.sampleType);
+            const hasAttestedReports = (sandboxData.attestedReports?.[s.sampleId] || []).length > 0;
+            const hasDiscrepancy = (sandboxData.sampleDiscrepancyCases?.[s.sampleId] || []).length > 0;
 
             return (
               <motion.div
@@ -175,14 +178,26 @@ export default function SampleExplorer({
                   <span className={`text-[9px] font-mono font-bold px-2 py-0.5 rounded border ${typeTheme.pill}`}>
                     {typeTheme.tag}
                   </span>
-                  <span className={`text-[9px] font-mono px-2 py-0.5 rounded border border-[#0A0A0A] font-extrabold uppercase ${
-                    s.status === 1 ? "bg-[#D7FB38] text-[#0A0A0A]" :
-                    s.status === 2 ? "bg-[#38BDF8] text-[#0A0A0A]" :
-                    s.status === 3 ? "bg-[#FF5A5F] text-white animate-pulse" :
-                    "bg-[#F4F4F5] text-[#0A0A0A]"
-                  }`}>
-                    {statusCfg.label}
-                  </span>
+                  <div className="flex items-center gap-1">
+                    {hasAttestedReports && (
+                      <span className="text-[9px] font-mono font-bold px-1.5 py-0.2 rounded bg-[#FEF08A] border border-[#0A0A0A] text-[#0A0A0A]">
+                        ATTESTED
+                      </span>
+                    )}
+                    {hasDiscrepancy && (
+                      <span className="text-[9px] font-mono font-bold px-1.5 py-0.2 rounded bg-[#FEF3C7] border border-[#D97706] text-[#92400E]">
+                        DISCREPANCY
+                      </span>
+                    )}
+                    <span className={`text-[9px] font-mono px-2 py-0.5 rounded border border-[#0A0A0A] font-extrabold uppercase ${
+                      s.status === 1 ? "bg-[#D7FB38] text-[#0A0A0A]" :
+                      s.status === 2 ? "bg-[#38BDF8] text-[#0A0A0A]" :
+                      s.status === 3 ? "bg-[#FF5A5F] text-white animate-pulse" :
+                      "bg-[#F4F4F5] text-[#0A0A0A]"
+                    }`}>
+                      {statusCfg.label}
+                    </span>
+                  </div>
                 </div>
 
                 <div className="p-3.5 sm:p-4 flex-1">
@@ -193,6 +208,12 @@ export default function SampleExplorer({
                         <h3 className="text-base font-black text-[#0A0A0A] font-mono truncate">
                           {s.externalId}
                         </h3>
+                        {s.blindId && (
+                          <span className="text-[9px] font-mono bg-[#F7FEE7] text-[#365314] border border-[#0A0A0A] px-1.5 py-0.2 rounded font-extrabold uppercase flex items-center gap-1">
+                            <EyeOff className="w-2.5 h-2.5" />
+                            {s.blindId}
+                          </span>
+                        )}
                         {isChild && (
                           <span className="text-[9px] font-mono bg-[#FDE047] text-[#0A0A0A] border border-[#0A0A0A] px-1.5 py-0.2 rounded font-extrabold uppercase">
                             Aliquot

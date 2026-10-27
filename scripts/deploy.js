@@ -4,10 +4,10 @@ const path = require("path");
 
 async function main() {
   console.log("--------------------------------------------------");
-  console.log("🚀 Deploying Tracechain Smart Contract Infrastructure");
+  console.log("🚀 Deploying Tracechain 2.0 Smart Contract Infrastructure");
   console.log("--------------------------------------------------");
 
-  const [deployer, hospital, lab, research, courier, auditor] = await hre.ethers.getSigners();
+  const [deployer, hospital, lab, research, courier, auditor, unauthorized, secondLab] = await hre.ethers.getSigners();
   console.log("Deployer / Network Admin account:", deployer.address);
 
   // Deploy SampleChain contract
@@ -40,7 +40,18 @@ async function main() {
       hre.ethers.encodeBytes32String("CH").slice(0, 6),
       zeroAccreditation
     );
-    console.log("  ✓ Registered Laboratory:", lab.address, "(Apex Genomics Core Lab)");
+    console.log("  ✓ Registered Primary Lab:", lab.address, "(Apex Genomics Core Lab)");
+
+    if (secondLab) {
+      await contract.registerOrg(
+        secondLab.address,
+        "Helvetia Independent Verification Laboratory",
+        2, // Laboratory
+        hre.ethers.encodeBytes32String("CH").slice(0, 6),
+        zeroAccreditation
+      );
+      console.log("  ✓ Registered Secondary Independent Lab:", secondLab.address, "(Helvetia Verification Lab)");
+    }
 
     if (research) {
       await contract.registerOrg(
@@ -71,24 +82,24 @@ async function main() {
     );
     console.log("  ✓ Registered Auditor:", auditor.address, "(BioEthics Compliance)");
 
-    // Seed initial demo sample from hospital
-    console.log("\n🧪 Seeding sample data...");
+    // Seed initial demo sample from hospital with Blind Testing ID
+    console.log("\n🧪 Seeding sample data with Blind Testing ID...");
     const contractAsHospital = contract.connect(hospital);
     const now = Math.floor(Date.now() / 1000);
     const consentHash = hre.ethers.keccak256(hre.ethers.toUtf8Bytes("CONSENT_FORM_SIGNED_SUBJECT_2026_09"));
     const subjectHash = hre.ethers.keccak256(hre.ethers.toUtf8Bytes("SUBJECT_ANON_ID_P90812"));
 
-    const regTx = await contractAsHospital.registerSample({
+    const regTx = await contractAsHospital.registerSampleBlind({
       externalId: "MSBC-2026-WB-001",
       sampleType: "Whole Blood (EDTA)",
       collectedAt: now - 3600,
       consentHash: consentHash,
       subjectHash: subjectHash,
       note: "Collected in Ward 4B Oncology. Initial volume: 10 mL."
-    });
-    const receipt = await regTx.wait();
+    }, "BT-2026-90812");
+    await regTx.wait();
     const sampleId = await contract.computeSampleId(hospital.address, "MSBC-2026-WB-001");
-    console.log("  ✓ Registered initial sample ID:", sampleId);
+    console.log("  ✓ Registered initial sample ID:", sampleId, "with Blind ID: BT-2026-90812");
 
     // Hospital logs cryogenic storage
     await contractAsHospital.logStorage(sampleId, "CryoFreezer Bay 3, Shelf B", -800, "Stored at -80.0°C in liquid nitrogen backup unit");

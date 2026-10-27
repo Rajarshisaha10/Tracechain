@@ -3,7 +3,20 @@ import { ethers } from "ethers";
 import SampleChainABI from "../contracts/SampleChainABI.json";
 import { SAMPLE_CHAIN_ADDRESS, NETWORK_CHAIN_ID } from "../contracts/contractAddress";
 import { buildInitialDemoState, DEMO_ORGS } from "../utils/mockData";
-import { computeSampleId, computeRecordHash, verifyClientChain, hashString } from "../utils/crypto";
+import {
+  computeSampleId,
+  computeRecordHash,
+  verifyClientChain,
+  hashString,
+  computeReportPayloadHash,
+  generateSimulatedSignature
+} from "../utils/crypto";
+import {
+  generateBlindId,
+  registerIdentityMapping,
+  resolveIdentity,
+  lookupBlindId
+} from "../services/identityMappingService";
 
 const ChainContext = createContext(null);
 
@@ -99,6 +112,7 @@ export function ChainProvider({ children }) {
     const initial = buildInitialDemoState();
     setSandboxData(initial);
     localStorage.removeItem("tracechain_sandbox_v2");
+    localStorage.removeItem("tracechain_identity_vault_v2");
   };
 
   // Helper: Active user profile info
@@ -124,18 +138,44 @@ export function ChainProvider({ children }) {
   // Operations (Handles both Sandbox and Web3 Contract calls)
   // -------------------------------------------------------------
 
-  const registerSample = async ({ externalId, sampleType, collectedAt, consentHash, subjectHash, note }) => {
+  const registerSample = async ({
+    externalId,
+    sampleType,
+    collectedAt,
+    consentHash,
+    subjectHash,
+    note,
+    blindId,
+    patientData
+  }) => {
+    const chosenBlindId = blindId || generateBlindId();
+
     if (mode === "web3") {
       if (!contract) throw new Error("Contract not connected");
-      const tx = await contract.registerSample({
+      const tx = await contract.registerSampleBlind(
+        {
+          externalId,
+          sampleType,
+          collectedAt: Math.floor(new Date(collectedAt).getTime() / 1000) || Math.floor(Date.now() / 1000),
+          consentHash: consentHash || ethers.ZeroHash,
+          subjectHash: subjectHash || ethers.ZeroHash,
+          note: note || "Registered via Tracechain DApp",
+        },
+        chosenBlindId
+      );
+      const receipt = await tx.wait();
+      const sampleId = computeSampleId(walletAddress, externalId);
+
+      // Register off-chain privacy mapping for authorized collector
+      registerIdentityMapping({
+        sampleId,
         externalId,
-        sampleType,
-        collectedAt: Math.floor(new Date(collectedAt).getTime() / 1000) || Math.floor(Date.now() / 1000),
-        consentHash: consentHash || ethers.ZeroHash,
-        subjectHash: subjectHash || ethers.ZeroHash,
-        note: note || "Registered via Tracechain DApp",
+        blindId: chosenBlindId,
+        patientData,
+        creatorAddress: walletAddress
       });
-      return await tx.wait();
+
+      return receipt;
     }
 
     // Sandbox execution
@@ -172,7 +212,17 @@ export function ChainProvider({ children }) {
       pendingRecipient: ethers.ZeroAddress,
       status: 1, // Active
       headHash: initialRec.recordHash,
+      blindId: chosenBlindId,
     };
+
+    // Store off-chain identity mapping
+    registerIdentityMapping({
+      sampleId,
+      externalId,
+      blindId: chosenBlindId,
+      patientData,
+      creatorAddress: creator
+    });
 
     setSandboxData((prev) => ({
       ...prev,
@@ -181,7 +231,7 @@ export function ChainProvider({ children }) {
       allSampleIds: [sampleId, ...prev.allSampleIds],
     }));
 
-    return { sampleId, hash: initialRec.recordHash };
+    return { sampleId, hash: initialRec.recordHash, blindId: chosenBlindId };
   };
 
   const createAliquot = async ({ parentId, externalId, sampleType, note }) => {
@@ -247,6 +297,7 @@ export function ChainProvider({ children }) {
       pendingRecipient: ethers.ZeroAddress,
       status: 1, // Active
       headHash: childRec.recordHash,
+      blindId: parent.blindId ? `${parent.blindId}-ALQ` : generateBlindId(),
     };
 
     setSandboxData((prev) => ({
@@ -504,27 +555,90 @@ export function ChainProvider({ children }) {
     }));
   };
 
-  const recordTest = async (sampleId, testName, resultHash, uri) => {
+  // -------------------------------------------------------------
+  // FEATURE TWO: ATTESTED LABORATORY REPORTS
+  // -------------------------------------------------------------
+  const recordAttestedTest = async ({ sampleId, testType, reportHash, findings, uri }) => {
     if (mode === "web3") {
-      if (!contract) throw new Error("Contract not connected");
-      const tx = await contract.recordTest(sampleId, testName, resultHash, uri || "");
+      if (!contract || !signer) throw new Error("Contract or wallet signer not connected");
+      const currentReports = await contract.getAttestedReports(sampleId);
+      const currentVer = currentReports.length + 1;
+      const providerNetwork = await provider.getNetwork();
+      const currentBlock = await provider.getBlock("latest");
+      const nowTs = currentBlock.timestamp + 1;
+
+      const payloadHash = computeReportPayloadHash(
+        sampleId,
+        walletAddress,
+        testType,
+        reportHash,
+        findings,
+        currentVer,
+        nowTs
+      );
+      const signature = await signer.signMessage(ethers.getBytes(payloadHash));
+
+      const tx = await contract.recordAttestedTest(
+        sampleId,
+        testType,
+        reportHash,
+        findings,
+        uri || "",
+        signature
+      );
       return await tx.wait();
     }
 
+    // Sandbox execution
     const s = sandboxData.samples[sampleId];
     if (!s) throw new Error("Sample not found");
     if (s.custodian.toLowerCase() !== activeAccount.toLowerCase()) {
-      throw new Error("Only current custodian can record test results");
+      throw new Error("Only the current custodian can record laboratory test results");
+    }
+    if (currentActor.orgType !== 2 && currentActor.orgType !== 3) {
+      throw new Error("Unauthorized: Only registered Laboratory or Research organizations can attest diagnostic reports");
     }
 
+    const existingReports = sandboxData.attestedReports?.[sampleId] || [];
+    const currentVer = existingReports.length + 1;
     const timestampSec = Math.floor(Date.now() / 1000);
+
+    const payloadHash = computeReportPayloadHash(
+      sampleId,
+      activeAccount,
+      testType,
+      reportHash,
+      findings,
+      currentVer,
+      timestampSec
+    );
+    const signature = generateSimulatedSignature(activeAccount, payloadHash);
+
+    const newReport = {
+      sampleId,
+      laboratory: activeAccount,
+      testType,
+      reportHash,
+      findings,
+      reportVersion: currentVer,
+      timestamp: timestampSec,
+      signature,
+      uri: uri || "",
+      isRetest: false,
+      originalReportHash: ethers.ZeroHash,
+    };
+
+    const noteStr = currentVer === 1
+      ? `Attested Report v1: ${testType} [${findings}]`
+      : `Superceded Attested Report v${currentVer}: ${testType} [${findings}]`;
+
     const rec = {
-      recType: 9, // Test
+      recType: 16, // ReportAttested
       actor: activeAccount,
       timestamp: timestampSec,
-      dataHash: resultHash,
+      dataHash: reportHash,
       temp: -2147483648,
-      note: testName,
+      note: noteStr,
       uri: uri || "",
       prevHash: s.headHash,
     };
@@ -540,7 +654,461 @@ export function ChainProvider({ children }) {
         ...prev.histories,
         [sampleId]: [...(prev.histories[sampleId] || []), rec],
       },
+      attestedReports: {
+        ...prev.attestedReports,
+        [sampleId]: [...existingReports, newReport],
+      },
     }));
+
+    return { version: currentVer, signature, payloadHash };
+  };
+
+  // -------------------------------------------------------------
+  // FEATURE THREE: INDEPENDENT RETESTING WORKFLOW
+  // -------------------------------------------------------------
+  const requestIndependentRetest = async ({ sampleId, designatedLab, reason }) => {
+    if (mode === "web3") {
+      if (!contract) throw new Error("Contract not connected");
+      const tx = await contract.requestIndependentRetest(sampleId, designatedLab, reason);
+      return await tx.wait();
+    }
+
+    // Sandbox execution
+    if (currentActor.orgType !== 5 && currentActor.orgType !== 0) {
+      throw new Error("Unauthorized: Only compliance auditors or network governance can order independent retests");
+    }
+
+    const s = sandboxData.samples[sampleId];
+    if (!s) throw new Error("Sample not found");
+
+    const reports = sandboxData.attestedReports?.[sampleId] || [];
+    if (reports.length === 0) {
+      throw new Error("No prior attested report found to verify");
+    }
+    const latestRep = reports[reports.length - 1];
+
+    if (designatedLab.toLowerCase() === latestRep.laboratory.toLowerCase()) {
+      throw new Error("Independence violation: The secondary testing laboratory must differ from the initial testing organization");
+    }
+
+    const targetOrg = sandboxData.orgs[designatedLab];
+    if (!targetOrg || (targetOrg.orgType !== 2 && targetOrg.orgType !== 3)) {
+      throw new Error("Designated retesting entity must be an accredited Laboratory or Research facility");
+    }
+
+    const timestampSec = Math.floor(Date.now() / 1000);
+    const requestId = ethers.keccak256(
+      ethers.solidityPacked(
+        ["bytes32", "address", "uint256"],
+        [sampleId, designatedLab, timestampSec]
+      )
+    );
+
+    const newRequest = {
+      requestId,
+      sampleId,
+      initiator: activeAccount,
+      originalLab: latestRep.laboratory,
+      designatedLab,
+      originalReportHash: latestRep.reportHash,
+      reason,
+      requestedAt: timestampSec,
+      completed: false,
+      retestReportHash: ethers.ZeroHash,
+    };
+
+    const rec = {
+      recType: 17, // RetestRequested
+      actor: activeAccount,
+      timestamp: timestampSec,
+      dataHash: requestId,
+      temp: -2147483648,
+      note: `Independent retest requested. Assigned: ${targetOrg.name} | ${reason}`,
+      uri: "",
+      prevHash: s.headHash,
+    };
+    rec.recordHash = computeRecordHash(rec);
+
+    setSandboxData((prev) => ({
+      ...prev,
+      samples: {
+        ...prev.samples,
+        [sampleId]: { ...s, headHash: rec.recordHash },
+      },
+      histories: {
+        ...prev.histories,
+        [sampleId]: [...(prev.histories[sampleId] || []), rec],
+      },
+      retestRequests: {
+        ...prev.retestRequests,
+        [requestId]: newRequest,
+      },
+      sampleRetestRequests: {
+        ...prev.sampleRetestRequests,
+        [sampleId]: [...(prev.sampleRetestRequests?.[sampleId] || []), requestId],
+      },
+      allRetestRequestIds: [requestId, ...(prev.allRetestRequestIds || [])],
+    }));
+
+    return { requestId };
+  };
+
+  const recordRetestReport = async ({ requestId, reportHash, findings, uri }) => {
+    if (mode === "web3") {
+      if (!contract || !signer) throw new Error("Contract or wallet signer not connected");
+      const req = await contract.getRetestRequest(requestId);
+      const currentBlock = await provider.getBlock("latest");
+      const nowTs = currentBlock.timestamp + 1;
+
+      const payloadHash = computeReportPayloadHash(
+        req.sampleId,
+        walletAddress,
+        "Independent Retest Verification",
+        reportHash,
+        findings,
+        1,
+        nowTs
+      );
+      const signature = await signer.signMessage(ethers.getBytes(payloadHash));
+
+      const tx = await contract.recordRetestReport(requestId, reportHash, findings, uri || "", signature);
+      return await tx.wait();
+    }
+
+    // Sandbox execution
+    const req = sandboxData.retestRequests?.[requestId];
+    if (!req) throw new Error("Retest request not found");
+    if (req.completed) throw new Error("Retest request has already been recorded");
+    if (req.designatedLab.toLowerCase() !== activeAccount.toLowerCase()) {
+      throw new Error("Unauthorized: Only the designated secondary laboratory can record this retest");
+    }
+    if (req.originalLab.toLowerCase() === activeAccount.toLowerCase()) {
+      throw new Error("Independence violation: The original laboratory cannot submit retest verification results");
+    }
+
+    const s = sandboxData.samples[req.sampleId];
+    if (!s) throw new Error("Sample not found");
+    if (s.custodian.toLowerCase() !== activeAccount.toLowerCase()) {
+      throw new Error("Physical custody required: Specimen must be transferred to the secondary laboratory prior to reporting");
+    }
+
+    const timestampSec = Math.floor(Date.now() / 1000);
+    const payloadHash = computeReportPayloadHash(
+      req.sampleId,
+      activeAccount,
+      "Independent Retest Verification",
+      reportHash,
+      findings,
+      1,
+      timestampSec
+    );
+    const signature = generateSimulatedSignature(activeAccount, payloadHash);
+
+    const retestReport = {
+      sampleId: req.sampleId,
+      laboratory: activeAccount,
+      testType: "Independent Retest Verification",
+      reportHash,
+      findings,
+      reportVersion: 1,
+      timestamp: timestampSec,
+      signature,
+      uri: uri || "",
+      isRetest: true,
+      originalReportHash: req.originalReportHash,
+    };
+
+    const rec = {
+      recType: 18, // RetestReported
+      actor: activeAccount,
+      timestamp: timestampSec,
+      dataHash: reportHash,
+      temp: -2147483648,
+      note: `Independent Retest Submitted [${findings}]`,
+      uri: uri || "",
+      prevHash: s.headHash,
+    };
+    rec.recordHash = computeRecordHash(rec);
+
+    setSandboxData((prev) => ({
+      ...prev,
+      samples: {
+        ...prev.samples,
+        [req.sampleId]: { ...s, headHash: rec.recordHash },
+      },
+      histories: {
+        ...prev.histories,
+        [req.sampleId]: [...(prev.histories[req.sampleId] || []), rec],
+      },
+      retestRequests: {
+        ...prev.retestRequests,
+        [requestId]: { ...req, completed: true, retestReportHash: reportHash },
+      },
+      attestedReports: {
+        ...prev.attestedReports,
+        [req.sampleId]: [...(prev.attestedReports?.[req.sampleId] || []), retestReport],
+      },
+    }));
+
+    return { signature, payloadHash };
+  };
+
+  // -------------------------------------------------------------
+  // FEATURE FOUR: DISCREPANCY MANAGEMENT & RESOLUTION
+  // -------------------------------------------------------------
+  const flagDiscrepancy = async ({ requestId, reason, evidenceHash, placeOnQuarantine = true }) => {
+    if (mode === "web3") {
+      if (!contract) throw new Error("Contract not connected");
+      const tx = await contract.flagDiscrepancy(requestId, reason, evidenceHash || ethers.ZeroHash, placeOnQuarantine);
+      return await tx.wait();
+    }
+
+    // Sandbox execution
+    const req = sandboxData.retestRequests?.[requestId];
+    if (!req) throw new Error("Retest request not found");
+    if (!req.completed) throw new Error("Retest report must be recorded before flagging discrepancy");
+
+    // The original laboratory CANNOT flag or dismiss discrepancies to cover up issues
+    if (activeAccount.toLowerCase() === req.originalLab.toLowerCase()) {
+      throw new Error("Anti-tamper rule: The original laboratory cannot self-manage or intervene in disputes regarding its own results");
+    }
+
+    const s = sandboxData.samples[req.sampleId];
+    const timestampSec = Math.floor(Date.now() / 1000);
+    const caseId = ethers.keccak256(
+      ethers.solidityPacked(["bytes32", "uint256"], [requestId, timestampSec])
+    );
+
+    const newCase = {
+      caseId,
+      sampleId: req.sampleId,
+      requestId,
+      originalReportHash: req.originalReportHash,
+      retestReportHash: req.retestReportHash,
+      originalLab: req.originalLab,
+      retestLab: req.designatedLab,
+      reason,
+      evidenceHash: evidenceHash || ethers.ZeroHash,
+      status: 0, // Open
+      disposition: 0, // None
+      resolutionReason: "",
+      reviewer: ethers.ZeroAddress,
+      flaggedAt: timestampSec,
+      resolvedAt: 0,
+    };
+
+    let updatedHistory = [...(sandboxData.histories[req.sampleId] || [])];
+    let newHead = s.headHash;
+
+    const discRec = {
+      recType: 19, // DiscrepancyFlagged
+      actor: activeAccount,
+      timestamp: timestampSec,
+      dataHash: caseId,
+      temp: -2147483648,
+      note: `Discrepancy Investigation Opened: ${reason}`,
+      uri: "",
+      prevHash: newHead,
+    };
+    discRec.recordHash = computeRecordHash(discRec);
+    updatedHistory.push(discRec);
+    newHead = discRec.recordHash;
+
+    let newStatus = s.status;
+    if (placeOnQuarantine && s.status !== 3) {
+      newStatus = 3; // Quarantined
+      const qRec = {
+        recType: 11, // Quarantined
+        actor: activeAccount,
+        timestamp: timestampSec + 1,
+        dataHash: ethers.ZeroHash,
+        temp: -2147483648,
+        note: `Quarantined on hold pending resolution of discrepancy #${caseId.slice(0, 8)}`,
+        uri: "",
+        prevHash: newHead,
+      };
+      qRec.recordHash = computeRecordHash(qRec);
+      updatedHistory.push(qRec);
+      newHead = qRec.recordHash;
+    }
+
+    setSandboxData((prev) => ({
+      ...prev,
+      samples: {
+        ...prev.samples,
+        [req.sampleId]: { ...s, status: newStatus, headHash: newHead },
+      },
+      histories: {
+        ...prev.histories,
+        [req.sampleId]: updatedHistory,
+      },
+      discrepancyCases: {
+        ...prev.discrepancyCases,
+        [caseId]: newCase,
+      },
+      sampleDiscrepancyCases: {
+        ...prev.sampleDiscrepancyCases,
+        [req.sampleId]: [...(prev.sampleDiscrepancyCases?.[req.sampleId] || []), caseId],
+      },
+      allDiscrepancyCaseIds: [caseId, ...(prev.allDiscrepancyCaseIds || [])],
+    }));
+
+    return { caseId };
+  };
+
+  const updateDiscrepancyStatus = async ({ caseId, status, note }) => {
+    if (mode === "web3") {
+      if (!contract) throw new Error("Contract not connected");
+      const tx = await contract.updateDiscrepancyStatus(caseId, status, note || "");
+      return await tx.wait();
+    }
+
+    const c = sandboxData.discrepancyCases?.[caseId];
+    if (!c) throw new Error("Discrepancy case not found");
+    if (currentActor.orgType !== 5 && currentActor.orgType !== 0) {
+      throw new Error("Unauthorized: Only compliance auditors can update discrepancy investigation status");
+    }
+    if (activeAccount.toLowerCase() === c.originalLab.toLowerCase()) {
+      throw new Error("Anti-tamper protection: The original laboratory cannot self-manage this case");
+    }
+
+    setSandboxData((prev) => ({
+      ...prev,
+      discrepancyCases: {
+        ...prev.discrepancyCases,
+        [caseId]: { ...c, status },
+      },
+    }));
+  };
+
+  const resolveDiscrepancy = async ({
+    caseId,
+    disposition,
+    resolutionReason,
+    evidenceHash,
+    releaseFromQuarantine = true
+  }) => {
+    if (mode === "web3") {
+      if (!contract) throw new Error("Contract not connected");
+      const tx = await contract.resolveDiscrepancy(
+        caseId,
+        disposition,
+        resolutionReason,
+        evidenceHash || ethers.ZeroHash,
+        releaseFromQuarantine
+      );
+      return await tx.wait();
+    }
+
+    // Sandbox execution
+    const c = sandboxData.discrepancyCases?.[caseId];
+    if (!c) throw new Error("Discrepancy case not found");
+    if (c.status === 2) throw new Error("Discrepancy is already resolved");
+
+    // Strict Anti-Tamper Rule
+    if (activeAccount.toLowerCase() === c.originalLab.toLowerCase()) {
+      throw new Error("Self-resolution forbidden: An original laboratory cannot unilaterally resolve a discrepancy involving its own report");
+    }
+    if (currentActor.orgType !== 5 && currentActor.orgType !== 0) {
+      throw new Error("Unauthorized: Only compliance auditors or network administrators can sign off on discrepancy resolutions");
+    }
+
+    const s = sandboxData.samples[c.sampleId];
+    const timestampSec = Math.floor(Date.now() / 1000);
+
+    let updatedHistory = [...(sandboxData.histories[c.sampleId] || [])];
+    let newHead = s.headHash;
+
+    let newStatus = s.status;
+    if (releaseFromQuarantine && s.status === 3) {
+      newStatus = 1; // Active
+      const rRec = {
+        recType: 12, // Released
+        actor: activeAccount,
+        timestamp: timestampSec,
+        dataHash: ethers.ZeroHash,
+        temp: -2147483648,
+        note: `Released from quarantine hold after formal audit resolution: ${resolutionReason}`,
+        uri: "",
+        prevHash: newHead,
+      };
+      rRec.recordHash = computeRecordHash(rRec);
+      updatedHistory.push(rRec);
+      newHead = rRec.recordHash;
+    }
+
+    const resRec = {
+      recType: 20, // DiscrepancyResolved
+      actor: activeAccount,
+      timestamp: timestampSec + 1,
+      dataHash: caseId,
+      temp: -2147483648,
+      note: `Discrepancy Resolved: ${resolutionReason}`,
+      uri: "",
+      prevHash: newHead,
+    };
+    resRec.recordHash = computeRecordHash(resRec);
+    updatedHistory.push(resRec);
+    newHead = resRec.recordHash;
+
+    setSandboxData((prev) => ({
+      ...prev,
+      samples: {
+        ...prev.samples,
+        [c.sampleId]: { ...s, status: newStatus, headHash: newHead },
+      },
+      histories: {
+        ...prev.histories,
+        [c.sampleId]: updatedHistory,
+      },
+      discrepancyCases: {
+        ...prev.discrepancyCases,
+        [caseId]: {
+          ...c,
+          status: 2, // Resolved
+          disposition,
+          resolutionReason,
+          evidenceHash: evidenceHash || c.evidenceHash,
+          reviewer: activeAccount,
+          resolvedAt: timestampSec,
+        },
+      },
+    }));
+  };
+
+  // -------------------------------------------------------------
+  // AUDIT SELECTION POLICY (Auditable Random Selection Simulator)
+  // -------------------------------------------------------------
+  const auditSampleSelectionPolicy = ({ selectionSeed } = {}) => {
+    const samples = Object.values(sandboxData.samples || {});
+    // Eligible samples: Completed initial attested tests, not currently quarantined, active status
+    const eligible = samples.filter((s) => {
+      const reports = sandboxData.attestedReports?.[s.sampleId] || [];
+      return reports.length > 0 && s.status === 1;
+    });
+
+    if (eligible.length === 0) {
+      return { eligible: [], selected: null, reason: "No eligible completed tests found for secondary verification." };
+    }
+
+    // Demonstrable selection logic with auditable trace
+    const entropy = selectionSeed || ethers.hexlify(ethers.randomBytes(16));
+    const numericSeed = BigInt(ethers.keccak256(ethers.toUtf8Bytes(entropy))) % BigInt(eligible.length);
+    const selected = eligible[Number(numericSeed)];
+
+    return {
+      eligible: eligible.map((s) => ({
+        sampleId: s.sampleId,
+        blindId: s.blindId || "UNBLINDED",
+        sampleType: s.sampleType,
+        custodian: s.custodian
+      })),
+      selected,
+      selectionSeed: entropy,
+      timestamp: Date.now(),
+      policy: "ISO-15189 Cross-Laboratory Blind Proficiency Verification (10% Sample Cohort Sampling)",
+      disclaimer: "PROTOTYPE DEMONSTRATION NOTICE: In a production clinical deployment, randomness must be sourced from an auditable cryptographic oracle (e.g. Chainlink VRF) to eliminate operator selection bias."
+    };
   };
 
   const logIncident = async (sampleId, description, evidenceHash, uri) => {
@@ -719,7 +1287,7 @@ export function ChainProvider({ children }) {
         isConnecting,
         web3Error,
         contractAddress: SAMPLE_CHAIN_ADDRESS,
-        // Methods
+        // Core Lifecycle Methods
         registerSample,
         createAliquot,
         initiateTransfer,
@@ -727,12 +1295,22 @@ export function ChainProvider({ children }) {
         rejectTransfer,
         logStorage,
         logHandling,
-        recordTest,
         logIncident,
         quarantine,
         release,
         tamperRecord,
         registerOrg,
+        // Verification & Discrepancy Methods
+        recordAttestedTest,
+        requestIndependentRetest,
+        recordRetestReport,
+        flagDiscrepancy,
+        updateDiscrepancyStatus,
+        resolveDiscrepancy,
+        auditSampleSelectionPolicy,
+        // Privacy & Identity Helpers
+        resolveIdentity,
+        lookupBlindId,
       }}
     >
       {children}

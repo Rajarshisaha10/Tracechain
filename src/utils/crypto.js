@@ -40,6 +40,61 @@ export async function hashFile(file) {
 }
 
 /**
+ * Computes canonical payload hash matching SampleChain.sol:computeReportPayloadHash
+ */
+export function computeReportPayloadHash(sampleId, laboratory, testType, reportHash, findings, reportVersion, timestamp) {
+  const coder = ethers.AbiCoder.defaultAbiCoder();
+  const encoded = coder.encode(
+    ["bytes32", "address", "bytes32", "bytes32", "bytes32", "uint32", "uint64"],
+    [
+      sampleId,
+      laboratory,
+      ethers.keccak256(ethers.toUtf8Bytes(testType || "")),
+      reportHash,
+      ethers.keccak256(ethers.toUtf8Bytes(findings || "")),
+      Number(reportVersion || 1),
+      BigInt(timestamp)
+    ]
+  );
+  return ethers.keccak256(encoded);
+}
+
+/**
+ * Verifies an ECDSA signature over a report payload hash against an expected laboratory address
+ */
+export function verifyReportSignature(payloadHash, signature, expectedSigner) {
+  if (!payloadHash || !signature || !expectedSigner) {
+    return { valid: false, reason: "Missing required signature verification parameters" };
+  }
+  try {
+    const recovered = ethers.verifyMessage(ethers.getBytes(payloadHash), signature);
+    const matches = recovered.toLowerCase() === expectedSigner.toLowerCase();
+    return {
+      valid: matches,
+      recoveredSigner: recovered,
+      expectedSigner,
+      reason: matches
+        ? "Signature verified: Authenticated by registered laboratory private key."
+        : `Signature mismatch: Recovered ${recovered.slice(0, 8)}… does not match ${expectedSigner.slice(0, 8)}…`
+    };
+  } catch (err) {
+    return { valid: false, reason: "Signature decoding failed: " + err.message };
+  }
+}
+
+/**
+ * Generates simulated ECDSA signature for Sandbox demonstration mode.
+ * Clearly labeled as a deterministic simulated signature for offline testing.
+ */
+export function generateSimulatedSignature(address, payloadHash) {
+  // Deterministic demo private key derived from address hash for sandbox test reproducibility
+  const deterministicKey = ethers.keccak256(ethers.solidityPacked(["string", "address"], ["DEMO_SANDBOX_KEY_", address]));
+  const wallet = new ethers.Wallet(deterministicKey);
+  // Returns signature with wallet address matching the simulated deterministic signer
+  return wallet.signMessageSync(ethers.getBytes(payloadHash));
+}
+
+/**
  * Recalculates the exact Solidity Record hash
  * keccak256(abi.encodePacked(prevHash, uint8(recType), actor, uint64(timestamp), dataHash, int32(temp), keccak256(note), keccak256(uri)))
  */

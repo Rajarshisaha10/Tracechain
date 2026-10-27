@@ -38,22 +38,27 @@ export function formatTemp(tempCx10) {
  * Formats record type enum to friendly string
  */
 export const RECORD_TYPE_NAMES = [
-  "Collected",          // 0
-  "Aliquot Created",    // 1
-  "Derived From",       // 2
-  "Transfer Initiated", // 3
-  "Transfer Accepted",  // 4
-  "Transfer Rejected",  // 5
-  "Transfer Cancelled", // 6
-  "Storage Logged",     // 7
-  "Handling Action",    // 8
-  "Lab Test Recorded",  // 9
-  "Incident Reported",  // 10
-  "Quarantined",        // 11
-  "Released",           // 12
-  "Consumed",           // 13
-  "Destroyed",          // 14
-  "Admin Reassigned"    // 15
+  "Collected",           // 0
+  "Aliquot Created",     // 1
+  "Derived From",        // 2
+  "Transfer Initiated",  // 3
+  "Transfer Accepted",   // 4
+  "Transfer Rejected",   // 5
+  "Transfer Cancelled",  // 6
+  "Storage Logged",      // 7
+  "Handling Action",     // 8
+  "Lab Test Recorded",   // 9
+  "Incident Reported",   // 10
+  "Quarantined",         // 11
+  "Released",            // 12
+  "Consumed",            // 13
+  "Destroyed",           // 14
+  "Admin Reassigned",    // 15
+  "Report Attested",     // 16
+  "Retest Requested",    // 17
+  "Retest Reported",     // 18
+  "Discrepancy Flagged", // 19
+  "Discrepancy Resolved" // 20
 ];
 
 export const STATUS_CONFIG = {
@@ -73,3 +78,18 @@ export const ORG_TYPE_NAMES = [
   "Logistics Courier",
   "Regulatory Auditor"
 ];
+
+export const DISCREPANCY_STATUS_CONFIG = {
+  0: { label: "Open", color: "bg-[#FEF3C7] text-[#92400E] border-2 border-[#0A0A0A] shadow-[2px_2px_0px_#0A0A0A]", badge: "OPEN DISCREPANCY" },
+  1: { label: "Under Review", color: "bg-[#E0F2FE] text-[#0369A1] border-2 border-[#0A0A0A] shadow-[2px_2px_0px_#0A0A0A]", badge: "UNDER AUDIT REVIEW" },
+  2: { label: "Resolved", color: "bg-[#D7FB38] text-[#0A0A0A] border-2 border-[#0A0A0A] shadow-[2px_2px_0px_#0A0A0A]", badge: "RESOLVED & ARCHIVED" },
+  3: { label: "Escalated", color: "bg-[#FFE4E6] text-[#BE123C] border-2 border-[#0A0A0A] shadow-[2px_2px_0px_#0A0A0A]", badge: "ESCALATED TO REGULATOR" },
+};
+
+export const DISPOSITION_CONFIG = {
+  0: { label: "Pending", description: "Investigation underway" },
+  1: { label: "Affirmed Original", description: "Original laboratory measurement sustained; retest artifact or protocol deviation identified." },
+  2: { label: "Affirmed Retest", description: "Secondary independent retest validated; original report superseded due to measurement error or low sensitivity." },
+  3: { label: "Inconclusive (Re-collect)", description: "Both results divergent due to specimen degradation; fresh clinical specimen collection mandated." },
+  4: { label: "Contaminated (Discard)", description: "Contamination confirmed across analytical replicates; specimen discarded under biohazard protocols." }
+};

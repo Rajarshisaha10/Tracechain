@@ -20,22 +20,41 @@ import {
   Sparkles,
   ShieldCheck,
   ChevronRight,
-  Activity
+  Activity,
+  FileCheck2,
+  RefreshCw,
+  Scale,
+  EyeOff,
+  UserCheck
 } from "lucide-react";
 
 export default function Dashboard({
   onSelectSample,
   onOpenRegister,
   onOpenTransfer,
-  onOpenAliquot
+  onOpenAliquot,
+  onOpenWorkbench
 }) {
   const { sandboxData } = useChain();
   const samples = Object.values(sandboxData.samples || {});
   const histories = sandboxData.histories || {};
+  const attestedReports = sandboxData.attestedReports || {};
+  const retestRequests = sandboxData.retestRequests || {};
+  const discrepancyCases = Object.values(sandboxData.discrepancyCases || {});
 
   const totalSamples = samples.length;
   const inTransitCount = samples.filter((s) => s.status === 2).length;
   const quarantinedCount = samples.filter((s) => s.status === 3).length;
+
+  // Tracechain 2.0 Verification Metrics
+  const totalAttestedReports = Object.values(attestedReports).reduce(
+    (acc, list) => acc + (list?.length || 0),
+    0
+  );
+  const totalRetests = Object.values(retestRequests).length;
+  const openDiscrepancies = discrepancyCases.filter((c) => c.status !== 2).length;
+  const resolvedDiscrepancies = discrepancyCases.filter((c) => c.status === 2).length;
+  const blindSamplesCount = samples.filter((s) => !!s.blindId).length;
 
   const allEvents = [];
   Object.keys(histories).forEach((sampleId) => {
@@ -44,6 +63,7 @@ export default function Dashboard({
       allEvents.push({
         sampleId,
         externalId: s?.externalId || shortHash(sampleId),
+        blindId: s?.blindId,
         sampleType: s?.sampleType || "Biological Specimen",
         record: rec,
         index: idx,
@@ -83,11 +103,15 @@ export default function Dashboard({
             <div className="flex items-center gap-1.5 flex-wrap mb-1.5">
               <span className="brutal-pill bg-[#D7FB38] text-[#0A0A0A]">
                 <Zap className="w-3 h-3" />
-                EVM HASH-CHAIN
+                TRACECHAIN 2.0
               </span>
               <span className="brutal-pill bg-[#38BDF8] text-[#0A0A0A]">
-                <Sparkles className="w-3 h-3" />
-                ZERO-KNOWLEDGE
+                <EyeOff className="w-3 h-3" />
+                BLIND TESTING
+              </span>
+              <span className="brutal-pill bg-[#FDE047] text-[#0A0A0A]">
+                <Scale className="w-3 h-3" />
+                INDEPENDENT RETESTS
               </span>
               <span className="brutal-pill bg-[#FFFFFF] text-[#0A0A0A]">
                 ❄️ -80°C CRYO
@@ -95,10 +119,10 @@ export default function Dashboard({
             </div>
 
             <h1 className="text-xl sm:text-2xl lg:text-3xl font-extrabold text-[#0A0A0A] tracking-tight font-display">
-              Biological Specimen Provenance & Custody
+              Biological Specimen Provenance & Verification
             </h1>
             <p className="text-[#52525B] text-xs sm:text-sm mt-1 max-w-xl font-medium leading-relaxed">
-              Decentralized biological provenance registry with cryptographic event anchoring, two-step custody handoffs, and liquid nitrogen temperature verification.
+              Decentralized chain-of-custody registry with blind patient identifiers, ECDSA diagnostic report attestations, dual-lab independent retesting, and tamper-evident discrepancy investigation.
             </p>
           </div>
 
@@ -125,11 +149,56 @@ export default function Dashboard({
               <GitFork className="w-3.5 h-3.5" />
               <span>Split Aliquot</span>
             </button>
+            {onOpenWorkbench && (
+              <button
+                onClick={onOpenWorkbench}
+                className="brutal-btn bg-[#FDE047] hover:bg-[#FACC15] text-[#0A0A0A] px-3.5 py-2 text-xs flex-1 sm:flex-initial relative"
+              >
+                <Scale className="w-3.5 h-3.5" />
+                <span>Workbench</span>
+                {openDiscrepancies > 0 && (
+                  <span className="w-2 h-2 rounded-full bg-[#FF5A5F] border border-[#0A0A0A] inline-block animate-ping" />
+                )}
+              </button>
+            )}
           </div>
         </div>
       </div>
 
-      {/* KPI Stats Grid - 4 Animated Brutalist Cards with Animated Counter */}
+      {/* Discrepancy Alert Strip (if active discrepancies exist) */}
+      {openDiscrepancies > 0 && (
+        <div className="brutal-card p-3.5 sm:p-4 bg-[#FFF1F2] border-2 border-[#DC2626] flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 shadow-[3px_3px_0px_#DC2626]">
+          <div className="flex items-center gap-3">
+            <div className="w-9 h-9 rounded-lg bg-[#FF5A5F] text-white flex items-center justify-center shrink-0 border-2 border-[#0A0A0A] shadow-[1.5px_1.5px_0px_#0A0A0A]">
+              <AlertTriangle className="w-5 h-5 animate-pulse" />
+            </div>
+            <div>
+              <div className="flex items-center gap-2 flex-wrap">
+                <span className="text-xs font-black uppercase text-[#DC2626] font-mono tracking-tight">
+                  Active Analytical Discrepancy Detected
+                </span>
+                <span className="text-[9px] font-mono bg-[#DC2626] text-white px-1.5 py-0.2 rounded font-bold uppercase">
+                  Anti-Tamper Lock Active
+                </span>
+              </div>
+              <p className="text-xs text-[#0A0A0A] font-medium mt-0.5">
+                {openDiscrepancies} biological specimen{openDiscrepancies > 1 ? "s have" : " has"} discordant findings between primary and independent verification labs. The original testing laboratory is strictly barred from self-resolution.
+              </p>
+            </div>
+          </div>
+          {onOpenWorkbench && (
+            <button
+              onClick={onOpenWorkbench}
+              className="brutal-btn bg-[#FFFFFF] hover:bg-[#FEE2E2] text-[#DC2626] border-2 border-[#DC2626] shadow-[2px_2px_0px_#DC2626] text-xs px-3.5 py-2 shrink-0 flex items-center gap-1.5 font-black uppercase"
+            >
+              <span>Investigate Case</span>
+              <ChevronRight className="w-4 h-4" />
+            </button>
+          )}
+        </div>
+      )}
+
+      {/* Primary KPI Stats Grid - 4 Animated Brutalist Cards with Animated Counter */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
         
         {/* Total Specimens */}
@@ -188,7 +257,7 @@ export default function Dashboard({
           </div>
         </motion.div>
 
-        {/* Quarantined */}
+        {/* Quarantine Hold */}
         <motion.div 
           whileHover={{ y: -3, scale: 1.015 }}
           transition={{ type: "spring", stiffness: 400, damping: 20 }}
@@ -248,6 +317,123 @@ export default function Dashboard({
 
       </div>
 
+      {/* Tracechain 2.0 Verification Layer Metrics Banner */}
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
+        
+        {/* Attested Reports */}
+        <motion.div 
+          whileHover={{ y: -2 }}
+          className="p-3 sm:p-3.5 rounded-xl bg-[#FFFFFF] border-2 border-[#0A0A0A] shadow-[2.5px_2.5px_0px_#0A0A0A] flex flex-col justify-between"
+        >
+          <div className="flex items-center justify-between">
+            <span className="text-[10px] font-extrabold uppercase font-mono text-[#52525B]">
+              Attested Lab Reports
+            </span>
+            <span className="brutal-pill bg-[#C084FC] text-[9px] px-1.5 py-0.2">
+              ECDSA
+            </span>
+          </div>
+          <div className="mt-1.5 flex items-baseline justify-between">
+            <div className="text-xl sm:text-2xl font-black font-mono text-[#0A0A0A]">
+              <AnimatedCounter value={totalAttestedReports} />
+            </div>
+            <FileCheck2 className="w-4 h-4 text-[#7C3AED]" />
+          </div>
+          <div className="mt-1.5 pt-1.5 border-t border-[#E5E7EB] text-[10px] text-[#52525B] font-mono font-medium truncate">
+            Cryptographic Key Attestations
+          </div>
+        </motion.div>
+
+        {/* Blind Testing IDs */}
+        <motion.div 
+          whileHover={{ y: -2 }}
+          className="p-3 sm:p-3.5 rounded-xl bg-[#FFFFFF] border-2 border-[#0A0A0A] shadow-[2.5px_2.5px_0px_#0A0A0A] flex flex-col justify-between"
+        >
+          <div className="flex items-center justify-between">
+            <span className="text-[10px] font-extrabold uppercase font-mono text-[#52525B]">
+              Blind Testing IDs
+            </span>
+            <span className="brutal-pill bg-[#38BDF8] text-[9px] px-1.5 py-0.2">
+              OFF-CHAIN
+            </span>
+          </div>
+          <div className="mt-1.5 flex items-baseline justify-between">
+            <div className="text-xl sm:text-2xl font-black font-mono text-[#0A0A0A]">
+              <AnimatedCounter value={blindSamplesCount} />
+              <span className="text-xs text-[#71717A] font-normal ml-1">/ {totalSamples}</span>
+            </div>
+            <EyeOff className="w-4 h-4 text-[#0284C7]" />
+          </div>
+          <div className="mt-1.5 pt-1.5 border-t border-[#E5E7EB] text-[10px] text-[#52525B] font-mono font-medium truncate">
+            De-Identified Patient Vault
+          </div>
+        </motion.div>
+
+        {/* Independent Retests */}
+        <motion.div 
+          whileHover={{ y: -2 }}
+          className="p-3 sm:p-3.5 rounded-xl bg-[#FFFFFF] border-2 border-[#0A0A0A] shadow-[2.5px_2.5px_0px_#0A0A0A] flex flex-col justify-between"
+        >
+          <div className="flex items-center justify-between">
+            <span className="text-[10px] font-extrabold uppercase font-mono text-[#52525B]">
+              Independent Retests
+            </span>
+            <span className="brutal-pill bg-[#FDE047] text-[9px] px-1.5 py-0.2">
+              2ND LAB
+            </span>
+          </div>
+          <div className="mt-1.5 flex items-baseline justify-between">
+            <div className="text-xl sm:text-2xl font-black font-mono text-[#0A0A0A]">
+              <AnimatedCounter value={totalRetests} />
+            </div>
+            <RefreshCw className="w-4 h-4 text-[#CA8A04]" />
+          </div>
+          <div className="mt-1.5 pt-1.5 border-t border-[#E5E7EB] text-[10px] text-[#52525B] font-mono font-medium truncate">
+            Secondary Verification Audits
+          </div>
+        </motion.div>
+
+        {/* Discrepancies */}
+        <motion.div 
+          whileHover={{ y: -2 }}
+          onClick={onOpenWorkbench}
+          className={`p-3 sm:p-3.5 rounded-xl border-2 border-[#0A0A0A] shadow-[2.5px_2.5px_0px_#0A0A0A] flex flex-col justify-between ${
+            onOpenWorkbench ? "cursor-pointer hover:bg-[#FFFBEB]" : ""
+          } ${openDiscrepancies > 0 ? "bg-[#FEF2F2]" : "bg-[#FFFFFF]"}`}
+        >
+          <div className="flex items-center justify-between">
+            <span className="text-[10px] font-extrabold uppercase font-mono text-[#52525B]">
+              Discrepancies
+            </span>
+            <span className={`brutal-pill text-[9px] px-1.5 py-0.2 ${
+              openDiscrepancies > 0 ? "bg-[#FF5A5F] text-white" : "bg-[#10B981] text-white"
+            }`}>
+              {openDiscrepancies > 0 ? "ACTION REQ" : "CLEAR"}
+            </span>
+          </div>
+          <div className="mt-1.5 flex items-baseline justify-between">
+            <div className="text-xl sm:text-2xl font-black font-mono text-[#0A0A0A]">
+              <span className={openDiscrepancies > 0 ? "text-[#DC2626]" : ""}>
+                {openDiscrepancies}
+              </span>
+              <span className="text-xs text-[#71717A] font-normal ml-1">
+                open ({resolvedDiscrepancies} res)
+              </span>
+            </div>
+            <Scale className={`w-4 h-4 ${openDiscrepancies > 0 ? "text-[#DC2626]" : "text-[#10B981]"}`} />
+          </div>
+          <div className="mt-1.5 pt-1.5 border-t border-[#E5E7EB] text-[10px] text-[#52525B] font-mono font-medium flex items-center justify-between">
+            <span>Anti-Tamper Enforced</span>
+            {onOpenWorkbench && (
+              <span className="text-[#0A0A0A] font-bold underline flex items-center gap-0.5">
+                Review <ChevronRight className="w-2.5 h-2.5" />
+              </span>
+            )}
+          </div>
+        </motion.div>
+
+      </div>
+
       {/* Main Content Grid: Live Provenance Activity & Cold-Chain Telemetry */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 sm:gap-5">
         
@@ -285,6 +471,26 @@ export default function Dashboard({
                 const isQuarantine = rec.recType === 11;
                 const isTest = rec.recType === 9;
                 const isAliquot = rec.recType === 1 || rec.recType === 2;
+                const isReportAttested = rec.recType === 16;
+                const isRetestRequested = rec.recType === 17;
+                const isRetestReported = rec.recType === 18;
+                const isDiscrepancyFlagged = rec.recType === 19;
+                const isDiscrepancyResolved = rec.recType === 20;
+
+                const getBadgeConfig = () => {
+                  if (isDiscrepancyFlagged) return { bg: "bg-[#FF5A5F]", text: "text-white", label: "DISCREPANCY" };
+                  if (isDiscrepancyResolved) return { bg: "bg-[#10B981]", text: "text-white", label: "RESOLVED" };
+                  if (isRetestReported) return { bg: "bg-[#D7FB38]", text: "text-[#0A0A0A]", label: "RETEST PASS" };
+                  if (isRetestRequested) return { bg: "bg-[#FDE047]", text: "text-[#0A0A0A]", label: "RETEST REQ" };
+                  if (isReportAttested) return { bg: "bg-[#C084FC]", text: "text-[#0A0A0A]", label: "ATTESTATION" };
+                  if (isIncident || isQuarantine) return { bg: "bg-[#FF5A5F]", text: "text-white", label: "ALERT" };
+                  if (isStorage) return { bg: "bg-[#38BDF8]", text: "text-[#0A0A0A]", label: "STORAGE" };
+                  if (isTest) return { bg: "bg-[#C084FC]", text: "text-[#0A0A0A]", label: "TEST" };
+                  if (isAliquot) return { bg: "bg-[#FDE047]", text: "text-[#0A0A0A]", label: "ALIQUOT" };
+                  return { bg: "bg-[#D7FB38]", text: "text-[#0A0A0A]", label: "EVENT" };
+                };
+
+                const badge = getBadgeConfig();
 
                 return (
                   <motion.div
@@ -294,32 +500,37 @@ export default function Dashboard({
                     onClick={() => onSelectSample(evt.sampleId)}
                     className="relative p-3 rounded-xl bg-[#F7F8F4] hover:bg-[#FFFFFF] border-2 border-[#0A0A0A] shadow-[2px_2px_0px_#0A0A0A] hover:shadow-[3.5px_3.5px_0px_#0A0A0A] flex flex-col sm:flex-row sm:items-center justify-between gap-3 group cursor-pointer transition-all overflow-hidden"
                   >
-                    {/* Laser Scanner Line (absolute overlay - does not participate in flex flow) */}
+                    {/* Laser Scanner Line (absolute overlay) */}
                     <div className="absolute inset-0 pointer-events-none opacity-0 group-hover:opacity-100 transition-opacity">
                       <div className="animate-laser" />
                     </div>
 
                     <div className="flex items-start sm:items-center gap-3 flex-1 min-w-0">
-                      <div className={`w-8 h-8 rounded-lg flex items-center justify-center text-xs font-bold border-2 border-[#0A0A0A] shadow-[1.5px_1.5px_0px_#0A0A0A] shrink-0 ${
-                        isIncident || isQuarantine
-                          ? "bg-[#FF5A5F] text-white"
-                          : isStorage
-                          ? "bg-[#38BDF8] text-[#0A0A0A]"
-                          : isTest
-                          ? "bg-[#C084FC] text-[#0A0A0A]"
-                          : isAliquot
-                          ? "bg-[#FDE047] text-[#0A0A0A]"
-                          : "bg-[#D7FB38] text-[#0A0A0A]"
-                      }`}>
-                        <Cpu className="w-4 h-4" />
+                      <div className={`w-8 h-8 rounded-lg flex items-center justify-center text-xs font-bold border-2 border-[#0A0A0A] shadow-[1.5px_1.5px_0px_#0A0A0A] shrink-0 ${badge.bg} ${badge.text}`}>
+                        {isDiscrepancyFlagged || isDiscrepancyResolved ? (
+                          <Scale className="w-4 h-4" />
+                        ) : isRetestReported || isRetestRequested ? (
+                          <RefreshCw className="w-4 h-4" />
+                        ) : isReportAttested ? (
+                          <FileCheck2 className="w-4 h-4" />
+                        ) : isIncident || isQuarantine ? (
+                          <AlertTriangle className="w-4 h-4" />
+                        ) : (
+                          <Cpu className="w-4 h-4" />
+                        )}
                       </div>
                       <div className="min-w-0 flex-1">
                         <div className="flex items-center gap-2 flex-wrap">
                           <span className="text-xs sm:text-sm font-black text-[#0A0A0A] group-hover:underline font-mono">
                             {evt.externalId}
                           </span>
+                          {evt.blindId && (
+                            <span className="text-[10px] font-mono bg-[#E0F2FE] text-[#0284C7] px-1.5 py-0.2 rounded border border-[#0A0A0A] font-bold">
+                              {evt.blindId}
+                            </span>
+                          )}
                           <span className="text-[10px] font-mono bg-[#FFFFFF] text-[#0A0A0A] px-1.5 py-0.2 rounded border border-[#0A0A0A] font-bold">
-                            {evt.sampleType}
+                            {badge.label}
                           </span>
                         </div>
                         <p className="text-xs text-[#0A0A0A] mt-0.5 font-medium line-clamp-1">

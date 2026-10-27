@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from "react";
 import QRCode from "qrcode";
-import { X, QrCode, Printer, Check, Copy } from "lucide-react";
+import { X, QrCode, Printer, Check, Copy, EyeOff } from "lucide-react";
 import { shortHash } from "../utils/formatters";
 
 export default function BarcodeModal({ sample, onClose }) {
@@ -10,8 +10,9 @@ export default function BarcodeModal({ sample, onClose }) {
   useEffect(() => {
     if (!sample) return;
     const payload = JSON.stringify({
-      schema: "Tracechain-v1",
+      schema: "Tracechain-v2-BlindTesting",
       id: sample.sampleId,
+      blindId: sample.blindId || "UNBLINDED",
       barcode: sample.externalId,
       type: sample.sampleType,
       head: sample.headHash,
@@ -50,7 +51,7 @@ export default function BarcodeModal({ sample, onClose }) {
             </div>
             <div>
               <h3 className="text-base font-extrabold text-[#0A0A0A] tracking-tight">Cryo-Vial Barcode Label</h3>
-              <p className="text-[11px] text-[#52525B] font-mono font-bold">Physical specimen tag</p>
+              <p className="text-[11px] text-[#52525B] font-mono font-bold">Physical specimen tag with Blind ID</p>
             </div>
           </div>
           <button onClick={onClose} className="p-1.5 rounded-lg bg-[#FFFFFF] hover:bg-[#FFE4E6] border-2 border-[#0A0A0A] shadow-[1.5px_1.5px_0px_#0A0A0A] active:translate-x-[1px] active:translate-y-[1px] transition-all cursor-pointer">
@@ -60,13 +61,27 @@ export default function BarcodeModal({ sample, onClose }) {
 
         <div className="p-5 sm:p-6 space-y-4">
           {/* Printable Label Preview Box */}
-          <div className="p-5 bg-[#FFFFFF] rounded-xl text-[#0A0A0A] shadow-[4px_4px_0px_#0A0A0A] inline-block w-full border-2 border-[#0A0A0A]">
-            <div className="text-[10px] font-black tracking-widest text-[#0A0A0A] uppercase font-mono bg-[#D7FB38] border-2 border-[#0A0A0A] px-2 py-0.5 rounded-md inline-block shadow-[1px_1px_0px_#0A0A0A]">
-              TRACECHAIN REGISTRY // EVM
+          <div className="p-4 bg-[#FFFFFF] rounded-xl text-[#0A0A0A] shadow-[4px_4px_0px_#0A0A0A] inline-block w-full border-2 border-[#0A0A0A]">
+            <div className="flex items-center justify-between gap-1 mb-2">
+              <span className="text-[9px] font-black tracking-widest text-[#0A0A0A] uppercase font-mono bg-[#D7FB38] border-2 border-[#0A0A0A] px-1.5 py-0.5 rounded shadow-[1px_1px_0px_#0A0A0A]">
+                TRACECHAIN // 2.0
+              </span>
+              <span className="text-[9px] font-mono font-extrabold text-[#365314] bg-[#F7FEE7] border border-[#0A0A0A] px-1.5 py-0.5 rounded flex items-center gap-1">
+                <EyeOff className="w-2.5 h-2.5 text-[#65A30D]" />
+                BLIND TESTING
+              </span>
+            </div>
+
+            {/* Prominent Blind Testing ID on label */}
+            <div className="my-1.5 p-1.5 rounded-lg bg-[#F7F8F4] border-2 border-[#0A0A0A] text-left">
+              <div className="text-[8px] font-mono uppercase text-[#71717A] font-bold">Lab-Facing Identifier:</div>
+              <div className="text-xs font-mono font-black text-[#0A0A0A] tracking-wide">
+                {sample.blindId || "BT-PENDING-REGISTRATION"}
+              </div>
             </div>
             
             {qrUrl && (
-              <div className="relative w-44 h-44 mx-auto my-3 overflow-hidden rounded-lg border-2 border-[#0A0A0A]">
+              <div className="relative w-40 h-40 mx-auto my-2 overflow-hidden rounded-lg border-2 border-[#0A0A0A]">
                 <img
                   src={qrUrl}
                   alt="Barcode QR"
@@ -76,30 +91,30 @@ export default function BarcodeModal({ sample, onClose }) {
               </div>
             )}
 
-            <div className="font-mono text-base font-black tracking-wider text-[#0A0A0A]">
-              {sample.externalId}
+            <div className="font-mono text-sm font-black tracking-wider text-[#0A0A0A]">
+              Barcode: {sample.externalId}
             </div>
-            <div className="text-xs font-bold text-[#52525B] mt-0.5 uppercase">
+            <div className="text-[11px] font-bold text-[#52525B] uppercase">
               {sample.sampleType}
             </div>
-            <div className="text-[10px] font-mono text-[#0A0A0A] font-bold bg-[#F7F8F4] px-2 py-1 rounded-md border-2 border-[#0A0A0A] mt-2 truncate shadow-[1px_1px_0px_#0A0A0A]">
-              ID: {shortHash(sample.sampleId, 6)}
+            <div className="text-[9px] font-mono text-[#0A0A0A] font-bold bg-[#F4F4F5] px-2 py-0.5 rounded border border-[#0A0A0A] mt-2 truncate">
+              Anchor: {shortHash(sample.sampleId, 6)}
             </div>
           </div>
 
-          <div className="space-y-2.5">
+          <div className="space-y-2">
             <button
               onClick={handleCopyId}
-              className="brutal-btn brutal-btn-secondary w-full text-xs py-2.5 cursor-pointer font-mono"
+              className="brutal-btn brutal-btn-secondary w-full text-xs py-2 cursor-pointer font-mono"
             >
-              {copied ? <Check className="w-4 h-4 text-[#0A0A0A]" /> : <Copy className="w-4 h-4" />}
+              {copied ? <Check className="w-3.5 h-3.5 text-[#0A0A0A]" /> : <Copy className="w-3.5 h-3.5" />}
               <span>{copied ? "Sample ID Copied" : "Copy Cryptographic ID"}</span>
             </button>
             <button
               onClick={handlePrint}
-              className="brutal-btn brutal-btn-primary w-full text-xs py-2.5 cursor-pointer uppercase"
+              className="brutal-btn brutal-btn-primary w-full text-xs py-2 cursor-pointer uppercase"
             >
-              <Printer className="w-4 h-4" />
+              <Printer className="w-3.5 h-3.5" />
               <span>Print Cryo-Vial Label</span>
             </button>
           </div>

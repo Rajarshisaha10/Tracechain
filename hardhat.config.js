@@ -9,16 +9,18 @@ module.exports = {
         enabled: true,
         runs: 200,
       },
-      viaIR: false,
+      viaIR: true,
     },
   },
   networks: {
     hardhat: {
       chainId: 31337,
+      allowUnlimitedContractSize: true,
     },
     localhost: {
       url: "http://127.0.0.1:8545",
       chainId: 31337,
+      allowUnlimitedContractSize: true,
     },
     sepolia: {
       url: process.env.SEPOLIA_RPC_URL || "https://rpc.sepolia.org",

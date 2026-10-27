@@ -17,6 +17,10 @@ pragma solidity ^0.8.20;
  *                      Research Centers, Couriers, and Compliance Auditors).
  *  - Privacy First   : Only hashes (consent forms, pseudonymous subject IDs, lab report hashes)
  *                      are stored on-chain. Zero PII is exposed.
+ *  - Blind Testing   : Opaque blind identifiers uncouple patient identity from lab-facing records.
+ *  - Independent Attestation & Retesting:
+ *                      Cryptographically signed lab reports, auditor-initiated secondary retesting
+ *                      by independent facilities, and tamper-evident discrepancy investigation workflows.
  *  - Batch Operations: Supports batch transfers for cryogenic transport racks and multi-vial shipments.
  */
 contract SampleChain {
@@ -39,8 +43,16 @@ contract SampleChain {
         Released,            // 12
         Consumed,            // 13
         Destroyed,           // 14
-        AdminReassigned      // 15 dataHash = new custodian address
+        AdminReassigned,     // 15 dataHash = new custodian address
+        ReportAttested,      // 16 dataHash = reportHash, note = testType & version
+        RetestRequested,     // 17 dataHash = requestId, note = reason & designatedLab
+        RetestReported,      // 18 dataHash = retestReportHash, note = findings
+        DiscrepancyFlagged,  // 19 dataHash = caseId, note = discrepancyReason
+        DiscrepancyResolved  // 20 dataHash = caseId, note = disposition
     }
+
+    enum DiscrepancyStatus { Open, UnderReview, Resolved, Escalated }
+    enum DiscrepancyDisposition { None, AffirmedOriginal, AffirmedRetest, InconclusiveReCollect, ContaminatedDiscard }
 
     struct Org {
         string name;
@@ -65,6 +77,7 @@ contract SampleChain {
         address pendingRecipient;// destination during transit
         Status status;
         bytes32 headHash;        // hash-chain tip over the complete event history
+        string blindId;          // Opaque blind testing identifier (non-identifying)
     }
 
     struct Record {
@@ -86,6 +99,51 @@ contract SampleChain {
         bytes32 consentHash;
         bytes32 subjectHash;
         string note;
+    }
+
+    struct AttestedReport {
+        bytes32 sampleId;
+        address laboratory;
+        string testType;
+        bytes32 reportHash;
+        string findings;         // Qualitative summary (e.g. "NEGATIVE", "PATHOGENIC_MUTATION_DETECTED")
+        uint32 reportVersion;
+        uint64 timestamp;
+        bytes signature;
+        string uri;
+        bool isRetest;
+        bytes32 originalReportHash;
+    }
+
+    struct RetestRequest {
+        bytes32 requestId;
+        bytes32 sampleId;
+        address initiator;        // Auditor or Admin
+        address originalLab;      // Laboratory that recorded the original test
+        address designatedLab;    // Independent secondary laboratory
+        bytes32 originalReportHash;
+        string reason;
+        uint64 requestedAt;
+        bool completed;
+        bytes32 retestReportHash;
+    }
+
+    struct DiscrepancyCase {
+        bytes32 caseId;
+        bytes32 sampleId;
+        bytes32 requestId;
+        bytes32 originalReportHash;
+        bytes32 retestReportHash;
+        address originalLab;
+        address retestLab;
+        string reason;
+        bytes32 evidenceHash;
+        DiscrepancyStatus status;
+        DiscrepancyDisposition disposition;
+        string resolutionReason;
+        address reviewer;
+        uint64 flaggedAt;
+        uint64 resolvedAt;
     }
 
     // ---------------------------------------------------------------- constants & storage
@@ -110,6 +168,16 @@ contract SampleChain {
     mapping(address => bytes32[]) private held;      // every sample an org has ever held
     mapping(address => bytes32[]) private incoming;  // transfers offered to an org
 
+    // Verification & Discrepancy Storage
+    mapping(bytes32 => AttestedReport[]) private attestedReports;     // sampleId => reports
+    mapping(bytes32 => RetestRequest) private retestRequests;           // requestId => request
+    mapping(bytes32 => bytes32[]) private sampleRetestRequestIds;      // sampleId => requestIds
+    bytes32[] private allRetestRequestIds;
+
+    mapping(bytes32 => DiscrepancyCase) private discrepancyCases;      // caseId => case
+    mapping(bytes32 => bytes32[]) private sampleDiscrepancyCaseIds;    // sampleId => caseIds
+    bytes32[] private allDiscrepancyCaseIds;
+
     // ----------------------------------------------------------------- errors
     error NotAdmin();
     error NotPendingAdmin();
@@ -127,6 +195,17 @@ contract SampleChain {
     error InvalidState(Status current);
     error ArrayLengthMismatch();
 
+    // Verification errors
+    error InvalidSignature();
+    error RetestLabMustDiffer();
+    error InvalidRetestLab();
+    error RetestRequestNotFound();
+    error RetestAlreadyCompleted();
+    error DiscrepancyNotFound();
+    error SelfResolutionForbidden();
+    error UnauthorizedAuditor();
+    error NoAttestedReportFound();
+
     // ----------------------------------------------------------------- events
     event AdminTransferStarted(address indexed currentAdmin, address indexed pendingAdmin);
     event AdminTransferred(address indexed oldAdmin, address indexed newAdmin);
@@ -135,6 +214,7 @@ contract SampleChain {
     event OrgRegistered(address indexed account, OrgType orgType, bytes2 country, string name);
     event OrgStatusChanged(address indexed account, bool active);
     event SampleRegistered(bytes32 indexed sampleId, address indexed creator, string externalId, string sampleType);
+    event BlindIdAssociated(bytes32 indexed sampleId, string blindId);
     event AliquotCreated(bytes32 indexed parentId, bytes32 indexed childId, address indexed creator, string externalId);
     event TransferInitiated(bytes32 indexed sampleId, address indexed from, address indexed to);
     event TransferCompleted(bytes32 indexed sampleId, address indexed recipient, bool intact);
@@ -146,6 +226,14 @@ contract SampleChain {
     event SampleQuarantined(bytes32 indexed sampleId, address indexed by, string reason);
     event SampleReleased(bytes32 indexed sampleId, address indexed by, string note);
     event SampleFinalized(bytes32 indexed sampleId, Status finalStatus, string reason);
+
+    // Verification events
+    event ReportAttested(bytes32 indexed sampleId, address indexed laboratory, bytes32 indexed reportHash, uint32 version, string findings);
+    event RetestRequested(bytes32 indexed requestId, bytes32 indexed sampleId, address indexed initiator, address designatedLab);
+    event RetestReported(bytes32 indexed requestId, bytes32 indexed sampleId, address indexed retestLab, bytes32 reportHash, string findings);
+    event DiscrepancyFlagged(bytes32 indexed caseId, bytes32 indexed sampleId, address indexed reporter, string reason);
+    event DiscrepancyStatusUpdated(bytes32 indexed caseId, DiscrepancyStatus status, string note);
+    event DiscrepancyResolved(bytes32 indexed caseId, bytes32 indexed sampleId, address indexed reviewer, DiscrepancyDisposition disposition, string reason);
 
     // -------------------------------------------------------------- modifiers
     modifier onlyAdmin() {
@@ -236,6 +324,15 @@ contract SampleChain {
     }
 
     function registerSample(NewSample calldata p) external whenNotPaused returns (bytes32 id) {
+        return _registerInternal(p, "");
+    }
+
+    /// @notice Register sample with an opaque Blind Testing ID for privacy preservation
+    function registerSampleBlind(NewSample calldata p, string calldata blindId) external whenNotPaused returns (bytes32 id) {
+        return _registerInternal(p, blindId);
+    }
+
+    function _registerInternal(NewSample calldata p, string memory blindId) internal returns (bytes32 id) {
         Org storage o = _activeOrg();
         if (!_isBioHandler(o.orgType)) revert Unauthorized();
         if (
@@ -258,12 +355,28 @@ contract SampleChain {
         s.custodian = msg.sender;
         s.status = Status.Active;
         s.headHash = id; // anchor of the hash chain
+        s.blindId = blindId;
         
         allSampleIds.push(id);
         held[msg.sender].push(id);
 
         _add(id, _rec(RecType.Collected, p.consentHash, p.note, ""));
         emit SampleRegistered(id, msg.sender, p.externalId, p.sampleType);
+        if (bytes(blindId).length > 0) {
+            emit BlindIdAssociated(id, blindId);
+        }
+    }
+
+    /// @notice Associate or update an opaque Blind Testing ID on an active sample
+    function setBlindId(bytes32 id, string calldata blindId) external whenNotPaused {
+        Sample storage s = _sample(id);
+        Org storage o = _activeOrg();
+        if (msg.sender != s.creator && msg.sender != s.custodian && o.orgType != OrgType.Auditor && msg.sender != admin) {
+            revert Unauthorized();
+        }
+        if (bytes(blindId).length == 0) revert InvalidInput();
+        s.blindId = blindId;
+        emit BlindIdAssociated(id, blindId);
     }
 
     /// @notice Split off a child sample (aliquot) from a held sample
@@ -295,6 +408,7 @@ contract SampleChain {
         cs.custodian = msg.sender;
         cs.status = Status.Active;
         cs.headHash = childId;
+        cs.blindId = bytes(ps.blindId).length > 0 ? string.concat(ps.blindId, "-ALQ") : "";
 
         allSampleIds.push(childId);
         children[parentId].push(childId);
@@ -408,7 +522,7 @@ contract SampleChain {
         ));
     }
 
-    /// @notice Record diagnostic or genomic test. `resultHash` is SHA/Keccak of report, `uri` is IPFS or link.
+    /// @notice Record diagnostic or genomic test without cryptographic signature (backward compatibility)
     function recordTest(bytes32 id, string calldata testName, bytes32 resultHash, string calldata uri) external whenNotPaused {
         Sample storage s = _sample(id);
         _requireCustodian(s);
@@ -419,7 +533,305 @@ contract SampleChain {
         _add(id, _rec(RecType.Test, resultHash, testName, uri));
     }
 
-    /// @notice Report an incident (temperature excursion, broken seal, container drop).
+    // ------------------------------------------------------------------ FEATURE TWO: ATTESTED REPORTS
+    /// @notice Computes canonical payload hash for lab report attestation
+    function computeReportPayloadHash(
+        bytes32 sampleId,
+        address laboratory,
+        string memory testType,
+        bytes32 reportHash,
+        string memory findings,
+        uint32 reportVersion,
+        uint64 timestamp
+    ) public pure returns (bytes32) {
+        return keccak256(abi.encode(
+            sampleId,
+            laboratory,
+            keccak256(bytes(testType)),
+            reportHash,
+            keccak256(bytes(findings)),
+            reportVersion,
+            timestamp
+        ));
+    }
+
+    /// @notice Records a cryptographically attested laboratory report signed by an authorized laboratory wallet.
+    function recordAttestedTest(
+        bytes32 id,
+        string calldata testType,
+        bytes32 reportHash,
+        string calldata findings,
+        string calldata uri,
+        bytes calldata signature
+    ) external whenNotPaused returns (uint32 version) {
+        Sample storage s = _sample(id);
+        _requireCustodian(s);
+        _requireStatus(s, Status.Active);
+        OrgType t = orgs[msg.sender].orgType;
+        if (t != OrgType.Laboratory && t != OrgType.Research) revert Unauthorized();
+        if (bytes(testType).length == 0 || reportHash == bytes32(0) || bytes(findings).length == 0) revert InvalidInput();
+
+        uint32 currentVer = uint32(attestedReports[id].length) + 1;
+        uint64 nowTs = uint64(block.timestamp);
+
+        // Verify ECDSA signature of payload
+        bytes32 payloadHash = computeReportPayloadHash(id, msg.sender, testType, reportHash, findings, currentVer, nowTs);
+        bytes32 ethSignedHash = keccak256(abi.encodePacked("\x19Ethereum Signed Message:\n32", payloadHash));
+        address recovered = recoverSigner(ethSignedHash, signature);
+        if (recovered != msg.sender) revert InvalidSignature();
+
+        AttestedReport memory r = AttestedReport({
+            sampleId: id,
+            laboratory: msg.sender,
+            testType: testType,
+            reportHash: reportHash,
+            findings: findings,
+            reportVersion: currentVer,
+            timestamp: nowTs,
+            signature: signature,
+            uri: uri,
+            isRetest: false,
+            originalReportHash: bytes32(0)
+        });
+        attestedReports[id].push(r);
+
+        string memory noteStr = currentVer == 1
+            ? string.concat("Attested Report v1: ", testType, " [", findings, "]")
+            : string.concat("Superceded Attested Report v", _uintToString(currentVer), ": ", testType, " [", findings, "]");
+
+        _add(id, _rec(RecType.ReportAttested, reportHash, noteStr, uri));
+        emit ReportAttested(id, msg.sender, reportHash, currentVer, findings);
+        return currentVer;
+    }
+
+    // ------------------------------------------------------------------ FEATURE THREE: INDEPENDENT RETESTING
+    /// @notice Request secondary independent verification test by an authorized independent lab
+    function requestIndependentRetest(
+        bytes32 sampleId,
+        address designatedLab,
+        string calldata reason
+    ) external whenNotPaused returns (bytes32 requestId) {
+        Org storage o = _activeOrg();
+        if (msg.sender != admin && o.orgType != OrgType.Auditor) revert UnauthorizedAuditor();
+        _sample(sampleId);
+
+        uint256 repCount = attestedReports[sampleId].length;
+        if (repCount == 0) revert NoAttestedReportFound();
+        AttestedReport storage latestRep = attestedReports[sampleId][repCount - 1];
+
+        if (designatedLab == latestRep.laboratory) revert RetestLabMustDiffer();
+        Org storage desOrg = orgs[designatedLab];
+        if (!desOrg.active || (desOrg.orgType != OrgType.Laboratory && desOrg.orgType != OrgType.Research)) {
+            revert InvalidRetestLab();
+        }
+        if (bytes(reason).length == 0) revert InvalidInput();
+
+        requestId = keccak256(abi.encodePacked(sampleId, designatedLab, block.timestamp, allRetestRequestIds.length));
+        retestRequests[requestId] = RetestRequest({
+            requestId: requestId,
+            sampleId: sampleId,
+            initiator: msg.sender,
+            originalLab: latestRep.laboratory,
+            designatedLab: designatedLab,
+            originalReportHash: latestRep.reportHash,
+            reason: reason,
+            requestedAt: uint64(block.timestamp),
+            completed: false,
+            retestReportHash: bytes32(0)
+        });
+
+        allRetestRequestIds.push(requestId);
+        sampleRetestRequestIds[sampleId].push(requestId);
+
+        _add(sampleId, _rec(
+            RecType.RetestRequested,
+            requestId,
+            string.concat("Independent retest requested. Assigned: ", desOrg.name, " | ", reason),
+            ""
+        ));
+
+        emit RetestRequested(requestId, sampleId, msg.sender, designatedLab);
+    }
+
+    /// @notice Secondary laboratory records its independently verified report
+    function recordRetestReport(
+        bytes32 requestId,
+        bytes32 reportHash,
+        string calldata findings,
+        string calldata uri,
+        bytes calldata signature
+    ) external whenNotPaused {
+        RetestRequest storage req = retestRequests[requestId];
+        if (req.requestId == bytes32(0)) revert RetestRequestNotFound();
+        if (req.completed) revert RetestAlreadyCompleted();
+        if (msg.sender != req.designatedLab) revert Unauthorized();
+        if (msg.sender == req.originalLab) revert RetestLabMustDiffer();
+        if (reportHash == bytes32(0) || bytes(findings).length == 0) revert InvalidInput();
+
+        Sample storage s = _sample(req.sampleId);
+        _requireCustodian(s);
+        _requireLive(s);
+
+        uint64 nowTs = uint64(block.timestamp);
+        bytes32 payloadHash = computeReportPayloadHash(
+            req.sampleId,
+            msg.sender,
+            "Independent Retest Verification",
+            reportHash,
+            findings,
+            1,
+            nowTs
+        );
+        bytes32 ethSignedHash = keccak256(abi.encodePacked("\x19Ethereum Signed Message:\n32", payloadHash));
+        address recovered = recoverSigner(ethSignedHash, signature);
+        if (recovered != msg.sender) revert InvalidSignature();
+
+        req.completed = true;
+        req.retestReportHash = reportHash;
+
+        AttestedReport memory rep = AttestedReport({
+            sampleId: req.sampleId,
+            laboratory: msg.sender,
+            testType: "Independent Retest Verification",
+            reportHash: reportHash,
+            findings: findings,
+            reportVersion: 1,
+            timestamp: nowTs,
+            signature: signature,
+            uri: uri,
+            isRetest: true,
+            originalReportHash: req.originalReportHash
+        });
+        attestedReports[req.sampleId].push(rep);
+
+        _add(req.sampleId, _rec(
+            RecType.RetestReported,
+            reportHash,
+            string.concat("Independent Retest Submitted [", findings, "]"),
+            uri
+        ));
+
+        emit RetestReported(requestId, req.sampleId, msg.sender, reportHash, findings);
+    }
+
+    // ------------------------------------------------------------------ FEATURE FOUR: DISCREPANCIES
+    /// @notice Flags a material discrepancy between original and secondary retest results
+    function flagDiscrepancy(
+        bytes32 requestId,
+        string calldata reason,
+        bytes32 evidenceHash,
+        bool placeOnQuarantine
+    ) external whenNotPaused returns (bytes32 caseId) {
+        RetestRequest storage req = retestRequests[requestId];
+        if (req.requestId == bytes32(0)) revert RetestRequestNotFound();
+        if (!req.completed) revert InvalidInput();
+        if (bytes(reason).length == 0) revert InvalidInput();
+
+        // The original laboratory CANNOT flag or dismiss cases to cover its own tracks
+        if (msg.sender == req.originalLab) revert Unauthorized();
+
+        Org storage o = _activeOrg();
+        if (msg.sender != admin && o.orgType != OrgType.Auditor && msg.sender != req.designatedLab) {
+            revert Unauthorized();
+        }
+
+        caseId = keccak256(abi.encodePacked(requestId, block.timestamp, allDiscrepancyCaseIds.length));
+        discrepancyCases[caseId] = DiscrepancyCase({
+            caseId: caseId,
+            sampleId: req.sampleId,
+            requestId: requestId,
+            originalReportHash: req.originalReportHash,
+            retestReportHash: req.retestReportHash,
+            originalLab: req.originalLab,
+            retestLab: req.designatedLab,
+            reason: reason,
+            evidenceHash: evidenceHash,
+            status: DiscrepancyStatus.Open,
+            disposition: DiscrepancyDisposition.None,
+            resolutionReason: "",
+            reviewer: address(0),
+            flaggedAt: uint64(block.timestamp),
+            resolvedAt: 0
+        });
+
+        allDiscrepancyCaseIds.push(caseId);
+        sampleDiscrepancyCaseIds[req.sampleId].push(caseId);
+
+        Sample storage s = _sample(req.sampleId);
+        if (placeOnQuarantine && s.status != Status.Quarantined) {
+            _quarantine(s, req.sampleId, string.concat("Quarantined: Investigation of Discrepancy #", reason));
+        }
+
+        _add(req.sampleId, _rec(
+            RecType.DiscrepancyFlagged,
+            caseId,
+            string.concat("Discrepancy Investigation Opened: ", reason),
+            ""
+        ));
+
+        emit DiscrepancyFlagged(caseId, req.sampleId, msg.sender, reason);
+    }
+
+    /// @notice Updates status of an active discrepancy investigation
+    function updateDiscrepancyStatus(
+        bytes32 caseId,
+        DiscrepancyStatus newStatus,
+        string calldata note
+    ) external whenNotPaused {
+        DiscrepancyCase storage c = discrepancyCases[caseId];
+        if (c.caseId == bytes32(0)) revert DiscrepancyNotFound();
+        Org storage o = _activeOrg();
+        if (msg.sender != admin && o.orgType != OrgType.Auditor) revert UnauthorizedAuditor();
+        if (msg.sender == c.originalLab) revert SelfResolutionForbidden();
+
+        c.status = newStatus;
+        emit DiscrepancyStatusUpdated(caseId, newStatus, note);
+    }
+
+    /// @notice Resolves a discrepancy case with binding disposition and rationale
+    function resolveDiscrepancy(
+        bytes32 caseId,
+        DiscrepancyDisposition disposition,
+        string calldata resolutionReason,
+        bytes32 evidenceHash,
+        bool releaseFromQuarantine
+    ) external whenNotPaused {
+        DiscrepancyCase storage c = discrepancyCases[caseId];
+        if (c.caseId == bytes32(0)) revert DiscrepancyNotFound();
+        if (c.status == DiscrepancyStatus.Resolved) revert InvalidInput();
+        if (disposition == DiscrepancyDisposition.None || bytes(resolutionReason).length == 0) revert InvalidInput();
+
+        // Strict Anti-Tamper Rule: Original laboratory cannot unilaterally resolve or close disputes against itself
+        if (msg.sender == c.originalLab) revert SelfResolutionForbidden();
+
+        Org storage o = _activeOrg();
+        if (msg.sender != admin && o.orgType != OrgType.Auditor) revert UnauthorizedAuditor();
+
+        c.status = DiscrepancyStatus.Resolved;
+        c.disposition = disposition;
+        c.resolutionReason = resolutionReason;
+        c.evidenceHash = evidenceHash != bytes32(0) ? evidenceHash : c.evidenceHash;
+        c.reviewer = msg.sender;
+        c.resolvedAt = uint64(block.timestamp);
+
+        Sample storage s = _sample(c.sampleId);
+        if (releaseFromQuarantine && s.status == Status.Quarantined) {
+            s.status = statusBeforeQuarantine[c.sampleId];
+            _add(c.sampleId, _rec(RecType.Released, bytes32(0), string.concat("Released after discrepancy resolution: ", resolutionReason), ""));
+            emit SampleReleased(c.sampleId, msg.sender, resolutionReason);
+        }
+
+        _add(c.sampleId, _rec(
+            RecType.DiscrepancyResolved,
+            caseId,
+            string.concat("Discrepancy Case Resolved: ", resolutionReason),
+            ""
+        ));
+
+        emit DiscrepancyResolved(caseId, c.sampleId, msg.sender, disposition, resolutionReason);
+    }
+
+    // ------------------------------------------------------------------ general incident & quarantine
     function logIncident(bytes32 id, string calldata description, bytes32 evidenceHash, string calldata uri) external whenNotPaused {
         Sample storage s = _sample(id);
         if (s.status == Status.Consumed || s.status == Status.Destroyed) revert InvalidState(s.status);
@@ -432,7 +844,6 @@ contract SampleChain {
         emit IncidentLogged(id, msg.sender, description);
     }
 
-    // ------------------------------------------------------------- quarantine & compliance
     function quarantine(bytes32 id, string calldata reason) external whenNotPaused {
         Sample storage s = _sample(id);
         if (s.status != Status.Active && s.status != Status.InTransit) revert InvalidState(s.status);
@@ -496,7 +907,9 @@ contract SampleChain {
         _sample(id);
         Record[] storage h = history[id];
         for (uint256 i = 0; i < h.length; i++) {
-            if (h[i].recType == RecType.Test && h[i].dataHash == resultHash) return (true, i);
+            if ((h[i].recType == RecType.Test || h[i].recType == RecType.ReportAttested || h[i].recType == RecType.RetestReported) && h[i].dataHash == resultHash) {
+                return (true, i);
+            }
         }
         return (false, 0);
     }
@@ -572,6 +985,39 @@ contract SampleChain {
         return incoming[orgAccount];
     }
 
+    // ------------------------------------------------------------------ Verification Queries
+    function getAttestedReports(bytes32 sampleId) external view returns (AttestedReport[] memory) {
+        return attestedReports[sampleId];
+    }
+
+    function getAttestedReportCount(bytes32 sampleId) external view returns (uint256) {
+        return attestedReports[sampleId].length;
+    }
+
+    function getRetestRequest(bytes32 requestId) external view returns (RetestRequest memory) {
+        return retestRequests[requestId];
+    }
+
+    function getAllRetestRequestIds() external view returns (bytes32[] memory) {
+        return allRetestRequestIds;
+    }
+
+    function getSampleRetestRequests(bytes32 sampleId) external view returns (bytes32[] memory) {
+        return sampleRetestRequestIds[sampleId];
+    }
+
+    function getDiscrepancyCase(bytes32 caseId) external view returns (DiscrepancyCase memory) {
+        return discrepancyCases[caseId];
+    }
+
+    function getAllDiscrepancyCaseIds() external view returns (bytes32[] memory) {
+        return allDiscrepancyCaseIds;
+    }
+
+    function getSampleDiscrepancyCases(bytes32 sampleId) external view returns (bytes32[] memory) {
+        return sampleDiscrepancyCaseIds[sampleId];
+    }
+
     struct SystemStats {
         uint256 totalSamples;
         uint256 totalOrgs;
@@ -579,6 +1025,9 @@ contract SampleChain {
         uint256 inTransitSamples;
         uint256 quarantinedSamples;
         uint256 finalSamples;
+        uint256 totalRetestRequests;
+        uint256 openDiscrepancies;
+        uint256 resolvedDiscrepancies;
     }
 
     function getSystemStats() external view returns (SystemStats memory stats) {
@@ -591,9 +1040,50 @@ contract SampleChain {
             else if (s == Status.Quarantined) stats.quarantinedSamples++;
             else if (s == Status.Consumed || s == Status.Destroyed) stats.finalSamples++;
         }
+        stats.totalRetestRequests = allRetestRequestIds.length;
+        for (uint256 j = 0; j < allDiscrepancyCaseIds.length; j++) {
+            DiscrepancyStatus st = discrepancyCases[allDiscrepancyCaseIds[j]].status;
+            if (st == DiscrepancyStatus.Open || st == DiscrepancyStatus.UnderReview || st == DiscrepancyStatus.Escalated) {
+                stats.openDiscrepancies++;
+            } else if (st == DiscrepancyStatus.Resolved) {
+                stats.resolvedDiscrepancies++;
+            }
+        }
     }
 
-    // --------------------------------------------------------------- internal helpers
+    // --------------------------------------------------------------- internal helpers & ECDSA
+    function recoverSigner(bytes32 ethSignedMessageHash, bytes memory sig) public pure returns (address) {
+        if (sig.length != 65) return address(0);
+        bytes32 r;
+        bytes32 s;
+        uint8 v;
+        assembly {
+            r := mload(add(sig, 32))
+            s := mload(add(sig, 64))
+            v := byte(0, mload(add(sig, 96)))
+        }
+        if (v < 27) v += 27;
+        if (v != 27 && v != 28) return address(0);
+        return ecrecover(ethSignedMessageHash, v, r, s);
+    }
+
+    function _uintToString(uint256 v) internal pure returns (string memory) {
+        if (v == 0) return "0";
+        uint256 digits;
+        uint256 temp = v;
+        while (temp != 0) {
+            digits++;
+            temp /= 10;
+        }
+        bytes memory buffer = new bytes(digits);
+        while (v != 0) {
+            digits -= 1;
+            buffer[digits] = bytes1(uint8(48 + uint256(v % 10)));
+            v /= 10;
+        }
+        return string(buffer);
+    }
+
     function _activeOrg() internal view returns (Org storage o) {
         o = orgs[msg.sender];
         if (!o.active) revert NotActiveOrg();

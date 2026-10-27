@@ -21,12 +21,27 @@
   },
   {
     "inputs": [],
+    "name": "DiscrepancyNotFound",
+    "type": "error"
+  },
+  {
+    "inputs": [],
     "name": "InvalidInput",
     "type": "error"
   },
   {
     "inputs": [],
     "name": "InvalidRecipient",
+    "type": "error"
+  },
+  {
+    "inputs": [],
+    "name": "InvalidRetestLab",
+    "type": "error"
+  },
+  {
+    "inputs": [],
+    "name": "InvalidSignature",
     "type": "error"
   },
   {
@@ -38,6 +53,11 @@
       }
     ],
     "name": "InvalidState",
+    "type": "error"
+  },
+  {
+    "inputs": [],
+    "name": "NoAttestedReportFound",
     "type": "error"
   },
   {
@@ -67,6 +87,21 @@
   },
   {
     "inputs": [],
+    "name": "RetestAlreadyCompleted",
+    "type": "error"
+  },
+  {
+    "inputs": [],
+    "name": "RetestLabMustDiffer",
+    "type": "error"
+  },
+  {
+    "inputs": [],
+    "name": "RetestRequestNotFound",
+    "type": "error"
+  },
+  {
+    "inputs": [],
     "name": "SampleExists",
     "type": "error"
   },
@@ -77,7 +112,17 @@
   },
   {
     "inputs": [],
+    "name": "SelfResolutionForbidden",
+    "type": "error"
+  },
+  {
+    "inputs": [],
     "name": "Unauthorized",
+    "type": "error"
+  },
+  {
+    "inputs": [],
+    "name": "UnauthorizedAuditor",
     "type": "error"
   },
   {
@@ -152,6 +197,118 @@
       }
     ],
     "name": "AliquotCreated",
+    "type": "event"
+  },
+  {
+    "anonymous": false,
+    "inputs": [
+      {
+        "indexed": true,
+        "internalType": "bytes32",
+        "name": "sampleId",
+        "type": "bytes32"
+      },
+      {
+        "indexed": false,
+        "internalType": "string",
+        "name": "blindId",
+        "type": "string"
+      }
+    ],
+    "name": "BlindIdAssociated",
+    "type": "event"
+  },
+  {
+    "anonymous": false,
+    "inputs": [
+      {
+        "indexed": true,
+        "internalType": "bytes32",
+        "name": "caseId",
+        "type": "bytes32"
+      },
+      {
+        "indexed": true,
+        "internalType": "bytes32",
+        "name": "sampleId",
+        "type": "bytes32"
+      },
+      {
+        "indexed": true,
+        "internalType": "address",
+        "name": "reporter",
+        "type": "address"
+      },
+      {
+        "indexed": false,
+        "internalType": "string",
+        "name": "reason",
+        "type": "string"
+      }
+    ],
+    "name": "DiscrepancyFlagged",
+    "type": "event"
+  },
+  {
+    "anonymous": false,
+    "inputs": [
+      {
+        "indexed": true,
+        "internalType": "bytes32",
+        "name": "caseId",
+        "type": "bytes32"
+      },
+      {
+        "indexed": true,
+        "internalType": "bytes32",
+        "name": "sampleId",
+        "type": "bytes32"
+      },
+      {
+        "indexed": true,
+        "internalType": "address",
+        "name": "reviewer",
+        "type": "address"
+      },
+      {
+        "indexed": false,
+        "internalType": "enum SampleChain.DiscrepancyDisposition",
+        "name": "disposition",
+        "type": "uint8"
+      },
+      {
+        "indexed": false,
+        "internalType": "string",
+        "name": "reason",
+        "type": "string"
+      }
+    ],
+    "name": "DiscrepancyResolved",
+    "type": "event"
+  },
+  {
+    "anonymous": false,
+    "inputs": [
+      {
+        "indexed": true,
+        "internalType": "bytes32",
+        "name": "caseId",
+        "type": "bytes32"
+      },
+      {
+        "indexed": false,
+        "internalType": "enum SampleChain.DiscrepancyStatus",
+        "name": "status",
+        "type": "uint8"
+      },
+      {
+        "indexed": false,
+        "internalType": "string",
+        "name": "note",
+        "type": "string"
+      }
+    ],
+    "name": "DiscrepancyStatusUpdated",
     "type": "event"
   },
   {
@@ -277,6 +434,111 @@
       }
     ],
     "name": "RecordAdded",
+    "type": "event"
+  },
+  {
+    "anonymous": false,
+    "inputs": [
+      {
+        "indexed": true,
+        "internalType": "bytes32",
+        "name": "sampleId",
+        "type": "bytes32"
+      },
+      {
+        "indexed": true,
+        "internalType": "address",
+        "name": "laboratory",
+        "type": "address"
+      },
+      {
+        "indexed": true,
+        "internalType": "bytes32",
+        "name": "reportHash",
+        "type": "bytes32"
+      },
+      {
+        "indexed": false,
+        "internalType": "uint32",
+        "name": "version",
+        "type": "uint32"
+      },
+      {
+        "indexed": false,
+        "internalType": "string",
+        "name": "findings",
+        "type": "string"
+      }
+    ],
+    "name": "ReportAttested",
+    "type": "event"
+  },
+  {
+    "anonymous": false,
+    "inputs": [
+      {
+        "indexed": true,
+        "internalType": "bytes32",
+        "name": "requestId",
+        "type": "bytes32"
+      },
+      {
+        "indexed": true,
+        "internalType": "bytes32",
+        "name": "sampleId",
+        "type": "bytes32"
+      },
+      {
+        "indexed": true,
+        "internalType": "address",
+        "name": "retestLab",
+        "type": "address"
+      },
+      {
+        "indexed": false,
+        "internalType": "bytes32",
+        "name": "reportHash",
+        "type": "bytes32"
+      },
+      {
+        "indexed": false,
+        "internalType": "string",
+        "name": "findings",
+        "type": "string"
+      }
+    ],
+    "name": "RetestReported",
+    "type": "event"
+  },
+  {
+    "anonymous": false,
+    "inputs": [
+      {
+        "indexed": true,
+        "internalType": "bytes32",
+        "name": "requestId",
+        "type": "bytes32"
+      },
+      {
+        "indexed": true,
+        "internalType": "bytes32",
+        "name": "sampleId",
+        "type": "bytes32"
+      },
+      {
+        "indexed": true,
+        "internalType": "address",
+        "name": "initiator",
+        "type": "address"
+      },
+      {
+        "indexed": false,
+        "internalType": "address",
+        "name": "designatedLab",
+        "type": "address"
+      }
+    ],
+    "name": "RetestRequested",
     "type": "event"
   },
   {
@@ -669,6 +931,55 @@
   {
     "inputs": [
       {
+        "internalType": "bytes32",
+        "name": "sampleId",
+        "type": "bytes32"
+      },
+      {
+        "internalType": "address",
+        "name": "laboratory",
+        "type": "address"
+      },
+      {
+        "internalType": "string",
+        "name": "testType",
+        "type": "string"
+      },
+      {
+        "internalType": "bytes32",
+        "name": "reportHash",
+        "type": "bytes32"
+      },
+      {
+        "internalType": "string",
+        "name": "findings",
+        "type": "string"
+      },
+      {
+        "internalType": "uint32",
+        "name": "reportVersion",
+        "type": "uint32"
+      },
+      {
+        "internalType": "uint64",
+        "name": "timestamp",
+        "type": "uint64"
+      }
+    ],
+    "name": "computeReportPayloadHash",
+    "outputs": [
+      {
+        "internalType": "bytes32",
+        "name": "",
+        "type": "bytes32"
+      }
+    ],
+    "stateMutability": "pure",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
         "internalType": "address",
         "name": "creator",
         "type": "address"
@@ -725,6 +1036,66 @@
     "type": "function"
   },
   {
+    "inputs": [
+      {
+        "internalType": "bytes32",
+        "name": "requestId",
+        "type": "bytes32"
+      },
+      {
+        "internalType": "string",
+        "name": "reason",
+        "type": "string"
+      },
+      {
+        "internalType": "bytes32",
+        "name": "evidenceHash",
+        "type": "bytes32"
+      },
+      {
+        "internalType": "bool",
+        "name": "placeOnQuarantine",
+        "type": "bool"
+      }
+    ],
+    "name": "flagDiscrepancy",
+    "outputs": [
+      {
+        "internalType": "bytes32",
+        "name": "caseId",
+        "type": "bytes32"
+      }
+    ],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [],
+    "name": "getAllDiscrepancyCaseIds",
+    "outputs": [
+      {
+        "internalType": "bytes32[]",
+        "name": "",
+        "type": "bytes32[]"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [],
+    "name": "getAllRetestRequestIds",
+    "outputs": [
+      {
+        "internalType": "bytes32[]",
+        "name": "",
+        "type": "bytes32[]"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
     "inputs": [],
     "name": "getAllSampleIds",
     "outputs": [
@@ -732,6 +1103,101 @@
         "internalType": "bytes32[]",
         "name": "",
         "type": "bytes32[]"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "bytes32",
+        "name": "sampleId",
+        "type": "bytes32"
+      }
+    ],
+    "name": "getAttestedReportCount",
+    "outputs": [
+      {
+        "internalType": "uint256",
+        "name": "",
+        "type": "uint256"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "bytes32",
+        "name": "sampleId",
+        "type": "bytes32"
+      }
+    ],
+    "name": "getAttestedReports",
+    "outputs": [
+      {
+        "components": [
+          {
+            "internalType": "bytes32",
+            "name": "sampleId",
+            "type": "bytes32"
+          },
+          {
+            "internalType": "address",
+            "name": "laboratory",
+            "type": "address"
+          },
+          {
+            "internalType": "string",
+            "name": "testType",
+            "type": "string"
+          },
+          {
+            "internalType": "bytes32",
+            "name": "reportHash",
+            "type": "bytes32"
+          },
+          {
+            "internalType": "string",
+            "name": "findings",
+            "type": "string"
+          },
+          {
+            "internalType": "uint32",
+            "name": "reportVersion",
+            "type": "uint32"
+          },
+          {
+            "internalType": "uint64",
+            "name": "timestamp",
+            "type": "uint64"
+          },
+          {
+            "internalType": "bytes",
+            "name": "signature",
+            "type": "bytes"
+          },
+          {
+            "internalType": "string",
+            "name": "uri",
+            "type": "string"
+          },
+          {
+            "internalType": "bool",
+            "name": "isRetest",
+            "type": "bool"
+          },
+          {
+            "internalType": "bytes32",
+            "name": "originalReportHash",
+            "type": "bytes32"
+          }
+        ],
+        "internalType": "struct SampleChain.AttestedReport[]",
+        "name": "",
+        "type": "tuple[]"
       }
     ],
     "stateMutability": "view",
@@ -751,6 +1217,102 @@
         "internalType": "bytes32[]",
         "name": "",
         "type": "bytes32[]"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "bytes32",
+        "name": "caseId",
+        "type": "bytes32"
+      }
+    ],
+    "name": "getDiscrepancyCase",
+    "outputs": [
+      {
+        "components": [
+          {
+            "internalType": "bytes32",
+            "name": "caseId",
+            "type": "bytes32"
+          },
+          {
+            "internalType": "bytes32",
+            "name": "sampleId",
+            "type": "bytes32"
+          },
+          {
+            "internalType": "bytes32",
+            "name": "requestId",
+            "type": "bytes32"
+          },
+          {
+            "internalType": "bytes32",
+            "name": "originalReportHash",
+            "type": "bytes32"
+          },
+          {
+            "internalType": "bytes32",
+            "name": "retestReportHash",
+            "type": "bytes32"
+          },
+          {
+            "internalType": "address",
+            "name": "originalLab",
+            "type": "address"
+          },
+          {
+            "internalType": "address",
+            "name": "retestLab",
+            "type": "address"
+          },
+          {
+            "internalType": "string",
+            "name": "reason",
+            "type": "string"
+          },
+          {
+            "internalType": "bytes32",
+            "name": "evidenceHash",
+            "type": "bytes32"
+          },
+          {
+            "internalType": "enum SampleChain.DiscrepancyStatus",
+            "name": "status",
+            "type": "uint8"
+          },
+          {
+            "internalType": "enum SampleChain.DiscrepancyDisposition",
+            "name": "disposition",
+            "type": "uint8"
+          },
+          {
+            "internalType": "string",
+            "name": "resolutionReason",
+            "type": "string"
+          },
+          {
+            "internalType": "address",
+            "name": "reviewer",
+            "type": "address"
+          },
+          {
+            "internalType": "uint64",
+            "name": "flaggedAt",
+            "type": "uint64"
+          },
+          {
+            "internalType": "uint64",
+            "name": "resolvedAt",
+            "type": "uint64"
+          }
+        ],
+        "internalType": "struct SampleChain.DiscrepancyCase",
+        "name": "",
+        "type": "tuple"
       }
     ],
     "stateMutability": "view",
@@ -1036,6 +1598,77 @@
     "inputs": [
       {
         "internalType": "bytes32",
+        "name": "requestId",
+        "type": "bytes32"
+      }
+    ],
+    "name": "getRetestRequest",
+    "outputs": [
+      {
+        "components": [
+          {
+            "internalType": "bytes32",
+            "name": "requestId",
+            "type": "bytes32"
+          },
+          {
+            "internalType": "bytes32",
+            "name": "sampleId",
+            "type": "bytes32"
+          },
+          {
+            "internalType": "address",
+            "name": "initiator",
+            "type": "address"
+          },
+          {
+            "internalType": "address",
+            "name": "originalLab",
+            "type": "address"
+          },
+          {
+            "internalType": "address",
+            "name": "designatedLab",
+            "type": "address"
+          },
+          {
+            "internalType": "bytes32",
+            "name": "originalReportHash",
+            "type": "bytes32"
+          },
+          {
+            "internalType": "string",
+            "name": "reason",
+            "type": "string"
+          },
+          {
+            "internalType": "uint64",
+            "name": "requestedAt",
+            "type": "uint64"
+          },
+          {
+            "internalType": "bool",
+            "name": "completed",
+            "type": "bool"
+          },
+          {
+            "internalType": "bytes32",
+            "name": "retestReportHash",
+            "type": "bytes32"
+          }
+        ],
+        "internalType": "struct SampleChain.RetestRequest",
+        "name": "",
+        "type": "tuple"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "bytes32",
         "name": "id",
         "type": "bytes32"
       }
@@ -1108,6 +1741,11 @@
             "internalType": "bytes32",
             "name": "headHash",
             "type": "bytes32"
+          },
+          {
+            "internalType": "string",
+            "name": "blindId",
+            "type": "string"
           }
         ],
         "internalType": "struct SampleChain.Sample",
@@ -1134,6 +1772,25 @@
   {
     "inputs": [
       {
+        "internalType": "bytes32",
+        "name": "sampleId",
+        "type": "bytes32"
+      }
+    ],
+    "name": "getSampleDiscrepancyCases",
+    "outputs": [
+      {
+        "internalType": "bytes32[]",
+        "name": "",
+        "type": "bytes32[]"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
         "internalType": "uint256",
         "name": "offset",
         "type": "uint256"
@@ -1149,6 +1806,25 @@
       {
         "internalType": "bytes32[]",
         "name": "ids",
+        "type": "bytes32[]"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "bytes32",
+        "name": "sampleId",
+        "type": "bytes32"
+      }
+    ],
+    "name": "getSampleRetestRequests",
+    "outputs": [
+      {
+        "internalType": "bytes32[]",
+        "name": "",
         "type": "bytes32[]"
       }
     ],
@@ -1189,6 +1865,21 @@
           {
             "internalType": "uint256",
             "name": "finalSamples",
+            "type": "uint256"
+          },
+          {
+            "internalType": "uint256",
+            "name": "totalRetestRequests",
+            "type": "uint256"
+          },
+          {
+            "internalType": "uint256",
+            "name": "openDiscrepancies",
+            "type": "uint256"
+          },
+          {
+            "internalType": "uint256",
+            "name": "resolvedDiscrepancies",
             "type": "uint256"
           }
         ],
@@ -1398,6 +2089,83 @@
       },
       {
         "internalType": "string",
+        "name": "testType",
+        "type": "string"
+      },
+      {
+        "internalType": "bytes32",
+        "name": "reportHash",
+        "type": "bytes32"
+      },
+      {
+        "internalType": "string",
+        "name": "findings",
+        "type": "string"
+      },
+      {
+        "internalType": "string",
+        "name": "uri",
+        "type": "string"
+      },
+      {
+        "internalType": "bytes",
+        "name": "signature",
+        "type": "bytes"
+      }
+    ],
+    "name": "recordAttestedTest",
+    "outputs": [
+      {
+        "internalType": "uint32",
+        "name": "version",
+        "type": "uint32"
+      }
+    ],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "bytes32",
+        "name": "requestId",
+        "type": "bytes32"
+      },
+      {
+        "internalType": "bytes32",
+        "name": "reportHash",
+        "type": "bytes32"
+      },
+      {
+        "internalType": "string",
+        "name": "findings",
+        "type": "string"
+      },
+      {
+        "internalType": "string",
+        "name": "uri",
+        "type": "string"
+      },
+      {
+        "internalType": "bytes",
+        "name": "signature",
+        "type": "bytes"
+      }
+    ],
+    "name": "recordRetestReport",
+    "outputs": [],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "bytes32",
+        "name": "id",
+        "type": "bytes32"
+      },
+      {
+        "internalType": "string",
         "name": "testName",
         "type": "string"
       },
@@ -1415,6 +2183,30 @@
     "name": "recordTest",
     "outputs": [],
     "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "bytes32",
+        "name": "ethSignedMessageHash",
+        "type": "bytes32"
+      },
+      {
+        "internalType": "bytes",
+        "name": "sig",
+        "type": "bytes"
+      }
+    ],
+    "name": "recoverSigner",
+    "outputs": [
+      {
+        "internalType": "address",
+        "name": "",
+        "type": "address"
+      }
+    ],
+    "stateMutability": "pure",
     "type": "function"
   },
   {
@@ -1504,6 +2296,62 @@
   {
     "inputs": [
       {
+        "components": [
+          {
+            "internalType": "string",
+            "name": "externalId",
+            "type": "string"
+          },
+          {
+            "internalType": "string",
+            "name": "sampleType",
+            "type": "string"
+          },
+          {
+            "internalType": "uint64",
+            "name": "collectedAt",
+            "type": "uint64"
+          },
+          {
+            "internalType": "bytes32",
+            "name": "consentHash",
+            "type": "bytes32"
+          },
+          {
+            "internalType": "bytes32",
+            "name": "subjectHash",
+            "type": "bytes32"
+          },
+          {
+            "internalType": "string",
+            "name": "note",
+            "type": "string"
+          }
+        ],
+        "internalType": "struct SampleChain.NewSample",
+        "name": "p",
+        "type": "tuple"
+      },
+      {
+        "internalType": "string",
+        "name": "blindId",
+        "type": "string"
+      }
+    ],
+    "name": "registerSampleBlind",
+    "outputs": [
+      {
+        "internalType": "bytes32",
+        "name": "id",
+        "type": "bytes32"
+      }
+    ],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
         "internalType": "bytes32",
         "name": "id",
         "type": "bytes32"
@@ -1533,6 +2381,86 @@
       }
     ],
     "name": "release",
+    "outputs": [],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "bytes32",
+        "name": "sampleId",
+        "type": "bytes32"
+      },
+      {
+        "internalType": "address",
+        "name": "designatedLab",
+        "type": "address"
+      },
+      {
+        "internalType": "string",
+        "name": "reason",
+        "type": "string"
+      }
+    ],
+    "name": "requestIndependentRetest",
+    "outputs": [
+      {
+        "internalType": "bytes32",
+        "name": "requestId",
+        "type": "bytes32"
+      }
+    ],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "bytes32",
+        "name": "caseId",
+        "type": "bytes32"
+      },
+      {
+        "internalType": "enum SampleChain.DiscrepancyDisposition",
+        "name": "disposition",
+        "type": "uint8"
+      },
+      {
+        "internalType": "string",
+        "name": "resolutionReason",
+        "type": "string"
+      },
+      {
+        "internalType": "bytes32",
+        "name": "evidenceHash",
+        "type": "bytes32"
+      },
+      {
+        "internalType": "bool",
+        "name": "releaseFromQuarantine",
+        "type": "bool"
+      }
+    ],
+    "name": "resolveDiscrepancy",
+    "outputs": [],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "bytes32",
+        "name": "id",
+        "type": "bytes32"
+      },
+      {
+        "internalType": "string",
+        "name": "blindId",
+        "type": "string"
+      }
+    ],
+    "name": "setBlindId",
     "outputs": [],
     "stateMutability": "nonpayable",
     "type": "function"
@@ -1571,6 +2499,29 @@
   {
     "inputs": [],
     "name": "unpause",
+    "outputs": [],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "bytes32",
+        "name": "caseId",
+        "type": "bytes32"
+      },
+      {
+        "internalType": "enum SampleChain.DiscrepancyStatus",
+        "name": "newStatus",
+        "type": "uint8"
+      },
+      {
+        "internalType": "string",
+        "name": "note",
+        "type": "string"
+      }
+    ],
+    "name": "updateDiscrepancyStatus",
     "outputs": [],
     "stateMutability": "nonpayable",
     "type": "function"

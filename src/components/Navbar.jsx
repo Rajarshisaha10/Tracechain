@@ -17,7 +17,8 @@ import {
   Dna,
   Check,
   Menu,
-  X
+  X,
+  Scale
 } from "lucide-react";
 
 export default function Navbar({ activeTab, setActiveTab }) {
@@ -36,12 +37,16 @@ export default function Navbar({ activeTab, setActiveTab }) {
   const [showRoleDropdown, setShowRoleDropdown] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
+  const discrepancyCases = Object.values(sandboxData.discrepancyCases || {});
+  const openDiscrepanciesCount = discrepancyCases.filter((c) => c.status !== 2).length;
+
   const navItems = [
     { id: "dashboard", label: "Dashboard", icon: Activity },
     { id: "samples", label: "Specimens", icon: Layers },
     { id: "custody", label: "Custody", icon: ArrowLeftRight },
     { id: "lineage", label: "Aliquots", icon: GitFork },
     { id: "compliance", label: "Lab & Audit", icon: FileCheck2 },
+    { id: "workbench", label: "Workbench", icon: Scale, badge: openDiscrepanciesCount },
     { id: "directory", label: "Directory", icon: Building2 },
   ];
 
@@ -76,11 +81,11 @@ export default function Navbar({ activeTab, setActiveTab }) {
                   TRACE<span className="text-[#0A0A0A] underline decoration-[#D7FB38] decoration-4">CHAIN</span>
                 </span>
                 <span className="text-[9px] font-mono font-extrabold bg-[#0A0A0A] text-[#D7FB38] px-1.5 py-0.5 rounded uppercase hidden sm:inline-block">
-                  EVM
+                  2.0
                 </span>
               </div>
               <p className="text-[9px] text-[#52525B] font-mono font-semibold tracking-tight mt-0.5 hidden md:block">
-                Provenance & Custody // 21 CFR §11
+                Blind Testing & Verification // 21 CFR §11
               </p>
             </div>
           </div>
@@ -107,6 +112,11 @@ export default function Navbar({ activeTab, setActiveTab }) {
                   )}
                   <Icon className="w-3.5 h-3.5 text-[#0A0A0A]" />
                   <span>{item.label}</span>
+                  {item.badge > 0 && (
+                    <span className="text-[9px] font-mono font-black bg-[#FF5A5F] text-white px-1.5 py-0.2 rounded-full border border-[#0A0A0A] shadow-[1px_1px_0px_#0A0A0A]">
+                      {item.badge}
+                    </span>
+                  )}
                 </button>
               );
             })}
@@ -202,7 +212,7 @@ export default function Navbar({ activeTab, setActiveTab }) {
                       </button>
                     </div>
 
-                    <div className="space-y-1 max-h-60 overflow-y-auto pr-1">
+                    <div className="space-y-1 max-h-64 overflow-y-auto pr-1">
                       {Object.values(sandboxData.orgs).map((org) => {
                         const isSelected = activeAccount.toLowerCase() === org.address.toLowerCase();
                         return (
@@ -260,7 +270,7 @@ export default function Navbar({ activeTab, setActiveTab }) {
             initial={{ opacity: 0, height: 0 }}
             animate={{ opacity: 1, height: "auto" }}
             exit={{ opacity: 0, height: 0 }}
-            className="lg:hidden mt-2 pt-2 border-t-2 border-[#0A0A0A] grid grid-cols-3 gap-1.5 pb-1 overflow-hidden"
+            className="lg:hidden mt-2 pt-2 border-t-2 border-[#0A0A0A] grid grid-cols-3 sm:grid-cols-4 gap-1.5 pb-1 overflow-hidden"
           >
             {navItems.map((item) => {
               const Icon = item.icon;
@@ -272,13 +282,20 @@ export default function Navbar({ activeTab, setActiveTab }) {
                     setActiveTab(item.id);
                     setMobileMenuOpen(false);
                   }}
-                  className={`flex flex-col items-center justify-center p-2 rounded-lg text-[10px] font-bold border transition-all ${
+                  className={`flex flex-col items-center justify-center p-2 rounded-lg text-[10px] font-bold border transition-all relative ${
                     isActive
                       ? "bg-[#D7FB38] text-[#0A0A0A] border-[#0A0A0A] shadow-[1.5px_1.5px_0px_#0A0A0A]"
                       : "bg-[#FFFFFF] text-[#52525B] border-[#E5E7EB]"
                   }`}
                 >
-                  <Icon className="w-3.5 h-3.5 mb-0.5" />
+                  <div className="relative">
+                    <Icon className="w-3.5 h-3.5 mb-0.5" />
+                    {item.badge > 0 && (
+                      <span className="absolute -top-1 -right-2 text-[8px] font-mono font-bold bg-[#FF5A5F] text-white px-1 rounded-full border border-[#0A0A0A]">
+                        {item.badge}
+                      </span>
+                    )}
+                  </div>
                   <span>{item.label}</span>
                 </button>
               );

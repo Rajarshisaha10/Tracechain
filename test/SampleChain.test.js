@@ -297,4 +297,586 @@ describe("SampleChain - Biological Specimen Chain of Custody", function () {
       expect(history.length).to.be.greaterThan(0);
     });
   });
+
+  describe("Blind Testing & Independent Verification Layer", function () {
+    let sampleId;
+    let secondLab;
+    const now = Math.floor(Date.now() / 1000);
+    const reportHash1 = ethers.keccak256(ethers.toUtf8Bytes("EXOME_REPORT_V1_PDF"));
+    const reportHash2 = ethers.keccak256(ethers.toUtf8Bytes("EXOME_RETEST_INDEPENDENT_V1_PDF"));
+    const evidenceHash = ethers.keccak256(ethers.toUtf8Bytes("DISCREPANCY_ANALYSIS_EVIDENCE_2026"));
+
+    beforeEach(async function () {
+      const signers = await ethers.getSigners();
+      secondLab = signers[7];
+      await contract.registerOrg(secondLab.address, "Apex Secondary Lab", OrgType.Laboratory, toBytes2("FR"), dummyHash);
+
+      // Register sample with blind identifier
+      const tx = await contract.connect(hospital).registerSampleBlind({
+        externalId: "HOSP-VERIFY-001",
+        sampleType: "Whole Blood (EDTA)",
+        collectedAt: now,
+        consentHash: dummyHash,
+        subjectHash: dummyHash,
+        note: "Collected in Oncology with Blind ID"
+      }, "BT-2026-90812");
+      await tx.wait();
+      sampleId = await contract.computeSampleId(hospital.address, "HOSP-VERIFY-001");
+
+      // Transfer custody to initial lab
+      await contract.connect(hospital).initiateTransfer(sampleId, lab.address, "Transfer for initial NGS");
+      await contract.connect(lab).acceptTransfer(sampleId, true, "Received intact for testing");
+    });
+
+    it("should store opaque blind identifier without exposing patient PII", async function () {
+      const sample = await contract.getSample(sampleId);
+      expect(sample.blindId).to.equal("BT-2026-90812");
+      expect(await contract.verifyChain(sampleId)).to.be.true;
+    });
+
+    it("should submit cryptographically attested report with valid ECDSA signature", async function () {
+      const blockNum = await ethers.provider.getBlockNumber();
+      const block = await ethers.provider.getBlock(blockNum);
+      const timestamp = block.timestamp + 1;
+      await ethers.provider.send("evm_setNextBlockTimestamp", [timestamp]);
+
+      const payloadHash = await contract.computeReportPayloadHash(
+        sampleId,
+        lab.address,
+        "NextGen Sequencing Panel",
+        reportHash1,
+        "NEGATIVE",
+        1,
+        timestamp
+      );
+      const signature = await lab.signMessage(ethers.getBytes(payloadHash));
+
+      await contract.connect(lab).recordAttestedTest(
+        sampleId,
+        "NextGen Sequencing Panel",
+        reportHash1,
+        "NEGATIVE",
+        "ipfs://bafybeireport1",
+        signature
+      );
+
+      const reports = await contract.getAttestedReports(sampleId);
+      expect(reports.length).to.equal(1);
+      expect(reports[0].laboratory).to.equal(lab.address);
+      expect(reports[0].findings).to.equal("NEGATIVE");
+      expect(reports[0].reportVersion).to.equal(1);
+      expect(reports[0].reportHash).to.equal(reportHash1);
+
+      expect(await contract.verifyChain(sampleId)).to.be.true;
+    });
+
+    it("should reject report if signature does not match lab wallet", async function () {
+      const blockNum = await ethers.provider.getBlockNumber();
+      const block = await ethers.provider.getBlock(blockNum);
+      const timestamp = block.timestamp + 1;
+      await ethers.provider.send("evm_setNextBlockTimestamp", [timestamp]);
+
+      const payloadHash = await contract.computeReportPayloadHash(
+        sampleId,
+        lab.address,
+        "NextGen Sequencing Panel",
+        reportHash1,
+        "NEGATIVE",
+        1,
+        timestamp
+      );
+      // Malicious or unauthorized signature from hospital instead of lab
+      const forgedSignature = await hospital.signMessage(ethers.getBytes(payloadHash));
+
+      await expect(
+        contract.connect(lab).recordAttestedTest(
+          sampleId,
+          "NextGen Sequencing Panel",
+          reportHash1,
+          "NEGATIVE",
+          "ipfs://bafybeireport1",
+          forgedSignature
+        )
+      ).to.be.revertedWithCustomError(contract, "InvalidSignature");
+    });
+
+    it("should reject report submission from unauthorized non-lab account", async function () {
+      // Transfer custody to courier so courier is custodian
+      await contract.connect(lab).initiateTransfer(sampleId, courier.address, "Dispatch to courier");
+      await contract.connect(courier).acceptTransfer(sampleId, true, "Received intact");
+
+      const blockNum = await ethers.provider.getBlockNumber();
+      const block = await ethers.provider.getBlock(blockNum);
+      const timestamp = block.timestamp + 1;
+      await ethers.provider.send("evm_setNextBlockTimestamp", [timestamp]);
+
+      const payloadHash = await contract.computeReportPayloadHash(
+        sampleId,
+        courier.address,
+        "NextGen Sequencing Panel",
+        reportHash1,
+        "NEGATIVE",
+        1,
+        timestamp
+      );
+      const signature = await courier.signMessage(ethers.getBytes(payloadHash));
+
+      await expect(
+        contract.connect(courier).recordAttestedTest(
+          sampleId,
+          "NextGen Sequencing Panel",
+          reportHash1,
+          "NEGATIVE",
+          "ipfs://bafybeireport1",
+          signature
+        )
+      ).to.be.revertedWithCustomError(contract, "Unauthorized");
+    });
+
+    it("should support report versioning/supersession without deleting previous report", async function () {
+      // Version 1
+      let blockNum = await ethers.provider.getBlockNumber();
+      let block = await ethers.provider.getBlock(blockNum);
+      let ts1 = block.timestamp + 1;
+      await ethers.provider.send("evm_setNextBlockTimestamp", [ts1]);
+
+      let payloadHash1 = await contract.computeReportPayloadHash(
+        sampleId,
+        lab.address,
+        "NextGen Sequencing Panel",
+        reportHash1,
+        "INCONCLUSIVE",
+        1,
+        ts1
+      );
+      let sig1 = await lab.signMessage(ethers.getBytes(payloadHash1));
+      await contract.connect(lab).recordAttestedTest(
+        sampleId,
+        "NextGen Sequencing Panel",
+        reportHash1,
+        "INCONCLUSIVE",
+        "ipfs://bafybeireport1",
+        sig1
+      );
+
+      // Version 2 (Correction / Supersession)
+      blockNum = await ethers.provider.getBlockNumber();
+      block = await ethers.provider.getBlock(blockNum);
+      let ts2 = block.timestamp + 1;
+      await ethers.provider.send("evm_setNextBlockTimestamp", [ts2]);
+
+      const reportHash1v2 = ethers.keccak256(ethers.toUtf8Bytes("EXOME_REPORT_V2_CORRECTED_PDF"));
+      let payloadHash2 = await contract.computeReportPayloadHash(
+        sampleId,
+        lab.address,
+        "NextGen Sequencing Panel",
+        reportHash1v2,
+        "NEGATIVE",
+        2,
+        ts2
+      );
+      let sig2 = await lab.signMessage(ethers.getBytes(payloadHash2));
+      await contract.connect(lab).recordAttestedTest(
+        sampleId,
+        "NextGen Sequencing Panel",
+        reportHash1v2,
+        "NEGATIVE",
+        "ipfs://bafybeireport1_v2",
+        sig2
+      );
+
+      const reports = await contract.getAttestedReports(sampleId);
+      expect(reports.length).to.equal(2);
+      expect(reports[0].reportVersion).to.equal(1);
+      expect(reports[0].findings).to.equal("INCONCLUSIVE");
+      expect(reports[1].reportVersion).to.equal(2);
+      expect(reports[1].findings).to.equal("NEGATIVE");
+
+      expect(await contract.verifyChain(sampleId)).to.be.true;
+    });
+
+    it("should allow auditor to request independent retest with a different laboratory", async function () {
+      // Lab submits initial attested report
+      const blockNum = await ethers.provider.getBlockNumber();
+      const block = await ethers.provider.getBlock(blockNum);
+      const timestamp = block.timestamp + 1;
+      await ethers.provider.send("evm_setNextBlockTimestamp", [timestamp]);
+
+      const payloadHash = await contract.computeReportPayloadHash(
+        sampleId,
+        lab.address,
+        "NextGen Sequencing Panel",
+        reportHash1,
+        "NEGATIVE",
+        1,
+        timestamp
+      );
+      const signature = await lab.signMessage(ethers.getBytes(payloadHash));
+      await contract.connect(lab).recordAttestedTest(
+        sampleId,
+        "NextGen Sequencing Panel",
+        reportHash1,
+        "NEGATIVE",
+        "ipfs://bafybeireport1",
+        signature
+      );
+
+      // Auditor requests independent retest assigning secondLab
+      const tx = await contract.connect(auditor).requestIndependentRetest(
+        sampleId,
+        secondLab.address,
+        "Random compliance audit selection (ISO 15189 proficiency)"
+      );
+      await tx.wait();
+
+      const requests = await contract.getSampleRetestRequests(sampleId);
+      expect(requests.length).to.equal(1);
+      const req = await contract.getRetestRequest(requests[0]);
+      expect(req.designatedLab).to.equal(secondLab.address);
+      expect(req.originalLab).to.equal(lab.address);
+      expect(req.completed).to.be.false;
+
+      expect(await contract.verifyChain(sampleId)).to.be.true;
+    });
+
+    it("should REVERT if auditor tries to assign the original testing lab as the retest lab", async function () {
+      // Lab submits initial report
+      const blockNum = await ethers.provider.getBlockNumber();
+      const block = await ethers.provider.getBlock(blockNum);
+      const timestamp = block.timestamp + 1;
+      await ethers.provider.send("evm_setNextBlockTimestamp", [timestamp]);
+
+      const payloadHash = await contract.computeReportPayloadHash(
+        sampleId,
+        lab.address,
+        "NextGen Sequencing Panel",
+        reportHash1,
+        "NEGATIVE",
+        1,
+        timestamp
+      );
+      const signature = await lab.signMessage(ethers.getBytes(payloadHash));
+      await contract.connect(lab).recordAttestedTest(
+        sampleId,
+        "NextGen Sequencing Panel",
+        reportHash1,
+        "NEGATIVE",
+        "ipfs://bafybeireport1",
+        signature
+      );
+
+      // Should fail if assigning original lab to verify itself
+      await expect(
+        contract.connect(auditor).requestIndependentRetest(
+          sampleId,
+          lab.address,
+          "Attempting to retest with same lab"
+        )
+      ).to.be.revertedWithCustomError(contract, "RetestLabMustDiffer");
+    });
+
+    it("should REVERT if unauthorized user tries to request an independent retest", async function () {
+      await expect(
+        contract.connect(courier).requestIndependentRetest(
+          sampleId,
+          secondLab.address,
+          "Unauthorized retest request"
+        )
+      ).to.be.revertedWithCustomError(contract, "UnauthorizedAuditor");
+    });
+
+    it("should allow second lab to complete retest after receiving sample in custody", async function () {
+      // Initial test
+      let blockNum = await ethers.provider.getBlockNumber();
+      let block = await ethers.provider.getBlock(blockNum);
+      let ts1 = block.timestamp + 1;
+      await ethers.provider.send("evm_setNextBlockTimestamp", [ts1]);
+
+      let payloadHash1 = await contract.computeReportPayloadHash(
+        sampleId,
+        lab.address,
+        "NextGen Sequencing Panel",
+        reportHash1,
+        "NEGATIVE",
+        1,
+        ts1
+      );
+      let sig1 = await lab.signMessage(ethers.getBytes(payloadHash1));
+      await contract.connect(lab).recordAttestedTest(
+        sampleId,
+        "NextGen Sequencing Panel",
+        reportHash1,
+        "NEGATIVE",
+        "ipfs://bafybeireport1",
+        sig1
+      );
+
+      // Auditor requests retest
+      await contract.connect(auditor).requestIndependentRetest(sampleId, secondLab.address, "Routine blind audit");
+      const [reqId] = await contract.getSampleRetestRequests(sampleId);
+
+      // Lab transfers sample to secondLab via custody handoff
+      await contract.connect(lab).initiateTransfer(sampleId, secondLab.address, "Secondary retest transfer");
+      await contract.connect(secondLab).acceptTransfer(sampleId, true, "Seal intact, sample received cold");
+
+      // Second lab records retest report
+      blockNum = await ethers.provider.getBlockNumber();
+      block = await ethers.provider.getBlock(blockNum);
+      let ts2 = block.timestamp + 1;
+      await ethers.provider.send("evm_setNextBlockTimestamp", [ts2]);
+
+      const retestPayloadHash = await contract.computeReportPayloadHash(
+        sampleId,
+        secondLab.address,
+        "Independent Retest Verification",
+        reportHash2,
+        "PATHOGENIC_MUTATION_DETECTED",
+        1,
+        ts2
+      );
+      const retestSig = await secondLab.signMessage(ethers.getBytes(retestPayloadHash));
+
+      await contract.connect(secondLab).recordRetestReport(
+        reqId,
+        reportHash2,
+        "PATHOGENIC_MUTATION_DETECTED",
+        "ipfs://bafybeiretestreport2",
+        retestSig
+      );
+
+      const req = await contract.getRetestRequest(reqId);
+      expect(req.completed).to.be.true;
+      expect(req.retestReportHash).to.equal(reportHash2);
+
+      const reports = await contract.getAttestedReports(sampleId);
+      expect(reports.length).to.equal(2);
+      expect(reports[0].findings).to.equal("NEGATIVE");
+      expect(reports[1].findings).to.equal("PATHOGENIC_MUTATION_DETECTED");
+      expect(reports[1].isRetest).to.be.true;
+
+      expect(await contract.verifyChain(sampleId)).to.be.true;
+    });
+
+    it("should flag a discrepancy and place sample in quarantine hold", async function () {
+      // Complete initial test and retest
+      let blockNum = await ethers.provider.getBlockNumber();
+      let block = await ethers.provider.getBlock(blockNum);
+      let ts1 = block.timestamp + 1;
+      await ethers.provider.send("evm_setNextBlockTimestamp", [ts1]);
+
+      let payloadHash1 = await contract.computeReportPayloadHash(
+        sampleId,
+        lab.address,
+        "NextGen Sequencing Panel",
+        reportHash1,
+        "NEGATIVE",
+        1,
+        ts1
+      );
+      let sig1 = await lab.signMessage(ethers.getBytes(payloadHash1));
+      await contract.connect(lab).recordAttestedTest(
+        sampleId,
+        "NextGen Sequencing Panel",
+        reportHash1,
+        "NEGATIVE",
+        "ipfs://bafybeireport1",
+        sig1
+      );
+
+      await contract.connect(auditor).requestIndependentRetest(sampleId, secondLab.address, "Blind retest check");
+      const [reqId] = await contract.getSampleRetestRequests(sampleId);
+
+      await contract.connect(lab).initiateTransfer(sampleId, secondLab.address, "Dispatch for retest");
+      await contract.connect(secondLab).acceptTransfer(sampleId, true, "Intact receipt");
+
+      blockNum = await ethers.provider.getBlockNumber();
+      block = await ethers.provider.getBlock(blockNum);
+      let ts2 = block.timestamp + 1;
+      await ethers.provider.send("evm_setNextBlockTimestamp", [ts2]);
+
+      const retestPayloadHash = await contract.computeReportPayloadHash(
+        sampleId,
+        secondLab.address,
+        "Independent Retest Verification",
+        reportHash2,
+        "PATHOGENIC_MUTATION_DETECTED",
+        1,
+        ts2
+      );
+      const retestSig = await secondLab.signMessage(ethers.getBytes(retestPayloadHash));
+      await contract.connect(secondLab).recordRetestReport(
+        reqId,
+        reportHash2,
+        "PATHOGENIC_MUTATION_DETECTED",
+        "ipfs://bafybeiretestreport2",
+        retestSig
+      );
+
+      // Auditor flags discrepancy due to result discordance (Negative vs Pathogenic)
+      const tx = await contract.connect(auditor).flagDiscrepancy(
+        reqId,
+        "Discordant findings: Initial reported Negative, Retest reported Pathogenic variant",
+        evidenceHash,
+        true // place on quarantine hold
+      );
+      await tx.wait();
+
+      const sample = await contract.getSample(sampleId);
+      expect(sample.status).to.equal(Status.Quarantined);
+
+      const cases = await contract.getSampleDiscrepancyCases(sampleId);
+      expect(cases.length).to.equal(1);
+      const c = await contract.getDiscrepancyCase(cases[0]);
+      expect(c.status).to.equal(0); // Open
+      expect(c.originalLab).to.equal(lab.address);
+      expect(c.retestLab).to.equal(secondLab.address);
+
+      expect(await contract.verifyChain(sampleId)).to.be.true;
+    });
+
+    it("should FORBID original lab from resolving its own discrepancy", async function () {
+      // Set up discrepancy
+      let blockNum = await ethers.provider.getBlockNumber();
+      let block = await ethers.provider.getBlock(blockNum);
+      let ts1 = block.timestamp + 1;
+      await ethers.provider.send("evm_setNextBlockTimestamp", [ts1]);
+
+      let payloadHash1 = await contract.computeReportPayloadHash(
+        sampleId,
+        lab.address,
+        "NextGen Sequencing Panel",
+        reportHash1,
+        "NEGATIVE",
+        1,
+        ts1
+      );
+      let sig1 = await lab.signMessage(ethers.getBytes(payloadHash1));
+      await contract.connect(lab).recordAttestedTest(
+        sampleId,
+        "NextGen Sequencing Panel",
+        reportHash1,
+        "NEGATIVE",
+        "ipfs://bafybeireport1",
+        sig1
+      );
+
+      await contract.connect(auditor).requestIndependentRetest(sampleId, secondLab.address, "Audit");
+      const [reqId] = await contract.getSampleRetestRequests(sampleId);
+      await contract.connect(lab).initiateTransfer(sampleId, secondLab.address, "Dispatch");
+      await contract.connect(secondLab).acceptTransfer(sampleId, true, "Intact");
+
+      blockNum = await ethers.provider.getBlockNumber();
+      block = await ethers.provider.getBlock(blockNum);
+      let ts2 = block.timestamp + 1;
+      await ethers.provider.send("evm_setNextBlockTimestamp", [ts2]);
+
+      const retestPayloadHash = await contract.computeReportPayloadHash(
+        sampleId,
+        secondLab.address,
+        "Independent Retest Verification",
+        reportHash2,
+        "PATHOGENIC",
+        1,
+        ts2
+      );
+      const retestSig = await secondLab.signMessage(ethers.getBytes(retestPayloadHash));
+      await contract.connect(secondLab).recordRetestReport(reqId, reportHash2, "PATHOGENIC", "ipfs://report2", retestSig);
+
+      await contract.connect(auditor).flagDiscrepancy(reqId, "Discordant result", evidenceHash, true);
+      const [caseId] = await contract.getSampleDiscrepancyCases(sampleId);
+
+      // Original lab attempts to dismiss or resolve dispute against itself
+      await expect(
+        contract.connect(lab).resolveDiscrepancy(
+          caseId,
+          1, // AffirmedOriginal
+          "Original lab claims its test is the correct one",
+          evidenceHash,
+          true
+        )
+      ).to.be.revertedWithCustomError(contract, "SelfResolutionForbidden");
+    });
+
+    it("should allow auditor to resolve discrepancy with formal disposition and quarantine release", async function () {
+      // Set up discrepancy
+      let blockNum = await ethers.provider.getBlockNumber();
+      let block = await ethers.provider.getBlock(blockNum);
+      let ts1 = block.timestamp + 1;
+      await ethers.provider.send("evm_setNextBlockTimestamp", [ts1]);
+
+      let payloadHash1 = await contract.computeReportPayloadHash(
+        sampleId,
+        lab.address,
+        "NextGen Sequencing Panel",
+        reportHash1,
+        "NEGATIVE",
+        1,
+        ts1
+      );
+      let sig1 = await lab.signMessage(ethers.getBytes(payloadHash1));
+      await contract.connect(lab).recordAttestedTest(
+        sampleId,
+        "NextGen Sequencing Panel",
+        reportHash1,
+        "NEGATIVE",
+        "ipfs://bafybeireport1",
+        sig1
+      );
+
+      await contract.connect(auditor).requestIndependentRetest(sampleId, secondLab.address, "Audit");
+      const [reqId] = await contract.getSampleRetestRequests(sampleId);
+      await contract.connect(lab).initiateTransfer(sampleId, secondLab.address, "Dispatch");
+      await contract.connect(secondLab).acceptTransfer(sampleId, true, "Intact");
+
+      blockNum = await ethers.provider.getBlockNumber();
+      block = await ethers.provider.getBlock(blockNum);
+      let ts2 = block.timestamp + 1;
+      await ethers.provider.send("evm_setNextBlockTimestamp", [ts2]);
+
+      const retestPayloadHash = await contract.computeReportPayloadHash(
+        sampleId,
+        secondLab.address,
+        "Independent Retest Verification",
+        reportHash2,
+        "PATHOGENIC",
+        1,
+        ts2
+      );
+      const retestSig = await secondLab.signMessage(ethers.getBytes(retestPayloadHash));
+      await contract.connect(secondLab).recordRetestReport(reqId, reportHash2, "PATHOGENIC", "ipfs://report2", retestSig);
+
+      await contract.connect(auditor).flagDiscrepancy(reqId, "Discordant result", evidenceHash, true);
+      const [caseId] = await contract.getSampleDiscrepancyCases(sampleId);
+
+      // Auditor updates to UnderReview first
+      await contract.connect(auditor).updateDiscrepancyStatus(caseId, 1, "Reviewing raw fastq and sequencing depth");
+
+      // Auditor resolves: Affirms retest, releases quarantine
+      await contract.connect(auditor).resolveDiscrepancy(
+        caseId,
+        2, // AffirmedRetest
+        "Independent retest confirmed 80x coverage detecting low-frequency variant. Retest affirmed.",
+        evidenceHash,
+        true // release from quarantine
+      );
+
+      const resolvedCase = await contract.getDiscrepancyCase(caseId);
+      expect(resolvedCase.status).to.equal(2); // Resolved
+      expect(resolvedCase.disposition).to.equal(2); // AffirmedRetest
+      expect(resolvedCase.reviewer).to.equal(auditor.address);
+      expect(resolvedCase.resolvedAt).to.be.greaterThan(0);
+
+      // Sample quarantine released back to Active
+      const sample = await contract.getSample(sampleId);
+      expect(sample.status).to.equal(Status.Active);
+
+      // Complete hash chain intact
+      expect(await contract.verifyChain(sampleId)).to.be.true;
+
+      // System stats reflect verification data
+      const stats = await contract.getSystemStats();
+      expect(stats.totalRetestRequests).to.equal(1);
+      expect(stats.resolvedDiscrepancies).to.equal(1);
+    });
+  });
 });

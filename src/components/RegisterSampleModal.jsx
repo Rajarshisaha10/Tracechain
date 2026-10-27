@@ -1,15 +1,20 @@
 import React, { useState } from "react";
 import { useChain } from "../context/ChainContext";
 import { hashFile, hashString } from "../utils/crypto";
-import { X, PlusCircle, Upload, ShieldCheck } from "lucide-react";
+import { generateBlindId } from "../services/identityMappingService";
+import { X, PlusCircle, Upload, ShieldCheck, EyeOff, RefreshCw, Lock } from "lucide-react";
 
 export default function RegisterSampleModal({ onClose, onSuccess }) {
   const { registerSample } = useChain();
 
   const [externalId, setExternalId] = useState(`TC-2026-${Math.floor(1000 + Math.random() * 9000)}`);
+  const [blindId, setBlindId] = useState(() => generateBlindId());
   const [sampleType, setSampleType] = useState("Whole Blood (EDTA)");
   const [collectedAt, setCollectedAt] = useState(new Date().toISOString().slice(0, 10));
   const [subjectRef, setSubjectRef] = useState("STUDY-NCT0482-P" + Math.floor(100 + Math.random() * 900));
+  const [patientName, setPatientName] = useState("Eleanor Vance (Synthetic Demo)");
+  const [patientDob, setPatientDob] = useState("1984-06-22");
+  const [clinicalRequisition, setClinicalRequisition] = useState("Comprehensive 500-Gene Targeted Oncology Exome Panel");
   const [consentHash, setConsentHash] = useState("0x" + "a1".repeat(32));
   const [fileName, setFileName] = useState("");
   const [note, setNote] = useState("Specimen collected at sterile biological extraction ward.");
@@ -30,8 +35,8 @@ export default function RegisterSampleModal({ onClose, onSuccess }) {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    if (!externalId.trim() || !sampleType.trim()) {
-      setError("Barcode ID and Specimen Type are required.");
+    if (!externalId.trim() || !sampleType.trim() || !blindId.trim()) {
+      setError("Barcode ID, Specimen Type, and Blind Identifier are required.");
       return;
     }
     try {
@@ -47,6 +52,14 @@ export default function RegisterSampleModal({ onClose, onSuccess }) {
         consentHash: consentHash || "0x" + "00".repeat(32),
         subjectHash: hashedSubject,
         note: note.trim(),
+        blindId: blindId.trim(),
+        patientData: {
+          patientName: patientName.trim(),
+          dob: patientDob,
+          subjectRef: subjectRef.trim(),
+          clinicalRequisition: clinicalRequisition.trim(),
+          collectingWard: note.trim() || "Clinical Extraction Ward"
+        }
       });
 
       setLoading(false);
@@ -71,7 +84,7 @@ export default function RegisterSampleModal({ onClose, onSuccess }) {
             </div>
             <div>
               <h3 className="text-base font-extrabold text-[#0A0A0A] tracking-tight">Register Biological Specimen</h3>
-              <p className="text-[11px] text-[#52525B] font-mono font-medium">Mint root provenance hash on EVM</p>
+              <p className="text-[11px] text-[#52525B] font-mono font-medium">Mint root provenance with Blind Testing ID</p>
             </div>
           </div>
           <button
@@ -91,16 +104,55 @@ export default function RegisterSampleModal({ onClose, onSuccess }) {
             </div>
           )}
 
-          <div>
-            <label className="block text-xs font-bold uppercase tracking-wider text-[#0A0A0A] mb-1.5">Specimen Barcode / Label ID</label>
+          {/* Blind Testing Identifier Box */}
+          <div className="p-3.5 bg-[#F7FEE7] border-2 border-[#0A0A0A] rounded-xl shadow-[2.5px_2.5px_0px_#0A0A0A] space-y-2">
+            <div className="flex items-center justify-between">
+              <span className="text-[10px] font-black tracking-wider uppercase text-[#365314] flex items-center gap-1.5">
+                <EyeOff className="w-3.5 h-3.5 text-[#65A30D]" />
+                Opaque Blind Testing Identifier
+              </span>
+              <button
+                type="button"
+                onClick={() => setBlindId(generateBlindId())}
+                className="text-[10px] font-bold text-[#0A0A0A] flex items-center gap-1 px-1.5 py-0.5 rounded bg-[#FFFFFF] border border-[#0A0A0A] hover:bg-[#F4F4F5] cursor-pointer"
+              >
+                <RefreshCw className="w-2.5 h-2.5" /> Re-roll ID
+              </button>
+            </div>
             <input
               type="text"
-              value={externalId}
-              onChange={(e) => setExternalId(e.target.value)}
-              placeholder="e.g. TC-2026-9081"
+              value={blindId}
+              onChange={(e) => setBlindId(e.target.value)}
+              className="brutal-input w-full text-xs font-mono font-black text-[#0A0A0A] p-2 bg-[#FFFFFF]"
               required
-              className="brutal-input w-full text-xs sm:text-sm p-2.5 font-mono"
             />
+            <p className="text-[10px] text-[#4D7C0F] leading-snug font-medium">
+              Laboratories only receive this opaque ID. Patient name, DOB, and medical charts are blinded to prevent confirmation bias and protect confidentiality.
+            </p>
+          </div>
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            <div>
+              <label className="block text-xs font-bold uppercase tracking-wider text-[#0A0A0A] mb-1.5">Specimen Barcode / Label ID</label>
+              <input
+                type="text"
+                value={externalId}
+                onChange={(e) => setExternalId(e.target.value)}
+                placeholder="e.g. TC-2026-9081"
+                required
+                className="brutal-input w-full text-xs sm:text-sm p-2.5 font-mono"
+              />
+            </div>
+            <div>
+              <label className="block text-xs font-bold uppercase tracking-wider text-[#0A0A0A] mb-1.5">Collection Date</label>
+              <input
+                type="date"
+                value={collectedAt}
+                onChange={(e) => setCollectedAt(e.target.value)}
+                required
+                className="brutal-input w-full text-xs sm:text-sm p-2.5 font-mono"
+              />
+            </div>
           </div>
 
           <div>
@@ -120,85 +172,97 @@ export default function RegisterSampleModal({ onClose, onSuccess }) {
             </select>
           </div>
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-            <div>
-              <label className="block text-xs font-bold uppercase tracking-wider text-[#0A0A0A] mb-1.5">Collection Date</label>
-              <input
-                type="date"
-                value={collectedAt}
-                onChange={(e) => setCollectedAt(e.target.value)}
-                required
-                className="brutal-input w-full text-xs sm:text-sm p-2.5 font-mono"
-              />
+          {/* Off-Chain Patient Information (HIPAA / GDPR Boundary) */}
+          <div className="p-3.5 bg-[#F4F4F5] border-2 border-[#0A0A0A] rounded-xl space-y-2.5 shadow-[2px_2px_0px_#0A0A0A]">
+            <div className="flex items-center gap-1.5 text-xs font-black text-[#0A0A0A]">
+              <Lock className="w-3.5 h-3.5 text-[#52525B]" />
+              <span>Patient Identity (Off-Chain Vault Only)</span>
+            </div>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+              <div>
+                <label className="block text-[10px] font-bold text-[#52525B] uppercase mb-1">Patient Name (Synthetic Demo)</label>
+                <input
+                  type="text"
+                  value={patientName}
+                  onChange={(e) => setPatientName(e.target.value)}
+                  className="brutal-input w-full text-xs p-2 bg-[#FFFFFF]"
+                  required
+                />
+              </div>
+              <div>
+                <label className="block text-[10px] font-bold text-[#52525B] uppercase mb-1">Date of Birth</label>
+                <input
+                  type="date"
+                  value={patientDob}
+                  onChange={(e) => setPatientDob(e.target.value)}
+                  className="brutal-input w-full text-xs p-2 bg-[#FFFFFF]"
+                  required
+                />
+              </div>
             </div>
             <div>
-              <label className="block text-xs font-bold uppercase tracking-wider text-[#0A0A0A] mb-1.5">Pseudonymous Subject ID</label>
+              <label className="block text-[10px] font-bold text-[#52525B] uppercase mb-1">Clinical Requisition Order</label>
               <input
                 type="text"
-                value={subjectRef}
-                onChange={(e) => setSubjectRef(e.target.value)}
-                placeholder="Study ID / Barcode"
+                value={clinicalRequisition}
+                onChange={(e) => setClinicalRequisition(e.target.value)}
+                className="brutal-input w-full text-xs p-2 bg-[#FFFFFF]"
                 required
-                className="brutal-input w-full text-xs sm:text-sm p-2.5 font-mono"
               />
             </div>
+            <p className="text-[10px] text-[#71717A] italic leading-tight">
+              Notice: This demographic record is NEVER broadcast to the public Ethereum ledger. It is cryptographically salted and isolated in an access-gated store for collection personnel only.
+            </p>
           </div>
 
-          {/* File Hash for Informed Consent */}
+          {/* Consent Document Hash */}
           <div>
-            <div className="flex justify-between items-center mb-1.5">
-              <label className="text-xs font-bold uppercase tracking-wider text-[#0A0A0A]">Informed Consent Document Seal</label>
-              <span className="brutal-pill bg-[#D7FB38] text-[10px]">Zero-Knowledge</span>
-            </div>
-            
-            <label className="border-2 border-dashed border-[#0A0A0A] hover:border-black rounded-xl p-4 text-center cursor-pointer block transition-all bg-[#F7F8F4] hover:bg-[#F4F4F5] shadow-[2px_2px_0px_#0A0A0A]">
-              <input
-                type="file"
-                className="hidden"
-                onChange={handleFileUpload}
-              />
-              <div className="flex flex-col items-center gap-1.5 text-xs text-[#52525B]">
-                <Upload className="w-5 h-5 text-[#0A0A0A]" />
-                {fileName ? (
-                  <span className="text-[#0A0A0A] font-mono font-bold truncate max-w-[240px]">
-                    ✓ {fileName}
-                  </span>
-                ) : (
-                  <span className="font-medium">Click or drag consent form PDF to compute Keccak-256 seal</span>
-                )}
-              </div>
+            <label className="block text-xs font-bold uppercase tracking-wider text-[#0A0A0A] mb-1.5">
+              Informed Consent Form (Cryptographic Anchor)
             </label>
-
-            <div className="font-mono text-[10px] bg-[#F7F8F4] p-2.5 rounded-lg border-2 border-[#0A0A0A] text-[#0A0A0A] font-bold break-all mt-2 shadow-[1.5px_1.5px_0px_#0A0A0A]">
-              {consentHash}
+            <div className="flex items-center gap-2">
+              <label className="brutal-btn brutal-btn-secondary px-3 py-2 text-xs cursor-pointer shrink-0">
+                <Upload className="w-3.5 h-3.5" />
+                <span>Upload PDF</span>
+                <input
+                  type="file"
+                  onChange={handleFileUpload}
+                  className="hidden"
+                  accept=".pdf,.png,.jpg"
+                />
+              </label>
+              <input
+                type="text"
+                value={consentHash}
+                onChange={(e) => setConsentHash(e.target.value)}
+                placeholder="0x..."
+                className="brutal-input flex-1 text-xs font-mono p-2 truncate"
+              />
             </div>
+            {fileName && (
+              <p className="text-[11px] text-[#15803D] font-bold font-mono mt-1">
+                ✓ Computed Keccak-256 for: {fileName}
+              </p>
+            )}
           </div>
 
           <div>
-            <label className="block text-xs font-bold uppercase tracking-wider text-[#0A0A0A] mb-1.5">Initial Collection Notes</label>
+            <label className="block text-xs font-bold uppercase tracking-wider text-[#0A0A0A] mb-1.5">Collection Protocol Note</label>
             <textarea
               rows={2}
               value={note}
               onChange={(e) => setNote(e.target.value)}
-              placeholder="Clinical ward, vial volume, temperature notes..."
-              className="brutal-input w-full text-xs sm:text-sm p-2.5 font-mono"
+              className="brutal-input w-full text-xs p-2 font-mono"
             />
           </div>
 
-          <div className="pt-3 flex flex-col-reverse sm:flex-row justify-end gap-2.5 border-t-2 border-[#0A0A0A]">
-            <button
-              type="button"
-              onClick={onClose}
-              className="brutal-btn brutal-btn-secondary text-xs py-2.5 px-4 cursor-pointer"
-            >
-              Cancel
-            </button>
+          <div className="pt-2">
             <button
               type="submit"
               disabled={loading}
-              className="brutal-btn brutal-btn-primary text-xs py-2.5 px-5 uppercase flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50"
+              className="brutal-btn brutal-btn-primary w-full py-3 text-xs uppercase cursor-pointer"
             >
-              {loading ? "Registering on Chain..." : "Confirm & Anchor on Chain"}
+              {loading ? "Anchoring Specimen on Blockchain..." : "Mint Provenance Root & Register Blind ID"}
             </button>
           </div>
 
