@@ -544,30 +544,6 @@ export default function SampleDetailModal({
                   {isSubmittingLab ? "Attesting..." : "⚡ Attest & Record"}
                 </button>
               </div>
-
-              {/* Real-time live tolerance calculation preview if typed */}
-              {labInputVal && !isNaN(parseFloat(labInputVal)) && (
-                (() => {
-                  const m = parseFloat(labInputVal);
-                  const b = Number(sample.baselineMetric?.value || 50);
-                  const tol = Number(sample.baselineMetric?.tolerance || 15);
-                  const varPct = Number((((m - b) / b) * 100).toFixed(1));
-                  const isOut = Math.abs(varPct) > tol;
-                  return (
-                    <div className={`p-2 rounded-lg border text-xs font-mono flex items-center justify-between ${
-                      isOut ? 'bg-[#FFF1F2] border-[#FF5A5F] text-[#BE123C]' : 'bg-[#F7FEE7] border-[#65A30D] text-[#365314]'
-                    }`}>
-                      <span className="font-bold flex items-center gap-1">
-                        {isOut ? <AlertTriangle className="w-3.5 h-3.5 text-[#FF5A5F]" /> : <CheckCircle2 className="w-3.5 h-3.5 text-[#65A30D]" />}
-                        {isOut ? `⚠️ WARNING: Out-of-Tolerance Deviation detected (${varPct > 0 ? '+' : ''}${varPct}%)` : `✓ Concordant Reading within ±${tol}% tolerance (${varPct > 0 ? '+' : ''}${varPct}%)`}
-                      </span>
-                      <span className="text-[10px] font-bold">
-                        {isOut ? "Will flag OUT OF SPEC & file dispute" : "Concordant"}
-                      </span>
-                    </div>
-                  );
-                })()
-              )}
             </div>
 
             {/* Submission Status Message */}
