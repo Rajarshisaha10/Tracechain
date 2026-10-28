@@ -9,6 +9,7 @@ import {
   AlertTriangle,
   Upload,
   CheckCircle2,
+  Lock,
   Search,
   Unlock,
   FileText,
@@ -333,10 +334,11 @@ export default function AuditCompliance({ onSelectSample }) {
                 </div>
               </div>
 
-              {/* Quantitative Measurement & Real-Time Tolerance Verification */}
+              {/* Quantitative Measurement & Blind Tolerance Verification */}
               {(() => {
                 const s = samples.find((item) => item.sampleId === testSampleId);
                 const baseline = s?.baselineMetric;
+                const isLab = currentActor.orgType === 2;
                 const numMeasured = measuredValue !== "" ? parseFloat(measuredValue) : null;
                 const numBaseline = baseline ? parseFloat(baseline.value) : null;
                 let variancePct = null;
@@ -352,28 +354,63 @@ export default function AuditCompliance({ onSelectSample }) {
                       <div className="flex items-center gap-2">
                         <FlaskConical className="w-4 h-4 text-[#2563EB]" />
                         <span className="text-xs font-black uppercase tracking-wider text-[#0A0A0A]">
-                          Assay Measurement & Baseline Tolerance Check
+                          Assay Measurement & Blind Tolerance Check
                         </span>
                       </div>
                       {baseline && (
                         <span className="text-[10px] font-mono font-extrabold bg-[#EFF6FF] text-[#1D4ED8] border border-[#0A0A0A] px-2 py-0.5 rounded">
-                          Benchmark: {baseline.name} (±{baseline.tolerance}%)
+                          Metric: {baseline.name} (±{baseline.tolerance}%)
                         </span>
                       )}
                     </div>
 
                     {baseline && (
-                      <div className="p-2.5 bg-[#F8FAFC] border border-[#0A0A0A] rounded-lg text-xs font-mono flex items-center justify-between">
-                        <div>
-                          <span className="text-[#64748B] block text-[10px] uppercase font-bold">Registered Baseline:</span>
-                          <span className="font-black text-[#0A0A0A]">{baseline.value} {baseline.unit}</span>
-                        </div>
-                        <div className="text-right">
-                          <span className="text-[#64748B] block text-[10px] uppercase font-bold">Permissible Window:</span>
-                          <span className="font-bold text-[#0A0A0A]">
-                            {(Number(baseline.value) * (1 - baseline.tolerance / 100)).toFixed(1)} – {(Number(baseline.value) * (1 + baseline.tolerance / 100)).toFixed(1)} {baseline.unit}
+                      <div className="p-3 bg-[#F8FAFC] border border-[#0A0A0A] rounded-xl text-xs font-mono space-y-2">
+                        <div className="flex items-center justify-between">
+                          <div className="flex items-center gap-1.5 font-bold text-[#0A0A0A]">
+                            {isLab ? (
+                              <>
+                                <Lock className="w-3.5 h-3.5 text-[#B45309]" />
+                                <span className="text-[#B45309]">Sealed Intake Baseline (Blind Testing Active)</span>
+                              </>
+                            ) : (
+                              <>
+                                <Check className="w-3.5 h-3.5 text-[#15803D]" />
+                                <span className="text-[#0A0A0A]">Hospital Baseline Reference</span>
+                              </>
+                            )}
+                          </div>
+                          <span className="text-[10px] bg-[#FFFFFF] border border-[#0A0A0A] px-2 py-0.5 rounded font-bold text-[#52525B]">
+                            Tolerance Window: ±{baseline.tolerance}%
                           </span>
                         </div>
+
+                        {isLab ? (
+                          <div className="p-2.5 bg-[#FFFFFF] border border-[#0A0A0A]/20 rounded-lg space-y-1">
+                            <div className="flex items-center justify-between">
+                              <span className="text-[10px] uppercase font-bold text-[#71717A]">Hospital Target:</span>
+                              <span className="text-[10px] font-mono font-black text-[#B45309] bg-[#FEF9C3] px-2 py-0.5 rounded border border-[#F59E0B] flex items-center gap-1">
+                                <EyeOff className="w-3 h-3" /> [SEALED FROM LAB TO PREVENT BIAS]
+                              </span>
+                            </div>
+                            <p className="text-[10px] text-[#52525B] leading-tight pt-1">
+                              Per ISO-15189 double-blind testing protocols, laboratory personnel cannot view the hospital's registered baseline reading before inputting results. Enter your honest measured value; the system will evaluate concordance against the sealed tolerance window upon submission.
+                            </p>
+                          </div>
+                        ) : (
+                          <div className="flex items-center justify-between p-2 bg-[#FFFFFF] border border-[#0A0A0A]/20 rounded-lg">
+                            <div>
+                              <span className="text-[#64748B] block text-[10px] uppercase font-bold">Registered Target:</span>
+                              <span className="font-black text-sm text-[#0A0A0A]">{baseline.value} {baseline.unit}</span>
+                            </div>
+                            <div className="text-right">
+                              <span className="text-[#64748B] block text-[10px] uppercase font-bold">Permissible Window:</span>
+                              <span className="font-bold text-[#0A0A0A]">
+                                {(Number(baseline.value) * (1 - baseline.tolerance / 100)).toFixed(1)} – {(Number(baseline.value) * (1 + baseline.tolerance / 100)).toFixed(1)} {baseline.unit}
+                              </span>
+                            </div>
+                          </div>
+                        )}
                       </div>
                     )}
 
@@ -389,14 +426,14 @@ export default function AuditCompliance({ onSelectSample }) {
                               onClick={() => setMeasuredValue((Number(baseline.value) * 1.02).toFixed(1))}
                               className="text-[10px] font-bold px-1.5 py-0.5 rounded bg-[#F7FEE7] text-[#365314] border border-[#0A0A0A] hover:bg-[#ECFCCB]"
                             >
-                              Simulate Concordant
+                              Demo: Input In-Spec Value
                             </button>
                             <button
                               type="button"
                               onClick={() => setMeasuredValue((Number(baseline.value) * 1.65).toFixed(1))}
                               className="text-[10px] font-bold px-1.5 py-0.5 rounded bg-[#FFF1F2] text-[#BE123C] border border-[#0A0A0A] hover:bg-[#FFE4E6]"
                             >
-                              Simulate Out-of-Tolerance Discrepancy
+                              Demo: Input Out-of-Spec (Trigger Warning)
                             </button>
                           </div>
                         )}
@@ -406,7 +443,7 @@ export default function AuditCompliance({ onSelectSample }) {
                         step="any"
                         value={measuredValue}
                         onChange={(e) => setMeasuredValue(e.target.value)}
-                        placeholder={baseline ? `Enter measured numeric value, e.g. ${baseline.value}` : "Enter measured numeric value"}
+                        placeholder={baseline ? `Enter independent measured value in ${baseline.unit}` : "Enter measured numeric value"}
                         className="w-full brutal-input text-xs font-mono font-bold p-2 bg-[#FFFFFF]"
                       />
                     </div>
@@ -416,13 +453,13 @@ export default function AuditCompliance({ onSelectSample }) {
                       <div className="p-3 bg-[#FFF1F2] border-2 border-[#FF5A5F] rounded-xl text-[#BE123C] space-y-1 shadow-[2px_2px_0px_#FF5A5F] animate-pulse">
                         <div className="flex items-center gap-1.5 font-black text-xs">
                           <AlertTriangle className="w-4 h-4 text-[#FF5A5F] shrink-0" />
-                          <span>WARNING: MEASUREMENT OUT OF TOLERANCE!</span>
+                          <span>⚠️ BLIND TOLERANCE WARNING: MEASUREMENT OUT OF TOLERANCE!</span>
                         </div>
                         <p className="text-[11px] font-mono leading-tight">
-                          Lab measurement of <strong>{numMeasured} {baseline?.unit}</strong> deviates by <strong>{variancePct > 0 ? `+${variancePct}%` : `${variancePct}%`}</strong> from intake baseline (<strong>{baseline?.value} {baseline?.unit}</strong>). This exceeds the maximum allowable tolerance of <strong>±{baseline?.tolerance}%</strong>.
+                          Your measured reading of <strong>{numMeasured} {baseline?.unit}</strong> fails the hospital's sealed tolerance window (deviates by <strong>{variancePct > 0 ? `+${variancePct}%` : `${variancePct}%`}</strong> vs allowable margin <strong>±{baseline?.tolerance}%</strong>).
                         </p>
                         <p className="text-[10px] text-[#9F1239] font-bold">
-                          ⚠️ An auditable discrepancy will automatically be flagged on the immutable ledger.
+                          ⚠️ Submitting this test will automatically create an analytical discrepancy case on the blockchain and alert compliance auditors.
                         </p>
                       </div>
                     )}
@@ -431,7 +468,7 @@ export default function AuditCompliance({ onSelectSample }) {
                       <div className="p-2.5 bg-[#F7FEE7] border border-[#65A30D] rounded-xl text-[#365314] flex items-center justify-between text-xs font-mono">
                         <div className="flex items-center gap-1.5 font-bold">
                           <CheckCircle2 className="w-4 h-4 text-[#65A30D] shrink-0" />
-                          <span>Concordant: {variancePct > 0 ? `+${variancePct}%` : `${variancePct}%`} variance is within ±{baseline.tolerance}% tolerance margin</span>
+                          <span>✓ Blind Concordance Verified: Your reading is within the hospital's sealed allowable tolerance margin.</span>
                         </div>
                         <span className="text-[9px] bg-[#FFFFFF] px-1.5 py-0.5 rounded border border-[#65A30D] font-extrabold">
                           IN SPEC
