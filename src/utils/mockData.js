@@ -348,6 +348,13 @@ export function buildInitialDemoState() {
       pendingRecipient: lab,
       status: 2, // InTransit
       headHash: chain1.headHash,
+      baselineMetric: {
+        name: "Biomarker Concentration",
+        value: 50.0,
+        unit: "ng/µL",
+        tolerance: 15,
+        expectedQualitative: "NEGATIVE"
+      },
     },
     [id2]: {
       sampleId: id2,
@@ -364,6 +371,13 @@ export function buildInitialDemoState() {
       pendingRecipient: ethers.ZeroAddress,
       status: 1, // Active
       headHash: chain2.headHash,
+      baselineMetric: {
+        name: "ctDNA Concentration",
+        value: 12.0,
+        unit: "ng/µL",
+        tolerance: 15,
+        expectedQualitative: "NEGATIVE"
+      },
     },
     [id3]: {
       sampleId: id3,
@@ -380,6 +394,13 @@ export function buildInitialDemoState() {
       pendingRecipient: ethers.ZeroAddress,
       status: 3, // Quarantined
       headHash: chain3.headHash,
+      baselineMetric: {
+        name: "Tumor Cell Purity",
+        value: 75.0,
+        unit: "%",
+        tolerance: 10,
+        expectedQualitative: "HER2-NORMAL"
+      },
     },
     [id4]: {
       sampleId: id4,
@@ -396,6 +417,13 @@ export function buildInitialDemoState() {
       pendingRecipient: ethers.ZeroAddress,
       status: 1, // Active
       headHash: chain4.headHash,
+      baselineMetric: {
+        name: "RNA Integrity (RIN)",
+        value: 8.5,
+        unit: "Score",
+        tolerance: 10,
+        expectedQualitative: "HIGH-QUALITY"
+      },
     },
     [id5]: {
       sampleId: id5,
@@ -412,6 +440,21 @@ export function buildInitialDemoState() {
       pendingRecipient: ethers.ZeroAddress,
       status: 3, // Quarantined pending discrepancy review
       headHash: chain5.headHash,
+      baselineMetric: {
+        name: "EGFR Mutation Allele Freq",
+        value: 0.5,
+        unit: "%",
+        tolerance: 20,
+        expectedQualitative: "NEGATIVE (WT)"
+      },
+      hasValueWarning: true,
+      latestVarianceWarning: {
+        measuredValue: 4.8,
+        baselineValue: 0.5,
+        unit: "%",
+        variancePct: 860.0,
+        tolerancePct: 20
+      }
     }
   };
 
@@ -451,6 +494,11 @@ export function buildInitialDemoState() {
         uri: "ipfs://bafybeigenomicsequencingreportfinal",
         isRetest: false,
         originalReportHash: ethers.ZeroHash,
+        measuredValue: 8.4,
+        measuredUnit: "Score",
+        baselineValue: 8.5,
+        variancePct: -1.2,
+        isOutOfTolerance: false,
       }
     ],
     [id5]: [
@@ -479,6 +527,11 @@ export function buildInitialDemoState() {
         uri: "ipfs://bafybeihelvetiaretestdisc07",
         isRetest: true,
         originalReportHash: origReportHash,
+        measuredValue: 4.8,
+        measuredUnit: "%",
+        baselineValue: 0.5,
+        variancePct: 860.0,
+        isOutOfTolerance: true,
       }
     ]
   };
@@ -517,6 +570,12 @@ export function buildInitialDemoState() {
       reviewer: ethers.ZeroAddress,
       flaggedAt: nowSec - 30000,
       resolvedAt: 0,
+      isMeasurementDiscrepancy: true,
+      baselineValue: 0.5,
+      measuredValue: 4.8,
+      unit: "%",
+      variancePct: 860.0,
+      tolerancePct: 20
     }
   };
 

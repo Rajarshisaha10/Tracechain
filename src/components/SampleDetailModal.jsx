@@ -30,7 +30,10 @@ import {
   EyeOff,
   Eye,
   Scale,
-  Award
+  Award,
+  AlertTriangle,
+  CheckCircle2,
+  FlaskConical
 } from "lucide-react";
 
 export default function SampleDetailModal({
@@ -319,6 +322,68 @@ export default function SampleDetailModal({
             </div>
           </div>
 
+          {/* Feature: Analytical Baseline & Assay Concordance Benchmark */}
+          <div className="p-4 bg-[#FFFFFF] border-2 border-[#0A0A0A] rounded-xl shadow-[3px_3px_0px_#0A0A0A] space-y-3">
+            <div className="flex items-center justify-between border-b border-[#0A0A0A]/20 pb-2">
+              <div className="flex items-center gap-2">
+                <FlaskConical className="w-4 h-4 text-[#D97706]" />
+                <h4 className="text-xs font-black uppercase tracking-wider text-[#0A0A0A]">
+                  Analytical Baseline & Concordance Benchmark
+                </h4>
+              </div>
+              <span className="text-[10px] font-mono font-bold bg-[#FEF9C3] text-[#854D0E] border border-[#0A0A0A] px-2 py-0.5 rounded">
+                Tolerance: ±{sample.baselineMetric?.tolerance || 15}%
+              </span>
+            </div>
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs">
+              <div className="p-2.5 bg-[#F7F8F4] border border-[#0A0A0A] rounded-lg">
+                <span className="text-[#52525B] font-mono text-[10px] uppercase font-bold block">
+                  Registered Target ({sample.baselineMetric?.name || "Analyte Benchmark"}):
+                </span>
+                <div className="font-mono font-black text-sm text-[#0A0A0A] mt-0.5">
+                  {sample.baselineMetric?.value !== undefined ? `${sample.baselineMetric.value} ${sample.baselineMetric.unit || ""}` : "50.0 ng/µL (Default)"}
+                </div>
+                <p className="text-[10px] text-[#71717A] mt-0.5 font-mono">
+                  Allowable Window: {(Number(sample.baselineMetric?.value || 50) * (1 - (sample.baselineMetric?.tolerance || 15)/100)).toFixed(1)} – {(Number(sample.baselineMetric?.value || 50) * (1 + (sample.baselineMetric?.tolerance || 15)/100)).toFixed(1)} {sample.baselineMetric?.unit || "ng/µL"}
+                </p>
+              </div>
+
+              <div className="p-2.5 bg-[#F7F8F4] border border-[#0A0A0A] rounded-lg">
+                <span className="text-[#52525B] font-mono text-[10px] uppercase font-bold block">
+                  Concordance Evaluation:
+                </span>
+                {sample.hasValueWarning || attestedReports.some(r => r.isOutOfTolerance) ? (
+                  <div className="mt-1 flex items-center gap-1.5 text-xs font-black text-[#BE123C] bg-[#FFF1F2] border border-[#FF5A5F] p-1.5 rounded">
+                    <AlertTriangle className="w-4 h-4 text-[#FF5A5F] shrink-0 animate-pulse" />
+                    <span>⚠️ OUT OF TOLERANCE WARNING</span>
+                  </div>
+                ) : attestedReports.length > 0 ? (
+                  <div className="mt-1 flex items-center gap-1.5 text-xs font-black text-[#15803D] bg-[#F7FEE7] border border-[#65A30D] p-1.5 rounded">
+                    <CheckCircle2 className="w-4 h-4 text-[#65A30D] shrink-0" />
+                    <span>✓ CONCORDANT WITHIN SPEC</span>
+                  </div>
+                ) : (
+                  <div className="mt-1 text-xs font-mono font-bold text-[#71717A] p-1.5">
+                    Awaiting Laboratory Measurement
+                  </div>
+                )}
+              </div>
+            </div>
+
+            {(sample.hasValueWarning || attestedReports.some(r => r.isOutOfTolerance)) && (
+              <div className="p-3 bg-[#FFF1F2] border-2 border-[#FF5A5F] rounded-xl text-xs text-[#BE123C] space-y-1 shadow-[2px_2px_0px_#FF5A5F]">
+                <div className="flex items-center gap-1.5 font-black">
+                  <AlertTriangle className="w-4 h-4 text-[#FF5A5F]" />
+                  <span>CRITICAL ALERT: MEASUREMENT DISCREPANCY DETECTED!</span>
+                </div>
+                <p className="text-[11px] font-mono text-[#9F1239] leading-snug">
+                  Laboratory analytical results deviate significantly from intake baseline values beyond the approved ±{sample.baselineMetric?.tolerance || 15}% tolerance margin. This case has been escalated for audit cross-verification.
+                </p>
+              </div>
+            )}
+          </div>
+
           {/* Feature Two: Cryptographically Attested Laboratory Reports */}
           {attestedReports.length > 0 && (
             <div className="p-4 bg-[#FFFFFF] border-2 border-[#0A0A0A] rounded-xl shadow-[3px_3px_0px_#0A0A0A] space-y-3">
@@ -360,6 +425,31 @@ export default function SampleDetailModal({
                       <span className="text-[#52525B] font-mono text-[10px] uppercase block">Findings Summary:</span>
                       {rep.findings}
                     </div>
+
+                    {rep.measuredValue !== undefined && rep.measuredValue !== null && (
+                      <div className={`p-2.5 rounded-lg border mb-2 text-xs font-mono flex items-center justify-between ${
+                        rep.isOutOfTolerance
+                          ? 'bg-[#FFF1F2] border-[#FF5A5F] text-[#BE123C]'
+                          : 'bg-[#F7FEE7] border-[#65A30D] text-[#365314]'
+                      }`}>
+                        <div>
+                          <span className="font-bold">Measured: </span>
+                          <span className="font-black text-sm">{rep.measuredValue} {rep.measuredUnit || sample.baselineMetric?.unit}</span>
+                          {rep.baselineValue !== undefined && (
+                            <span className="text-[10px] ml-1.5 text-[#52525B]">
+                              (Baseline: {rep.baselineValue} {rep.measuredUnit || sample.baselineMetric?.unit})
+                            </span>
+                          )}
+                        </div>
+                        <span className={`px-2 py-0.5 rounded text-[10px] font-black uppercase border ${
+                          rep.isOutOfTolerance
+                            ? 'bg-[#FF5A5F] text-[#FFFFFF] border-[#9F1239]'
+                            : 'bg-[#D7FB38] text-[#0A0A0A] border-[#65A30D]'
+                        }`}>
+                          {rep.isOutOfTolerance ? `⚠️ Out of Tolerance (${rep.variancePct > 0 ? '+' : ''}${rep.variancePct}%)` : `✓ Concordant (${rep.variancePct > 0 ? '+' : ''}${rep.variancePct}%)`}
+                        </span>
+                      </div>
+                    )}
 
                     <div className="flex items-center justify-between gap-2 pt-1 border-t border-[#0A0A0A]/10 text-[10px] font-mono">
                       <span className="truncate max-w-[200px] text-[#71717A]">

@@ -2,7 +2,7 @@ import React, { useState } from "react";
 import { useChain } from "../context/ChainContext";
 import { hashFile, hashString } from "../utils/crypto";
 import { generateBlindId } from "../services/identityMappingService";
-import { X, PlusCircle, Upload, ShieldCheck, EyeOff, RefreshCw, Lock } from "lucide-react";
+import { X, PlusCircle, Upload, ShieldCheck, EyeOff, RefreshCw, Lock, FlaskConical, AlertTriangle, CheckCircle2 } from "lucide-react";
 
 export default function RegisterSampleModal({ onClose, onSuccess }) {
   const { registerSample } = useChain();
@@ -18,6 +18,11 @@ export default function RegisterSampleModal({ onClose, onSuccess }) {
   const [consentHash, setConsentHash] = useState("0x" + "a1".repeat(32));
   const [fileName, setFileName] = useState("");
   const [note, setNote] = useState("Specimen collected at sterile biological extraction ward.");
+  const [metricName, setMetricName] = useState("Biomarker Concentration");
+  const [metricValue, setMetricValue] = useState("50.0");
+  const [metricUnit, setMetricUnit] = useState("ng/µL");
+  const [metricTolerance, setMetricTolerance] = useState(15);
+  const [expectedQualitative, setExpectedQualitative] = useState("NEGATIVE");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
 
@@ -59,6 +64,13 @@ export default function RegisterSampleModal({ onClose, onSuccess }) {
           subjectRef: subjectRef.trim(),
           clinicalRequisition: clinicalRequisition.trim(),
           collectingWard: note.trim() || "Clinical Extraction Ward"
+        },
+        baselineMetric: {
+          name: metricName.trim() || "Biomarker Concentration",
+          value: parseFloat(metricValue) || 50.0,
+          unit: metricUnit,
+          tolerance: Number(metricTolerance) || 15,
+          expectedQualitative: expectedQualitative.trim()
         }
       });
 
@@ -170,6 +182,90 @@ export default function RegisterSampleModal({ onClose, onSuccess }) {
               <option value="Synovial Fluid">Synovial Fluid</option>
               <option value="Cryopreserved Stem Cells">Cryopreserved Stem Cells</option>
             </select>
+          </div>
+
+          {/* Analytical Baseline & Quality Benchmark (Lab Concordance Verification) */}
+          <div className="p-3.5 bg-[#FEF9C3] border-2 border-[#0A0A0A] rounded-xl space-y-2.5 shadow-[2px_2px_0px_#0A0A0A]">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-1.5 text-xs font-black text-[#0A0A0A]">
+                <FlaskConical className="w-3.5 h-3.5 text-[#B45309]" />
+                <span>Baseline Analytical Benchmark (Verification Control)</span>
+              </div>
+              <span className="text-[9px] font-mono font-bold bg-[#FFFFFF] border border-[#0A0A0A] px-1.5 py-0.2 rounded text-[#B45309]">
+                TOLERANCE CHECK
+              </span>
+            </div>
+
+            <p className="text-[10px] text-[#78350F] leading-snug">
+              Define the initial expected quantitative analyte measurement. If downstream testing laboratories report findings outside the acceptable tolerance margin, an automatic discrepancy warning is flagged.
+            </p>
+
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
+              <div>
+                <label className="block text-[10px] font-bold text-[#52525B] uppercase mb-1">Assay Metric / Analyte</label>
+                <input
+                  type="text"
+                  value={metricName}
+                  onChange={(e) => setMetricName(e.target.value)}
+                  placeholder="e.g. Biomarker Concentration"
+                  className="brutal-input w-full text-xs p-2 bg-[#FFFFFF]"
+                  required
+                />
+              </div>
+              <div>
+                <label className="block text-[10px] font-bold text-[#52525B] uppercase mb-1">Expected Baseline Value</label>
+                <input
+                  type="number"
+                  step="any"
+                  value={metricValue}
+                  onChange={(e) => setMetricValue(e.target.value)}
+                  placeholder="e.g. 50.0"
+                  className="brutal-input w-full text-xs p-2 font-mono font-bold bg-[#FFFFFF]"
+                  required
+                />
+              </div>
+              <div className="grid grid-cols-2 gap-1.5">
+                <div>
+                  <label className="block text-[10px] font-bold text-[#52525B] uppercase mb-1">Unit</label>
+                  <select
+                    value={metricUnit}
+                    onChange={(e) => setMetricUnit(e.target.value)}
+                    className="brutal-input w-full text-xs p-2 font-mono bg-[#FFFFFF]"
+                  >
+                    <option value="ng/µL">ng/µL</option>
+                    <option value="mL">mL</option>
+                    <option value="%">%</option>
+                    <option value="g/dL">g/dL</option>
+                    <option value="mg/L">mg/L</option>
+                    <option value="Score">Score</option>
+                  </select>
+                </div>
+                <div>
+                  <label className="block text-[10px] font-bold text-[#52525B] uppercase mb-1">Tolerance</label>
+                  <select
+                    value={metricTolerance}
+                    onChange={(e) => setMetricTolerance(Number(e.target.value))}
+                    className="brutal-input w-full text-xs p-2 font-mono bg-[#FFFFFF]"
+                  >
+                    <option value={5}>±5%</option>
+                    <option value={10}>±10%</option>
+                    <option value={15}>±15%</option>
+                    <option value={20}>±20%</option>
+                    <option value={25}>±25%</option>
+                  </select>
+                </div>
+              </div>
+            </div>
+
+            {metricValue && !isNaN(Number(metricValue)) && (
+              <div className="p-2 bg-[#FFFFFF] border border-[#0A0A0A] rounded-lg text-[10px] font-mono flex items-center justify-between text-[#0A0A0A]">
+                <span>
+                  Allowable Range: <strong>{(Number(metricValue) * (1 - metricTolerance / 100)).toFixed(1)}</strong> to{" "}
+                  <strong>{(Number(metricValue) * (1 + metricTolerance / 100)).toFixed(1)} {metricUnit}</strong>
+                </span>
+                <span className="font-bold text-[#B45309]">Margin: ±{metricTolerance}%</span>
+              </div>
+            )}
           </div>
 
           {/* Off-Chain Patient Information (HIPAA / GDPR Boundary) */}

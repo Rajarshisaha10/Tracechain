@@ -24,6 +24,59 @@ import { ethers } from "ethers";
 
 const STORAGE_KEY = "tracechain_identity_vault_v2";
 
+export const DEMO_SEEDS = [
+  {
+    externalId: "MSBC-2026-WB-001",
+    blindId: "BT-2026-9081-42C1",
+    patientName: "Eleanor Vance (Synthetic Demo)",
+    subjectRef: "STUDY-NCT0482-P1049",
+    dob: "1978-03-24",
+    clinicalRequisition: "Targeted Oncology Exome Sequencing",
+    collectingWard: "Oncology Surgery Ward 4B",
+    creator: "0x70997970C51812dc3A010C7d01b50e0d17dc79C8"
+  },
+  {
+    externalId: "MSBC-2026-AL-01",
+    blindId: "BT-2026-9081-42C1-ALQ",
+    patientName: "Eleanor Vance (Plasma Aliquot)",
+    subjectRef: "STUDY-NCT0482-P1049",
+    dob: "1978-03-24",
+    clinicalRequisition: "Circulating Tumor DNA (ctDNA) Assay",
+    collectingWard: "CryoBio Processing Lab 2",
+    creator: "0x70997970C51812dc3A010C7d01b50e0d17dc79C8"
+  },
+  {
+    externalId: "MSBC-2026-BX-04",
+    blindId: "BT-2026-7812-99B3",
+    patientName: "Marcus Sterling (Synthetic Demo)",
+    subjectRef: "STUDY-ONCOLOGY-T04",
+    dob: "1964-11-09",
+    clinicalRequisition: "Histopathology & HER2 Genomic Amplification",
+    collectingWard: "Surgical Suite 3",
+    creator: "0x70997970C51812dc3A010C7d01b50e0d17dc79C8"
+  },
+  {
+    externalId: "APEX-2026-RNA-09",
+    blindId: "BT-2026-4412-10A7",
+    patientName: "Clara Oswald (Synthetic Demo)",
+    subjectRef: "SUBJ-GEN-008",
+    dob: "1991-08-19",
+    clinicalRequisition: "High-Throughput RNA-Seq Transcriptomics",
+    collectingWard: "Genomics Extraction Bay",
+    creator: "0x3C44CdDdB6a900fa2b585dd299e03d12FA4293BC"
+  },
+  {
+    externalId: "MSBC-2026-DISC-07",
+    blindId: "BT-2026-5501-98E2",
+    patientName: "Julian Thorne (Synthetic Demo)",
+    subjectRef: "STUDY-DISC-T091",
+    dob: "1972-09-14",
+    clinicalRequisition: "Targeted EGFR T790M Resistance Mutation Panel",
+    collectingWard: "Surgical Oncology Biobank",
+    creator: "0x70997970C51812dc3A010C7d01b50e0d17dc79C8"
+  }
+];
+
 /**
  * Generates an opaque, non-identifying Blind Testing Identifier
  * Format: BT-YYYY-XXXX-XXXX (Opaque random alphanumeric entropy)
@@ -39,17 +92,54 @@ export function generateBlindId() {
 }
 
 /**
- * Reads vault state from local prototype storage
+ * Reads vault state from local prototype storage and self-heals default demo seeds
  */
 function readVault() {
+  let vault = {};
   try {
-    const raw = localStorage.getItem(STORAGE_KEY);
-    if (!raw) return {};
-    return JSON.parse(raw);
+    const raw = typeof localStorage !== "undefined" ? localStorage.getItem(STORAGE_KEY) : null;
+    if (raw) {
+      vault = JSON.parse(raw);
+    }
   } catch (err) {
     console.warn("[IdentityVault] Failed to read store:", err);
-    return {};
   }
+
+  // Ensure default demo seeds always exist in vault
+  let needsSync = false;
+  DEMO_SEEDS.forEach((seed) => {
+    const key = seed.blindId.toUpperCase();
+    if (!vault[key]) {
+      vault[key] = {
+        sampleId: "",
+        externalId: seed.externalId,
+        blindId: key,
+        creatorAddress: seed.creator.toLowerCase(),
+        registeredAt: Date.now() - 86400000 * 2,
+        patientData: {
+          patientName: seed.patientName,
+          subjectRef: seed.subjectRef,
+          dob: seed.dob,
+          clinicalRequisition: seed.clinicalRequisition,
+          collectingWard: seed.collectingWard,
+        },
+        accessLog: [
+          {
+            action: "INITIAL_SEED_CREATED",
+            actor: seed.creator,
+            timestamp: Date.now() - 86400000 * 2,
+          }
+        ]
+      };
+      needsSync = true;
+    }
+  });
+
+  if (needsSync && typeof localStorage !== "undefined") {
+    writeVault(vault);
+  }
+
+  return vault;
 }
 
 /**
@@ -57,7 +147,9 @@ function readVault() {
  */
 function writeVault(data) {
   try {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
+    if (typeof localStorage !== "undefined") {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
+    }
   } catch (err) {
     console.warn("[IdentityVault] Failed to persist store:", err);
   }
@@ -156,10 +248,10 @@ export function resolveIdentity(blindId, requesterAddress = "", requesterOrgType
     masked: true,
     reason: "BLIND_TESTING_ENFORCED",
     message: "Identity unmasking restricted. Laboratory and logistics personnel receive blind identifier only to eliminate confirmation bias and protect patient confidentiality.",
-    clinicalRequisition: entry.patientData.clinicalRequisition,
+    clinicalRequisition: entry.patientData?.clinicalRequisition || "Clinical Diagnostic Analysis",
     permittedFields: {
       blindId: entry.blindId,
-      clinicalRequisition: entry.patientData.clinicalRequisition,
+      clinicalRequisition: entry.patientData?.clinicalRequisition || "Clinical Diagnostic Analysis",
       collectionTimestamp: entry.registeredAt,
     }
   };
@@ -179,83 +271,9 @@ export function lookupBlindId(sampleId, externalId) {
 }
 
 /**
- * Seed demonstration identities
+ * Seed demonstration identities (kept for compatibility)
  */
 export function seedDemoIdentities(initialSamples) {
-  const vault = readVault();
-  let updated = false;
-
-  const demoSeeds = [
-    {
-      externalId: "MSBC-2026-WB-001",
-      blindId: "BT-2026-9081-42C1",
-      patientName: "Eleanor Vance (Synthetic Demo)",
-      subjectRef: "STUDY-NCT0482-P1049",
-      dob: "1978-03-24",
-      clinicalRequisition: "Targeted Oncology Exome Sequencing",
-      collectingWard: "Oncology Surgery Ward 4B",
-      creator: "0x70997970C51812dc3A010C7d01b50e0d17dc79C8"
-    },
-    {
-      externalId: "MSBC-2026-AL-01",
-      blindId: "BT-2026-9081-42C1-ALQ",
-      patientName: "Eleanor Vance (Plasma Aliquot)",
-      subjectRef: "STUDY-NCT0482-P1049",
-      dob: "1978-03-24",
-      clinicalRequisition: "Circulating Tumor DNA (ctDNA) Assay",
-      collectingWard: "CryoBio Processing Lab 2",
-      creator: "0x70997970C51812dc3A010C7d01b50e0d17dc79C8"
-    },
-    {
-      externalId: "MSBC-2026-BX-04",
-      blindId: "BT-2026-7812-99B3",
-      patientName: "Marcus Sterling (Synthetic Demo)",
-      subjectRef: "STUDY-ONCOLOGY-T04",
-      dob: "1964-11-09",
-      clinicalRequisition: "Histopathology & HER2 Genomic Amplification",
-      collectingWard: "Surgical Suite 3",
-      creator: "0x70997970C51812dc3A010C7d01b50e0d17dc79C8"
-    },
-    {
-      externalId: "APEX-2026-RNA-09",
-      blindId: "BT-2026-4412-10A7",
-      patientName: "Clara Oswald (Synthetic Demo)",
-      subjectRef: "SUBJ-GEN-008",
-      dob: "1991-08-19",
-      clinicalRequisition: "High-Throughput RNA-Seq Transcriptomics",
-      collectingWard: "Genomics Extraction Bay",
-      creator: "0x3C44CdDdB6a900fa2b585dd299e03d12FA4293BC"
-    }
-  ];
-
-  demoSeeds.forEach((seed) => {
-    if (!vault[seed.blindId.toUpperCase()]) {
-      vault[seed.blindId.toUpperCase()] = {
-        sampleId: "",
-        externalId: seed.externalId,
-        blindId: seed.blindId.toUpperCase(),
-        creatorAddress: seed.creator.toLowerCase(),
-        registeredAt: Date.now() - 86400000 * 2,
-        patientData: {
-          patientName: seed.patientName,
-          subjectRef: seed.subjectRef,
-          dob: seed.dob,
-          clinicalRequisition: seed.clinicalRequisition,
-          collectingWard: seed.collectingWard,
-        },
-        accessLog: [
-          {
-            action: "INITIAL_SEED_CREATED",
-            actor: seed.creator,
-            timestamp: Date.now() - 86400000 * 2
-          }
-        ]
-      };
-      updated = true;
-    }
-  });
-
-  if (updated) {
-    writeVault(vault);
-  }
+  // readVault() automatically self-heals demo seeds
+  readVault();
 }

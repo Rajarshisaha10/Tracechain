@@ -156,8 +156,10 @@ export default function SampleExplorer({
             const isChild = s.parentId && s.parentId !== "0x0000000000000000000000000000000000000000000000000000000000000000";
             const children = sandboxData.childrenMap?.[s.sampleId] || [];
             const typeTheme = getTypeTheme(s.sampleType);
-            const hasAttestedReports = (sandboxData.attestedReports?.[s.sampleId] || []).length > 0;
+            const sampleReports = sandboxData.attestedReports?.[s.sampleId] || [];
+            const hasAttestedReports = sampleReports.length > 0;
             const hasDiscrepancy = (sandboxData.sampleDiscrepancyCases?.[s.sampleId] || []).length > 0;
+            const hasValueWarning = s.hasValueWarning || sampleReports.some(r => r.isOutOfTolerance);
 
             return (
               <motion.div
@@ -187,6 +189,11 @@ export default function SampleExplorer({
                     {hasDiscrepancy && (
                       <span className="text-[9px] font-mono font-bold px-1.5 py-0.2 rounded bg-[#FEF3C7] border border-[#D97706] text-[#92400E]">
                         DISCREPANCY
+                      </span>
+                    )}
+                    {hasValueWarning && (
+                      <span className="text-[9px] font-mono font-black px-1.5 py-0.2 rounded bg-[#FFE4E6] border border-[#FF5A5F] text-[#BE123C] animate-pulse">
+                        ⚠️ OUT OF SPEC
                       </span>
                     )}
                     <span className={`text-[9px] font-mono px-2 py-0.5 rounded border border-[#0A0A0A] font-extrabold uppercase ${

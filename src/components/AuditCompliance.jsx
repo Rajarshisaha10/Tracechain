@@ -43,6 +43,7 @@ export default function AuditCompliance({ onSelectSample }) {
   const [testSampleId, setTestSampleId] = useState("");
   const [testName, setTestName] = useState("Comprehensive 500-Gene Targeted Exome Sequencing");
   const [findingsSummary, setFindingsSummary] = useState("NEGATIVE (No Pathogenic Mutations Detected)");
+  const [measuredValue, setMeasuredValue] = useState("");
   const [reportHash, setReportHash] = useState("0x" + "e5".repeat(32));
   const [reportFileName, setReportFileName] = useState("");
   const [reportUri, setReportUri] = useState("ipfs://bafybeireportngsdiagnostic2026");
@@ -88,12 +89,16 @@ export default function AuditCompliance({ onSelectSample }) {
     try {
       setTestLoading(true);
       setMsg({ text: "", type: "" });
+      const selectedS = samples.find((s) => s.sampleId === testSampleId);
       await recordAttestedTest({
         sampleId: testSampleId,
         testType: testName.trim(),
         reportHash,
         findings: findingsSummary.trim(),
-        uri: reportUri.trim()
+        uri: reportUri.trim(),
+        measuredValue: measuredValue !== "" ? measuredValue : undefined,
+        measuredUnit: selectedS?.baselineMetric?.unit || "",
+        autoFlagDiscrepancy: true
       });
       setMsg({ text: `Digitally signed laboratory report permanently attested on the blockchain!`, type: "ok" });
       setTestSampleId("");
@@ -327,6 +332,115 @@ export default function AuditCompliance({ onSelectSample }) {
                   />
                 </div>
               </div>
+
+              {/* Quantitative Measurement & Real-Time Tolerance Verification */}
+              {(() => {
+                const s = samples.find((item) => item.sampleId === testSampleId);
+                const baseline = s?.baselineMetric;
+                const numMeasured = measuredValue !== "" ? parseFloat(measuredValue) : null;
+                const numBaseline = baseline ? parseFloat(baseline.value) : null;
+                let variancePct = null;
+                let isOut = false;
+                if (numMeasured !== null && !isNaN(numMeasured) && numBaseline && numBaseline > 0) {
+                  variancePct = Number((((numMeasured - numBaseline) / numBaseline) * 100).toFixed(1));
+                  isOut = Math.abs(variancePct) > (baseline.tolerance || 15);
+                }
+
+                return (
+                  <div className="p-3.5 bg-[#FFFFFF] border-2 border-[#0A0A0A] rounded-xl shadow-[2.5px_2.5px_0px_#0A0A0A] space-y-3">
+                    <div className="flex items-center justify-between border-b border-[#0A0A0A]/10 pb-2">
+                      <div className="flex items-center gap-2">
+                        <FlaskConical className="w-4 h-4 text-[#2563EB]" />
+                        <span className="text-xs font-black uppercase tracking-wider text-[#0A0A0A]">
+                          Assay Measurement & Baseline Tolerance Check
+                        </span>
+                      </div>
+                      {baseline && (
+                        <span className="text-[10px] font-mono font-extrabold bg-[#EFF6FF] text-[#1D4ED8] border border-[#0A0A0A] px-2 py-0.5 rounded">
+                          Benchmark: {baseline.name} (±{baseline.tolerance}%)
+                        </span>
+                      )}
+                    </div>
+
+                    {baseline && (
+                      <div className="p-2.5 bg-[#F8FAFC] border border-[#0A0A0A] rounded-lg text-xs font-mono flex items-center justify-between">
+                        <div>
+                          <span className="text-[#64748B] block text-[10px] uppercase font-bold">Registered Baseline:</span>
+                          <span className="font-black text-[#0A0A0A]">{baseline.value} {baseline.unit}</span>
+                        </div>
+                        <div className="text-right">
+                          <span className="text-[#64748B] block text-[10px] uppercase font-bold">Permissible Window:</span>
+                          <span className="font-bold text-[#0A0A0A]">
+                            {(Number(baseline.value) * (1 - baseline.tolerance / 100)).toFixed(1)} – {(Number(baseline.value) * (1 + baseline.tolerance / 100)).toFixed(1)} {baseline.unit}
+                          </span>
+                        </div>
+                      </div>
+                    )}
+
+                    <div>
+                      <div className="flex items-center justify-between mb-1">
+                        <label className="block text-xs font-bold uppercase tracking-wider text-[#0A0A0A]">
+                          Measured Laboratory Value {baseline ? `(${baseline.unit})` : ""}
+                        </label>
+                        {baseline && (
+                          <div className="flex items-center gap-1.5">
+                            <button
+                              type="button"
+                              onClick={() => setMeasuredValue((Number(baseline.value) * 1.02).toFixed(1))}
+                              className="text-[10px] font-bold px-1.5 py-0.5 rounded bg-[#F7FEE7] text-[#365314] border border-[#0A0A0A] hover:bg-[#ECFCCB]"
+                            >
+                              Simulate Concordant
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => setMeasuredValue((Number(baseline.value) * 1.65).toFixed(1))}
+                              className="text-[10px] font-bold px-1.5 py-0.5 rounded bg-[#FFF1F2] text-[#BE123C] border border-[#0A0A0A] hover:bg-[#FFE4E6]"
+                            >
+                              Simulate Out-of-Tolerance Discrepancy
+                            </button>
+                          </div>
+                        )}
+                      </div>
+                      <input
+                        type="number"
+                        step="any"
+                        value={measuredValue}
+                        onChange={(e) => setMeasuredValue(e.target.value)}
+                        placeholder={baseline ? `Enter measured numeric value, e.g. ${baseline.value}` : "Enter measured numeric value"}
+                        className="w-full brutal-input text-xs font-mono font-bold p-2 bg-[#FFFFFF]"
+                      />
+                    </div>
+
+                    {/* Real-time Warning or Concordance Banner */}
+                    {isOut && (
+                      <div className="p-3 bg-[#FFF1F2] border-2 border-[#FF5A5F] rounded-xl text-[#BE123C] space-y-1 shadow-[2px_2px_0px_#FF5A5F] animate-pulse">
+                        <div className="flex items-center gap-1.5 font-black text-xs">
+                          <AlertTriangle className="w-4 h-4 text-[#FF5A5F] shrink-0" />
+                          <span>WARNING: MEASUREMENT OUT OF TOLERANCE!</span>
+                        </div>
+                        <p className="text-[11px] font-mono leading-tight">
+                          Lab measurement of <strong>{numMeasured} {baseline?.unit}</strong> deviates by <strong>{variancePct > 0 ? `+${variancePct}%` : `${variancePct}%`}</strong> from intake baseline (<strong>{baseline?.value} {baseline?.unit}</strong>). This exceeds the maximum allowable tolerance of <strong>±{baseline?.tolerance}%</strong>.
+                        </p>
+                        <p className="text-[10px] text-[#9F1239] font-bold">
+                          ⚠️ An auditable discrepancy will automatically be flagged on the immutable ledger.
+                        </p>
+                      </div>
+                    )}
+
+                    {!isOut && numMeasured !== null && baseline && (
+                      <div className="p-2.5 bg-[#F7FEE7] border border-[#65A30D] rounded-xl text-[#365314] flex items-center justify-between text-xs font-mono">
+                        <div className="flex items-center gap-1.5 font-bold">
+                          <CheckCircle2 className="w-4 h-4 text-[#65A30D] shrink-0" />
+                          <span>Concordant: {variancePct > 0 ? `+${variancePct}%` : `${variancePct}%`} variance is within ±{baseline.tolerance}% tolerance margin</span>
+                        </div>
+                        <span className="text-[9px] bg-[#FFFFFF] px-1.5 py-0.5 rounded border border-[#65A30D] font-extrabold">
+                          IN SPEC
+                        </span>
+                      </div>
+                    )}
+                  </div>
+                );
+              })()}
 
               <div>
                 <label className="block text-xs font-bold uppercase tracking-wider text-[#0A0A0A] mb-1">

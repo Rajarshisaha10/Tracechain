@@ -321,6 +321,31 @@ export default function DiscrepancyWorkbench({ onSelectSample }) {
                   </div>
                 </div>
 
+                {/* Quantitative Measurement Variance Banner */}
+                {(activeCase.isMeasurementDiscrepancy || (activeCase.variancePct !== undefined && activeCase.variancePct !== null)) && (
+                  <div className="p-3 bg-[#FFF1F2] border-2 border-[#FF5A5F] rounded-xl text-xs text-[#BE123C] shadow-[2px_2px_0px_#FF5A5F]">
+                    <div className="flex items-center justify-between mb-1.5">
+                      <span className="font-black uppercase tracking-wider text-[11px] flex items-center gap-1.5">
+                        <AlertTriangle className="w-3.5 h-3.5 text-[#FF5A5F]" />
+                        Quantitative Tolerance Mismatch Alert
+                      </span>
+                      <span className="text-[10px] font-mono font-bold bg-[#FFFFFF] border border-[#FF5A5F] px-1.5 py-0.2 rounded text-[#BE123C]">
+                        Variance: {activeCase.variancePct > 0 ? `+${activeCase.variancePct}%` : `${activeCase.variancePct}%`} (Allowed: ±{activeCase.tolerancePct || 15}%)
+                      </span>
+                    </div>
+                    <div className="grid grid-cols-2 gap-2 text-[11px] font-mono pt-1">
+                      <div className="p-2 bg-[#FFFFFF] border border-[#0A0A0A]/20 rounded-lg">
+                        <span className="text-[#52525B] text-[10px] uppercase font-bold block">Intake Baseline:</span>
+                        <strong className="text-sm text-[#0A0A0A]">{activeCase.baselineValue ?? activeSample?.baselineMetric?.value} {activeCase.unit || activeSample?.baselineMetric?.unit}</strong>
+                      </div>
+                      <div className="p-2 bg-[#FFFFFF] border border-[#FF5A5F] rounded-lg">
+                        <span className="text-[#BE123C] text-[10px] uppercase font-bold block">Lab Measured Value:</span>
+                        <strong className="text-sm text-[#BE123C]">{activeCase.measuredValue ?? originalReport?.measuredValue} {activeCase.unit || activeSample?.baselineMetric?.unit}</strong>
+                      </div>
+                    </div>
+                  </div>
+                )}
+
                 {/* Side-by-Side Report Comparison Deck */}
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-3 pt-2">
                   

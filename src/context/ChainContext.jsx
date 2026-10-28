@@ -109,10 +109,14 @@ export function ChainProvider({ children }) {
 
   // Reset sandbox to initial seed data
   const resetSandbox = () => {
+    try {
+      localStorage.removeItem("tracechain_sandbox_v2");
+      localStorage.removeItem("tracechain_identity_vault_v2");
+    } catch (e) {
+      console.warn("Storage reset error", e);
+    }
     const initial = buildInitialDemoState();
     setSandboxData(initial);
-    localStorage.removeItem("tracechain_sandbox_v2");
-    localStorage.removeItem("tracechain_identity_vault_v2");
   };
 
   // Helper: Active user profile info
@@ -146,7 +150,8 @@ export function ChainProvider({ children }) {
     subjectHash,
     note,
     blindId,
-    patientData
+    patientData,
+    baselineMetric
   }) => {
     const chosenBlindId = blindId || generateBlindId();
 
@@ -213,6 +218,13 @@ export function ChainProvider({ children }) {
       status: 1, // Active
       headHash: initialRec.recordHash,
       blindId: chosenBlindId,
+      baselineMetric: baselineMetric || {
+        name: "Biomarker Concentration",
+        value: 50.0,
+        unit: "ng/µL",
+        tolerance: 15,
+        expectedQualitative: "NEGATIVE"
+      },
     };
 
     // Store off-chain identity mapping
@@ -558,7 +570,7 @@ export function ChainProvider({ children }) {
   // -------------------------------------------------------------
   // FEATURE TWO: ATTESTED LABORATORY REPORTS
   // -------------------------------------------------------------
-  const recordAttestedTest = async ({ sampleId, testType, reportHash, findings, uri }) => {
+  const recordAttestedTest = async ({ sampleId, testType, reportHash, findings, uri, measuredValue, measuredUnit, autoFlagDiscrepancy = true }) => {
     if (mode === "web3") {
       if (!contract || !signer) throw new Error("Contract or wallet signer not connected");
       const currentReports = await contract.getAttestedReports(sampleId);
@@ -614,6 +626,20 @@ export function ChainProvider({ children }) {
     );
     const signature = generateSimulatedSignature(activeAccount, payloadHash);
 
+    const numMeasured = (measuredValue !== undefined && measuredValue !== null && measuredValue !== "") ? parseFloat(measuredValue) : null;
+    let variancePct = null;
+    let isOutOfTolerance = false;
+    const baseline = s.baselineMetric;
+
+    if (numMeasured !== null && !isNaN(numMeasured) && baseline && Number(baseline.value) > 0) {
+      const expectedNum = Number(baseline.value);
+      variancePct = Number((((numMeasured - expectedNum) / expectedNum) * 100).toFixed(1));
+      const tolerance = Number(baseline.tolerance || 15);
+      isOutOfTolerance = Math.abs(variancePct) > tolerance;
+    }
+
+    const unitStr = measuredUnit || baseline?.unit || "";
+
     const newReport = {
       sampleId,
       laboratory: activeAccount,
@@ -626,11 +652,60 @@ export function ChainProvider({ children }) {
       uri: uri || "",
       isRetest: false,
       originalReportHash: ethers.ZeroHash,
+      measuredValue: numMeasured,
+      measuredUnit: unitStr,
+      baselineValue: baseline?.value,
+      variancePct: variancePct,
+      isOutOfTolerance: isOutOfTolerance,
     };
 
-    const noteStr = currentVer === 1
+    let noteStr = currentVer === 1
       ? `Attested Report v1: ${testType} [${findings}]`
       : `Superceded Attested Report v${currentVer}: ${testType} [${findings}]`;
+
+    if (numMeasured !== null) {
+      noteStr += isOutOfTolerance
+        ? ` [⚠️ VARIANCE WARNING: Measured ${numMeasured} ${unitStr} vs Baseline ${baseline?.value} ${unitStr} (${variancePct > 0 ? '+' : ''}${variancePct}% exceeds tolerance ±${baseline?.tolerance}%)]`
+        : ` [✓ CONCORDANT: Measured ${numMeasured} ${unitStr} (${variancePct > 0 ? '+' : ''}${variancePct}% within tolerance)]`;
+    }
+
+    // Auto-create discrepancy case if measurement is out of tolerance
+    const updatedDiscrepancies = { ...(sandboxData.discrepancyCases || {}) };
+    const updatedSampleDiscrepancies = { ...(sandboxData.sampleDiscrepancyCases || {}) };
+    const updatedAllDiscrepancyCaseIds = [...(sandboxData.allDiscrepancyCaseIds || [])];
+
+    if (isOutOfTolerance && autoFlagDiscrepancy) {
+      const caseId = `CASE-VAR-${Date.now().toString(36).slice(-5).toUpperCase()}`;
+      const newCase = {
+        caseId,
+        sampleId,
+        requestId: "",
+        originalReportHash: reportHash,
+        retestReportHash: ethers.ZeroHash,
+        originalLab: activeAccount,
+        retestLab: ethers.ZeroAddress,
+        reason: `Quantitative Assay Discrepancy: Laboratory measured ${numMeasured} ${unitStr} vs registered baseline ${baseline?.value} ${unitStr} (${variancePct > 0 ? '+' : ''}${variancePct}% variance, exceeding acceptable ±${baseline?.tolerance}% tolerance).`,
+        evidenceHash: reportHash,
+        status: 0, // Open
+        disposition: 0,
+        resolutionReason: "",
+        reviewer: ethers.ZeroAddress,
+        flaggedAt: timestampSec,
+        resolvedAt: 0,
+        isMeasurementDiscrepancy: true,
+        baselineValue: baseline?.value,
+        measuredValue: numMeasured,
+        unit: unitStr,
+        variancePct: variancePct,
+        tolerancePct: baseline?.tolerance || 15
+      };
+
+      updatedDiscrepancies[caseId] = newCase;
+      updatedSampleDiscrepancies[sampleId] = [...(updatedSampleDiscrepancies[sampleId] || []), caseId];
+      if (!updatedAllDiscrepancyCaseIds.includes(caseId)) {
+        updatedAllDiscrepancyCaseIds.unshift(caseId);
+      }
+    }
 
     const rec = {
       recType: 16, // ReportAttested
@@ -648,7 +723,18 @@ export function ChainProvider({ children }) {
       ...prev,
       samples: {
         ...prev.samples,
-        [sampleId]: { ...s, headHash: rec.recordHash },
+        [sampleId]: { 
+          ...s, 
+          headHash: rec.recordHash,
+          hasValueWarning: isOutOfTolerance || s.hasValueWarning,
+          latestVarianceWarning: isOutOfTolerance ? {
+            measuredValue: numMeasured,
+            baselineValue: baseline?.value,
+            unit: unitStr,
+            variancePct,
+            tolerancePct: baseline?.tolerance
+          } : s.latestVarianceWarning
+        },
       },
       histories: {
         ...prev.histories,
@@ -658,6 +744,9 @@ export function ChainProvider({ children }) {
         ...prev.attestedReports,
         [sampleId]: [...existingReports, newReport],
       },
+      discrepancyCases: updatedDiscrepancies,
+      sampleDiscrepancyCases: updatedSampleDiscrepancies,
+      allDiscrepancyCaseIds: updatedAllDiscrepancyCaseIds,
     }));
 
     return { version: currentVer, signature, payloadHash };
