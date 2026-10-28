@@ -310,9 +310,9 @@ export default function SampleExplorer({
 
                   <button
                     onClick={() => onSelectSample(s.sampleId)}
-                    className="brutal-btn brutal-btn-primary text-xs px-2.5 py-1 font-mono uppercase"
+                    className="brutal-btn brutal-btn-primary text-xs px-2.5 py-1 font-mono uppercase flex items-center gap-1 cursor-pointer"
                   >
-                    <span>Inspect</span>
+                    <span>{currentActor.orgType === 2 ? "🔬 Input Lab Reading" : "Inspect & Enter Reading"}</span>
                     <ArrowRight className="w-3 h-3" />
                   </button>
                 </div>

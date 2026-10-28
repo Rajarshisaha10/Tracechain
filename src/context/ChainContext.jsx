@@ -570,7 +570,7 @@ export function ChainProvider({ children }) {
   // -------------------------------------------------------------
   // FEATURE TWO: ATTESTED LABORATORY REPORTS
   // -------------------------------------------------------------
-  const recordAttestedTest = async ({ sampleId, testType, reportHash, findings, uri, measuredValue, measuredUnit, autoFlagDiscrepancy = true }) => {
+  const recordAttestedTest = async ({ sampleId, testType, reportHash, findings, uri, measuredValue, measuredUnit, autoFlagDiscrepancy = true, attestingLabAddress = null }) => {
     if (mode === "web3") {
       if (!contract || !signer) throw new Error("Contract or wallet signer not connected");
       const currentReports = await contract.getAttestedReports(sampleId);
@@ -604,11 +604,21 @@ export function ChainProvider({ children }) {
     // Sandbox execution
     const s = sandboxData.samples[sampleId];
     if (!s) throw new Error("Sample not found");
-    if (s.custodian.toLowerCase() !== activeAccount.toLowerCase()) {
-      throw new Error("Only the current custodian can record laboratory test results");
-    }
-    if (currentActor.orgType !== 2 && currentActor.orgType !== 3) {
-      throw new Error("Unauthorized: Only registered Laboratory or Research organizations can attest diagnostic reports");
+
+    // In sandbox demo mode, default to active account if laboratory, else Apex Genomics Core Lab
+    const effectiveLabAddress = attestingLabAddress || (
+      (currentActor.orgType === 2 || currentActor.orgType === 3)
+        ? activeAccount
+        : "0x3C44CdDdB6a900fa2b585dd299e03d12FA4293BC"
+    );
+    const labOrg = sandboxData.orgs[effectiveLabAddress] || currentActor;
+
+    // Automatically set custody to the testing laboratory
+    s.custodian = effectiveLabAddress;
+    s.status = 1; // Active in laboratory custody
+
+    if (activeAccount.toLowerCase() !== effectiveLabAddress.toLowerCase()) {
+      setActiveAccount(effectiveLabAddress);
     }
 
     const existingReports = sandboxData.attestedReports?.[sampleId] || [];
@@ -617,14 +627,14 @@ export function ChainProvider({ children }) {
 
     const payloadHash = computeReportPayloadHash(
       sampleId,
-      activeAccount,
+      effectiveLabAddress,
       testType,
       reportHash,
       findings,
       currentVer,
       timestampSec
     );
-    const signature = generateSimulatedSignature(activeAccount, payloadHash);
+    const signature = generateSimulatedSignature(effectiveLabAddress, payloadHash);
 
     const numMeasured = (measuredValue !== undefined && measuredValue !== null && measuredValue !== "") ? parseFloat(measuredValue) : null;
     let variancePct = null;
@@ -642,7 +652,7 @@ export function ChainProvider({ children }) {
 
     const newReport = {
       sampleId,
-      laboratory: activeAccount,
+      laboratory: effectiveLabAddress,
       testType,
       reportHash,
       findings,
@@ -682,7 +692,7 @@ export function ChainProvider({ children }) {
         requestId: "",
         originalReportHash: reportHash,
         retestReportHash: ethers.ZeroHash,
-        originalLab: activeAccount,
+        originalLab: effectiveLabAddress,
         retestLab: ethers.ZeroAddress,
         reason: `Quantitative Assay Discrepancy: Laboratory measured ${numMeasured} ${unitStr} vs registered baseline ${baseline?.value} ${unitStr} (${variancePct > 0 ? '+' : ''}${variancePct}% variance, exceeding acceptable ±${baseline?.tolerance}% tolerance).`,
         evidenceHash: reportHash,

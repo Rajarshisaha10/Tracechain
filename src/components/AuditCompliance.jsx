@@ -285,6 +285,29 @@ export default function AuditCompliance({ onSelectSample }) {
               </p>
             </div>
 
+            {currentActor.orgType !== 2 && currentActor.orgType !== 3 && (
+              <div className="p-3 bg-[#FEF9C3] border-2 border-[#0A0A0A] rounded-xl text-xs flex flex-col sm:flex-row sm:items-center justify-between gap-2 shadow-[2px_2px_0px_#0A0A0A]">
+                <div className="flex items-center gap-2">
+                  <AlertTriangle className="w-4 h-4 text-[#B45309] shrink-0" />
+                  <div>
+                    <div className="font-bold text-[#0A0A0A]">
+                      Current Role: {currentActor.name} ({currentActor.orgTypeName})
+                    </div>
+                    <div className="text-[11px] text-[#71717A]">
+                      Under CLIA guidelines, diagnostic assays must be attested by a certified laboratory.
+                    </div>
+                  </div>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setActiveAccount("0x3C44CdDdB6a900fa2b585dd299e03d12FA4293BC")}
+                  className="px-3 py-1.5 rounded-lg bg-[#D7FB38] hover:bg-[#bef310] text-[#0A0A0A] font-bold text-xs border border-[#0A0A0A] shadow-[1px_1px_0px_#0A0A0A] active:translate-x-[1px] active:translate-y-[1px] cursor-pointer whitespace-nowrap self-start sm:self-auto"
+                >
+                  ⚡ Switch to Apex Core Lab
+                </button>
+              </div>
+            )}
+
             <form onSubmit={handleRecordAttestedTest} className="space-y-3.5">
               <div>
                 <label className="block text-xs font-bold uppercase tracking-wider text-[#0A0A0A] mb-1">

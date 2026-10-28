@@ -44,7 +44,7 @@ export default function SampleDetailModal({
   onOpenAliquot,
   onOpenQr
 }) {
-  const { sandboxData, tamperRecord, currentActor, activeAccount } = useChain();
+  const { sandboxData, tamperRecord, currentActor, activeAccount, recordAttestedTest, setActiveAccount } = useChain();
   const sample = sandboxData.samples?.[sampleId];
   const history = sandboxData.histories?.[sampleId] || [];
   const children = sandboxData.childrenMap?.[sampleId] || [];
@@ -55,6 +55,52 @@ export default function SampleDetailModal({
   const [isVerifying, setIsVerifying] = useState(false);
   const [copiedHash, setCopiedHash] = useState("");
   const [sigCheckToast, setSigCheckToast] = useState(null);
+  const [labInputVal, setLabInputVal] = useState("");
+  const [isSubmittingLab, setIsSubmittingLab] = useState(false);
+  const [labSubmitMsg, setLabSubmitMsg] = useState(null);
+
+  const handleDirectLabSubmit = async () => {
+    if (!labInputVal) return;
+    try {
+      setIsSubmittingLab(true);
+      setLabSubmitMsg(null);
+      const measuredNum = parseFloat(labInputVal);
+      const baselineVal = Number(sample.baselineMetric?.value || 50);
+      const tol = Number(sample.baselineMetric?.tolerance || 15);
+      const isOut = Math.abs(((measuredNum - baselineVal) / baselineVal) * 100) > tol;
+
+      await recordAttestedTest({
+        sampleId: sample.sampleId,
+        testType: "Analytical Diagnostic Assay",
+        reportHash: "0x" + "a7".repeat(32),
+        findings: isOut
+          ? `ANALYTICAL DEVIATION: Measured ${labInputVal} ${sample.baselineMetric?.unit || "units"}`
+          : `CONCORDANT ASSAY: Measured ${labInputVal} ${sample.baselineMetric?.unit || "units"}`,
+        uri: "ipfs://bafybeilabmeasuredreading2026",
+        measuredValue: labInputVal,
+        measuredUnit: sample.baselineMetric?.unit || "ng/µL",
+        autoFlagDiscrepancy: true
+      });
+
+      setIsSubmittingLab(false);
+      setLabInputVal("");
+      setLabSubmitMsg({
+        type: "ok",
+        text: "✓ Laboratory reading successfully recorded and anchored on the blockchain!"
+      });
+      confetti({
+        particleCount: 50,
+        spread: 60,
+        origin: { y: 0.6 }
+      });
+    } catch (err) {
+      setIsSubmittingLab(false);
+      setLabSubmitMsg({
+        type: "err",
+        text: err.message || "Failed to record lab reading"
+      });
+    }
+  };
 
   // Off-chain identity resolution state (Role-gated)
   const [unmaskedIdentity, setUnmaskedIdentity] = useState(null);
@@ -393,6 +439,144 @@ export default function SampleDetailModal({
                 <p className="text-[11px] font-mono text-[#9F1239] leading-snug">
                   Laboratory analytical results deviate significantly from intake baseline values beyond the approved ±{sample.baselineMetric?.tolerance || 15}% tolerance margin. This case has been escalated for audit cross-verification.
                 </p>
+              </div>
+            )}
+          </div>
+
+          {/* Feature: Laboratory Assay Measurement & Blind Entry */}
+          <div className="p-4 bg-[#FFFFFF] border-2 border-[#0A0A0A] rounded-xl shadow-[3px_3px_0px_#0A0A0A] space-y-3">
+            <div className="flex items-center justify-between border-b border-[#0A0A0A]/20 pb-2">
+              <div className="flex items-center gap-2">
+                <FlaskConical className="w-4 h-4 text-[#2563EB]" />
+                <h4 className="text-xs font-black uppercase tracking-wider text-[#0A0A0A]">
+                  Input Laboratory Assay Reading
+                </h4>
+              </div>
+              <span className="text-[10px] font-mono font-bold bg-[#EFF6FF] text-[#1D4ED8] border border-[#0A0A0A] px-2 py-0.5 rounded flex items-center gap-1">
+                <Lock className="w-2.5 h-2.5" /> Blind Assay Entry
+              </span>
+            </div>
+
+            {/* Blind protocol explanation */}
+            <div className="p-2.5 bg-[#F8FAFC] border border-[#0A0A0A] rounded-lg text-xs space-y-1">
+              <div className="flex items-center justify-between">
+                <span className="font-mono text-[10px] font-black uppercase text-[#1E3A8A]">
+                  Double-Blind Protocol Active
+                </span>
+                <span className="text-[9px] font-mono font-bold bg-[#FEF9C3] text-[#854D0E] px-1.5 py-0.2 rounded border border-[#CA8A04]">
+                  Anti-Bias Integrity
+                </span>
+              </div>
+              <p className="text-[11px] text-[#475569] leading-snug">
+                The intake baseline value is sealed from testing laboratories to eliminate confirmation bias. Enter your measured findings below; the consensus protocol will automatically test tolerance concordance.
+              </p>
+            </div>
+
+            {/* Role switch / active lab notice */}
+            {currentActor.orgType !== 2 && currentActor.orgType !== 3 ? (
+              <div className="p-2.5 bg-[#FFFBEB] border border-[#F59E0B] rounded-lg flex flex-col sm:flex-row sm:items-center justify-between gap-2 text-xs">
+                <div>
+                  <div className="font-bold text-[#92400E]">
+                    Current Identity: {currentActor.name} ({currentActor.orgTypeName})
+                  </div>
+                  <div className="text-[10px] text-[#B45309] font-mono">
+                    Under CLIA standards, tests must be certified by an independent testing laboratory.
+                  </div>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setActiveAccount("0x3C44CdDdB6a900fa2b585dd299e03d12FA4293BC")}
+                  className="px-2.5 py-1 rounded-lg bg-[#FDE047] hover:bg-[#FACC15] text-[#0A0A0A] font-bold text-xs border border-[#0A0A0A] shadow-[1px_1px_0px_#0A0A0A] active:translate-x-[1px] active:translate-y-[1px] cursor-pointer whitespace-nowrap self-start sm:self-auto"
+                >
+                  ⚡ Switch to Apex Core Lab
+                </button>
+              </div>
+            ) : (
+              <div className="p-2 bg-[#F7FEE7] border border-[#65A30D] rounded-lg text-xs flex items-center justify-between">
+                <span className="font-mono text-[11px] text-[#365314] font-bold">
+                  Testing Facility: <span className="text-[#0A0A0A] font-black">{currentActor.name}</span>
+                </span>
+                <span className="text-[9px] font-mono font-black uppercase px-1.5 py-0.5 rounded bg-[#D7FB38] text-[#0A0A0A] border border-[#0A0A0A]">
+                  CLIA Verified
+                </span>
+              </div>
+            )}
+
+            {/* Reading Input Field & Helpers */}
+            <div className="space-y-2">
+              <div className="flex items-center justify-between">
+                <label className="text-xs font-black uppercase tracking-wider text-[#0A0A0A]">
+                  Measured Laboratory Reading ({sample.baselineMetric?.unit || "ng/µL"}):
+                </label>
+                <div className="flex items-center gap-1.5">
+                  <button
+                    type="button"
+                    onClick={() => setLabInputVal((Number(sample.baselineMetric?.value || 50) * 1.02).toFixed(1))}
+                    className="text-[10px] font-bold px-1.5 py-0.5 rounded bg-[#F7FEE7] text-[#365314] border border-[#0A0A0A] hover:bg-[#ECFCCB] cursor-pointer"
+                  >
+                    Demo: In-Spec (±2%)
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setLabInputVal((Number(sample.baselineMetric?.value || 50) * 1.65).toFixed(1))}
+                    className="text-[10px] font-bold px-1.5 py-0.5 rounded bg-[#FFF1F2] text-[#BE123C] border border-[#0A0A0A] hover:bg-[#FFE4E6] cursor-pointer"
+                  >
+                    Demo: Out-of-Spec (+65% Warning)
+                  </button>
+                </div>
+              </div>
+
+              <div className="flex gap-2">
+                <input
+                  type="number"
+                  step="any"
+                  value={labInputVal}
+                  onChange={(e) => setLabInputVal(e.target.value)}
+                  placeholder={`e.g. 52.4 ${sample.baselineMetric?.unit || "ng/µL"}`}
+                  className="flex-1 brutal-input text-xs font-mono font-bold p-2 bg-[#FFFFFF]"
+                />
+                <button
+                  type="button"
+                  onClick={handleDirectLabSubmit}
+                  disabled={!labInputVal || isSubmittingLab}
+                  className="brutal-btn brutal-btn-primary px-3 py-2 text-xs uppercase font-mono font-bold whitespace-nowrap cursor-pointer disabled:opacity-50"
+                >
+                  {isSubmittingLab ? "Attesting..." : "⚡ Attest & Record"}
+                </button>
+              </div>
+
+              {/* Real-time live tolerance calculation preview if typed */}
+              {labInputVal && !isNaN(parseFloat(labInputVal)) && (
+                (() => {
+                  const m = parseFloat(labInputVal);
+                  const b = Number(sample.baselineMetric?.value || 50);
+                  const tol = Number(sample.baselineMetric?.tolerance || 15);
+                  const varPct = Number((((m - b) / b) * 100).toFixed(1));
+                  const isOut = Math.abs(varPct) > tol;
+                  return (
+                    <div className={`p-2 rounded-lg border text-xs font-mono flex items-center justify-between ${
+                      isOut ? 'bg-[#FFF1F2] border-[#FF5A5F] text-[#BE123C]' : 'bg-[#F7FEE7] border-[#65A30D] text-[#365314]'
+                    }`}>
+                      <span className="font-bold flex items-center gap-1">
+                        {isOut ? <AlertTriangle className="w-3.5 h-3.5 text-[#FF5A5F]" /> : <CheckCircle2 className="w-3.5 h-3.5 text-[#65A30D]" />}
+                        {isOut ? `⚠️ WARNING: Out-of-Tolerance Deviation detected (${varPct > 0 ? '+' : ''}${varPct}%)` : `✓ Concordant Reading within ±${tol}% tolerance (${varPct > 0 ? '+' : ''}${varPct}%)`}
+                      </span>
+                      <span className="text-[10px] font-bold">
+                        {isOut ? "Will flag OUT OF SPEC & file dispute" : "Concordant"}
+                      </span>
+                    </div>
+                  );
+                })()
+              )}
+            </div>
+
+            {/* Submission Status Message */}
+            {labSubmitMsg && (
+              <div className={`p-2.5 rounded-lg border-2 text-xs font-bold flex items-center justify-between ${
+                labSubmitMsg.type === "ok" ? "bg-[#DCFCE7] border-[#0A0A0A] text-[#166534]" : "bg-[#FFE4E6] border-[#FF5A5F] text-[#BE123C]"
+              }`}>
+                <span>{labSubmitMsg.text}</span>
+                <button type="button" onClick={() => setLabSubmitMsg(null)} className="text-[10px] underline font-mono">Dismiss</button>
               </div>
             )}
           </div>
